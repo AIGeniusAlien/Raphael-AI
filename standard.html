@@ -1,0 +1,41 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Raphael — Standard</title>
+  <style>body{font-family:system-ui,Arial;margin:20px} #out{white-space:pre-wrap;border:1px solid #ddd;padding:12px;border-radius:8px;min-height:140px}</style>
+</head>
+<body>
+  <h2>Raphael — Standard (push-to-talk)</h2>
+  <div>
+    <button id="mic">🎤 Hold to talk</button>
+    <button id="send">Send</button>
+    <input id="text" size="60" placeholder="Type message..." />
+    <a href="/handsfree" style="margin-left:10px">Hands-free</a>
+    <a href="/fhir-demo" style="margin-left:10px">FHIR Demo</a>
+  </div>
+  <div id="out"></div>
+<script>
+const out = document.getElementById('out');
+const micBtn = document.getElementById('mic');
+const textIn = document.getElementById('text');
+let rec; let recognizing=false;
+if ('webkitSpeechRecognition' in window) {
+  rec = new webkitSpeechRecognition();
+  rec.continuous=true; rec.interimResults=true; rec.lang='en-US';
+  rec.onresult = (e)=>{ let t=''; for (let i=e.resultIndex;i<e.results.length;i++){ t+=e.results[i][0].transcript; } textIn.value=t; };
+  rec.onend = ()=>{ recognizing=false; micBtn.textContent='🎤 Hold to talk'; };
+}
+micBtn.onmousedown = ()=>{ if(rec){ recognizing=true; rec.start(); micBtn.textContent='🛑 Release to stop'; }};
+micBtn.onmouseup = ()=>{ if(rec && recognizing){ rec.stop(); }};
+async function send(text){
+  out.textContent += `\n> ${text}`;
+  const r = await fetch("/v1/intents",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+  const j = await r.json();
+  out.textContent += `\n[${j.intent} • ${(j.confidence*100).toFixed(0)}%] ${j.readback}`;
+}
+document.getElementById('send').onclick = ()=> send(textIn.value.trim()||"Hello");
+</script>
+</body>
+</html>

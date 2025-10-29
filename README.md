@@ -1,0 +1,1 @@
+Kubernetes manifests skeleton for future scaling.

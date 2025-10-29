@@ -1,0 +1,26 @@
+
+<!doctype html><html><head><meta charset="utf-8"><title>Raphael Extension</title>
+<style>body{font-family:system-ui,Arial;margin:10px;width:320px}</style></head>
+<body>
+<h3>Raphael — Hands-free</h3>
+<p>This extension sends recognized phrases to /v1/intents.</p>
+<pre id="log" style="white-space:pre-wrap"></pre>
+<script>
+const log = (m)=>document.getElementById('log').textContent += "\n"+m;
+let rec; let enabled=false;
+if ('webkitSpeechRecognition' in window){
+  rec = new webkitSpeechRecognition();
+  rec.continuous=true; rec.interimResults=true; rec.lang='en-US';
+  rec.onresult=(e)=>{ for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) handle(t.trim()); } };
+  rec.onend=()=>{ if(enabled) rec.start(); };
+}
+async function handle(t){
+  if(t.toLowerCase().startsWith("raphael")) t=t.replace(/^raphael[ ,]*/i,"");
+  try{
+    const r = await fetch("/v1/intents",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:t})});
+    log(JSON.stringify(await r.json()));
+  }catch(e){ log("Error: "+e); }
+}
+document.onclick = ()=>{ if(!enabled && rec){ enabled=true; rec.start(); log("listening…"); } };
+</script>
+</body></html>

@@ -1,0 +1,50 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Raphael — Hands-free</title>
+  <style>body{font-family:system-ui,Arial;margin:20px} #log{white-space:pre-wrap;border:1px solid #ddd;padding:12px;border-radius:8px;min-height:160px}</style>
+</head>
+<body>
+  <h2>Raphael — Hands-free (say "Raphael…" after one mic consent)</h2>
+  <div>
+    <button id="enable">Enable Microphone</button>
+    <a href="/" style="margin-left:10px">Standard</a>
+    <a href="/fhir-demo" style="margin-left:10px">FHIR Demo</a>
+    <span id="status" style="margin-left:10px">mic: off</span>
+  </div>
+  <div id="log"></div>
+<script>
+const log = (m)=>document.getElementById('log').textContent += "\n"+m;
+const statusEl = document.getElementById('status');
+let rec; let enabled=false; let acc="";
+if ('webkitSpeechRecognition' in window) {
+  rec = new webkitSpeechRecognition();
+  rec.continuous=true; rec.interimResults=true; rec.lang='en-US';
+  rec.onresult = (e)=>{
+    for (let i=e.resultIndex;i<e.results.length;i++){
+      const frag=e.results[i][0].transcript;
+      acc += frag;
+      if (e.results[i].isFinal){
+        handlePhrase(acc.trim()); acc="";
+      }
+      statusEl.textContent='listening…';
+    }
+  };
+  rec.onend = ()=>{ if(enabled) rec.start(); };
+}
+async function handlePhrase(t){
+  log("> "+t);
+  if(t.toLowerCase().startsWith("raphael")) t=t.replace(/^raphael[ ,]*/i,"");
+  const r = await fetch("/v1/intents",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:t})});
+  const j = await r.json(); log("["+j.intent+"] "+j.readback);
+  speechSynthesis.speak(new SpeechSynthesisUtterance(j.readback));
+}
+document.getElementById('enable').onclick = ()=>{
+  if(!rec){ alert("SpeechRecognition not supported in this browser."); return; }
+  enabled=true; rec.start(); statusEl.textContent='listening…';
+};
+</script>
+</body>
+</html>

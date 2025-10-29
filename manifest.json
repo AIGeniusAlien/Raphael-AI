@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Raphael Hands-free",
+  "version": "0.1.0",
+  "permissions": [
+    "tabs",
+    "storage",
+    "microphone"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

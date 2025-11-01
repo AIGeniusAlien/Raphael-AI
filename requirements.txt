@@ -1,0 +1,22 @@
+# Web + ASGI
+fastapi==0.115.5
+uvicorn[standard]==0.31.1
+
+# HTTP client
+httpx==0.27.2
+anyio==4.6.2.post1
+
+# OpenAI SDK
+openai==1.51.0
+
+# Storage / DB
+SQLAlchemy==2.0.36
+greenlet==3.0.3
+
+# Static file perf + uploads (Starlette optional deps)
+aiofiles==23.2.1
+python-multipart==0.0.12
+
+# Pydantic (FastAPI runtime)
+pydantic==2.9.2
+pydantic-core==2.23.4

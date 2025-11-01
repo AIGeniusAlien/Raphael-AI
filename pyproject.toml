@@ -2,7 +2,6 @@
 name = "raphael-ai"
 version = "0.1.0"
 description = "Raphael API"
-readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
   "fastapi==0.120.4",
@@ -14,5 +13,5 @@ dependencies = [
   "python-multipart==0.0.20",
   "PyYAML==6.0.3",
   "SQLAlchemy==2.0.35",
-  "greenlet>=3.1.0",         # ⬅️ Py 3.13-compatible
+  "greenlet>=3.1.0"
 ]

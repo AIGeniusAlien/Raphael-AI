@@ -3,17 +3,20 @@ services:
     name: raphael-ai
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt || pip install .
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
     envVars:
-      - key: STATIC_PATH
-        value: static
-      - key: APP_NAME
-        value: Raphael
-      - key: OPENAI_MODEL
-        value: gpt-4o-mini
-      - key: VOICE_DEFAULT
-        value: verse
-      - key: FRONTEND_URL
-        value: https://raphael-ai.onrender.com
-      # Set OPENAI_API_KEY, DATABASE_URL, FHIR_* in dashboard (secrets)
+      - key: PYTHON_VERSION
+        value: 3.12.5
+      # keep your existing secrets here, or leave them set in Render’s dashboard:
+      # - key: OPENAI_API_KEY
+      #   sync: false
+      # - key: DATABASE_URL
+      #   value: sqlite:////data/raphael.db
+    disk:
+      name: raphael-data
+      mountPath: /data
+      sizeGB: 1

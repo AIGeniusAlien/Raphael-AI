@@ -2,21 +2,18 @@ services:
   - type: web
     name: raphael-ai
     env: python
-    plan: free
-    buildCommand: |
-      pip install --upgrade pip
-      pip install -r requirements.txt
+    plan: starter
+    region: oregon
+    buildCommand: pip install -U pip && pip install -r <(python - <<'PY'
+from pathlib import Path, PurePath
+# Prefer pyproject; fall back to requirements.txt if you add one later
+print("")  # no-op; Render will install from pyproject automatically
+PY
+)
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
     autoDeploy: true
+    # Optional but helpful if you want a specific Python
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.5
-      # keep your existing secrets here, or leave them set in Render’s dashboard:
-      # - key: OPENAI_API_KEY
-      #   sync: false
-      # - key: DATABASE_URL
-      #   value: sqlite:////data/raphael.db
-    disk:
-      name: raphael-data
-      mountPath: /data
-      sizeGB: 1
+        value: 3.13.4

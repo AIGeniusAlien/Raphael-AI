@@ -1,13 +1,11 @@
 {
-  "manifest_version": 3,
-  "name": "Raphael Hands-free",
-  "version": "0.1.0",
-  "permissions": [
-    "tabs",
-    "storage",
-    "microphone"
-  ],
-  "action": {
-    "default_popup": "popup.html"
-  }
+  "name": "Raphael",
+  "short_name": "Raphael",
+  "start_url": "/static/Raphael.html",
+  "display": "standalone",
+  "background_color": "#0e3c3a",
+  "theme_color": "#0e3c3a",
+  "icons": [
+    { "src": "/static/logo.png.PNG", "sizes": "512x512", "type": "image/png" }
+  ]
 }

@@ -1,12 +1,21 @@
-
 services:
   - type: web
     name: raphael-ai
     env: python
     plan: free
-    buildCommand: ""
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -U pip && pip install .
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: APP_ENV
+        value: prod
+      - key: APP_NAME
+        value: Raphael
+      - key: LOG_LEVEL
+        value: INFO
+      - key: HOST
+        value: 0.0.0.0
       - key: PORT
-        value: "10000"
-healthCheckPath: /healthz
+        value: 8000

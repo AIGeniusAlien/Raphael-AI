@@ -1,16 +1,50 @@
 <!doctype html>
-<meta charset="utf-8"/>
-<title>Raphael — FHIR Demo</title>
-<style>body{font:16px system-ui;padding:20px}</style>
-<h1>FHIR Demo</h1>
-<p><button onclick="location.href='/fhir/login'">Connect SMART</button></p>
-<label>Patient ID <input id="pid" placeholder="123"/></label>
-<p><button onclick="getSum()">Get Summary</button></p>
-<pre id="out"></pre>
-<script>
-async function getSum(){
-  const pid=document.getElementById('pid').value||'demo';
-  const r = await fetch('/api/fhir/summary?patient='+encodeURIComponent(pid));
-  document.getElementById('out').textContent = r.status+ "\n\n" + await r.text();
-}
-</script>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Raphael — FHIR Demo</title>
+  <style>
+    body{font:16px system-ui, -apple-system, Segoe UI, Roboto; margin:0; padding:24px; background:#fafdfc}
+    h1{margin:0 0 10px}
+    .card{background:#fff;border:1px solid #e6efed;border-radius:12px; padding:16px; max-width:720px}
+    label{display:block;margin:12px 0 6px;font-weight:600}
+    input{width:100%;padding:10px;border:1px solid #dfe7e6;border-radius:10px}
+    .row{display:flex;gap:8px;margin:14px 0}
+    button{border:0;border-radius:10px;padding:10px 12px;cursor:pointer}
+    .primary{background:#0e7d78;color:#fff}
+    .secondary{background:#eef5f4;color:#0e3c3a}
+    pre{white-space:pre-wrap;background:#0b1020;color:#d8f1ef;padding:14px;border-radius:12px;overflow:auto}
+    a{color:#0e7d78;text-decoration:none}
+  </style>
+</head>
+<body>
+  <h1>Raphael — FHIR Demo</h1>
+  <div class="card">
+    <p>
+      Use this page to test SMART-on-FHIR auth and the summary endpoint.
+      For the full experience, use <a href="/static/Raphael.html">Raphael.html</a>.
+    </p>
+
+    <div class="row">
+      <button class="primary" onclick="location.href='/fhir/login'">Connect SMART</button>
+      <button class="secondary" onclick="getSum()">Get Summary</button>
+    </div>
+
+    <label for="pid">Patient ID</label>
+    <input id="pid" placeholder="e.g., 123" />
+
+    <h3>Response</h3>
+    <pre id="out">—</pre>
+  </div>
+
+  <script>
+  async function getSum(){
+    const pid = document.getElementById('pid').value || 'demo';
+    const r = await fetch('/api/fhir/summary?patient='+encodeURIComponent(pid));
+    const text = await r.text();
+    document.getElementById('out').textContent = r.status + " " + r.statusText + "\n\n" + text;
+  }
+  </script>
+</body>
+</html>

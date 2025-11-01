@@ -1,14 +1,14 @@
 import os, json, base64, secrets, httpx
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
 from openai import OpenAI
 
-# ───────────────── CONFIG
+# ───────────── Config
 APP_NAME = os.getenv("APP_NAME", "Raphael")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -22,11 +22,14 @@ FHIR_TOKEN_URL = os.getenv("FHIR_TOKEN_URL", "")
 FHIR_CLIENT_ID = os.getenv("FHIR_CLIENT_ID", "")
 FHIR_CLIENT_SECRET = os.getenv("FHIR_CLIENT_SECRET", "")
 FHIR_REDIRECT_URI = os.getenv("FHIR_REDIRECT_URI", f"{FRONTEND_URL}/fhir/callback")
-FHIR_SCOPES = os.getenv("FHIR_SCOPES", "launch/patient patient/*.read patient/*.write offline_access openid profile fhirUser")
+FHIR_SCOPES = os.getenv(
+    "FHIR_SCOPES",
+    "launch/patient patient/*.read patient/*.write offline_access openid profile fhirUser"
+)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./raphael.db")
 
-# ───────────────── APP
+# ───────────── App
 app = FastAPI(title=APP_NAME)
 app.add_middleware(
     CORSMiddleware,
@@ -50,25 +53,27 @@ def startup():
 
 @app.get("/")
 def root():
-    return RedirectResponse("/static/raphael.html")
+    # Go to branded UI
+    return RedirectResponse("/static/Raphael.html", status_code=307)
 
 @app.get("/healthz")
 def healthz():
     return {"status": "ok", "ts": datetime.utcnow().isoformat()}
 
-# ───────────────── OPENAI CHAT
+# ───────────── OpenAI Chat (fallback text chat)
 @app.post("/api/chat")
-async def chat(req: dict):
+async def chat(req: Dict[str, Any]):
     messages = req.get("messages", [])
     patient = req.get("patient", {})
     sys = (
         "You are Raphael, a multimodal clinical copilot for physicians. "
-        "Use clear, cautious, evidence-aligned language. Never give diagnosis; "
-        "offer differential considerations and next-step guidance. "
-        "Use EHR data when available via FHIR."
+        "Be cautious, cite guidelines when known, avoid definitive diagnosis; "
+        "offer differentials and next steps. Use EHR/FHIR data if provided."
     )
     if patient:
         sys += f" Patient context: {json.dumps(patient)[:1500]}"
+    if not OPENAI_API_KEY:
+        raise HTTPException(400, "OPENAI_API_KEY missing.")
     client = OpenAI(api_key=OPENAI_API_KEY)
     resp = client.chat.completions.create(
         model=OPENAI_MODEL,
@@ -77,7 +82,7 @@ async def chat(req: dict):
     )
     return {"reply": resp.choices[0].message.content}
 
-# ───────────────── SMART-on-FHIR helpers
+# ───────────── SMART-on-FHIR helpers
 def save_tokens(vendor: str, tokens: dict):
     exp = None
     if "expires_in" in tokens:
@@ -134,8 +139,11 @@ async def fhir_headers():
         "Content-Type": "application/fhir+json",
     }
 
+# ───────────── SMART-on-FHIR endpoints
 @app.get("/fhir/login")
 def fhir_login():
+    if not all([FHIR_BASE_URL, FHIR_AUTH_URL, FHIR_TOKEN_URL, FHIR_CLIENT_ID, FHIR_REDIRECT_URI]):
+        return HTMLResponse("<h3>FHIR env vars missing. Set FHIR_* in Render.</h3>", status_code=500)
     params = {
         "response_type": "code",
         "client_id": FHIR_CLIENT_ID,
@@ -160,9 +168,9 @@ async def fhir_callback(code: str):
         r.raise_for_status()
         tokens = r.json()
     save_tokens("default", tokens)
-    return RedirectResponse("/static/raphael.html?ehr=connected")
+    return RedirectResponse("/static/Raphael.html?ehr=connected")
 
-# ───────────────── FHIR CRUD & Summaries
+# ───────────── FHIR CRUD + Summary
 @app.get("/api/fhir/patient/{pid}")
 async def fhir_get_patient(pid: str):
     headers = await fhir_headers()
@@ -180,16 +188,6 @@ async def fhir_obs(patient: str):
 
 @app.post("/api/fhir/document-reference")
 async def create_document_reference(body: dict):
-    """
-    body = {
-      "patient": "123",
-      "author": "Practitioner/abc" (optional),
-      "title": "Clinic Note",
-      "content_type": "text/plain",
-      "text": "the note body"   # if 'data' not provided
-      "data": "<base64>"        # optional, overrides text
-    }
-    """
     patient = body.get("patient")
     if not patient:
         raise HTTPException(400, "Missing patient")
@@ -197,10 +195,8 @@ async def create_document_reference(body: dict):
     title = body.get("title", "Clinical Note")
     data_b64 = body.get("data")
     text_note = body.get("text", "")
-
     if not data_b64:
         data_b64 = base64.b64encode(text_note.encode("utf-8")).decode("utf-8")
-
     dr = {
         "resourceType": "DocumentReference",
         "status": "current",
@@ -218,7 +214,6 @@ async def create_document_reference(body: dict):
     author = body.get("author")
     if author:
         dr["author"] = [{"reference": author}]
-
     headers = await fhir_headers()
     async with httpx.AsyncClient() as c:
         r = await c.post(f"{FHIR_BASE_URL}/DocumentReference", headers=headers, json=dr)
@@ -226,52 +221,40 @@ async def create_document_reference(body: dict):
 
 @app.get("/api/fhir/summary")
 async def patient_summary(patient: str):
-    """
-    Returns a compact clinical summary: Conditions (active), Medications, Allergies, latest Vitals.
-    """
     headers = await fhir_headers()
     async with httpx.AsyncClient() as c:
-        # Conditions (problems)
         cond = await c.get(f"{FHIR_BASE_URL}/Condition", params={"patient": patient, "clinical-status": "active", "_count": 50}, headers=headers)
-        # Medications (current/statement)
         meds = await c.get(f"{FHIR_BASE_URL}/MedicationStatement", params={"patient": patient, "_count": 50}, headers=headers)
-        # Allergies
         alg = await c.get(f"{FHIR_BASE_URL}/AllergyIntolerance", params={"patient": patient, "_count": 50}, headers=headers)
-        # Latest vitals (Observation)
         vit = await c.get(f"{FHIR_BASE_URL}/Observation", params={"patient": patient, "category": "vital-signs", "_sort": "-date", "_count": 20}, headers=headers)
 
     def entries(bundle):
-        if not isinstance(bundle, dict):
-            return []
-        return [e.get("resource") for e in bundle.get("entry", []) if e.get("resource")]
+        return [e.get("resource") for e in (bundle.json() if hasattr(bundle, "json") else bundle).get("entry", []) if e.get("resource")]
 
     def latest_vitals(observations):
-        # Map by code display to most recent valueQuantity/valueString if present
         out = {}
         for o in observations:
             code = o.get("code", {}).get("text") or (o.get("code", {}).get("coding", [{}])[0].get("display"))
             if not code:
                 continue
-            val = o.get("valueQuantity", {}) or {}
-            value = val.get("value")
-            unit = val.get("unit") or val.get("code")
+            valq = o.get("valueQuantity") or {}
+            value = valq.get("value") if valq else None
+            unit = valq.get("unit") or valq.get("code") if valq else ""
             if value is None:
                 value = o.get("valueString")
-                unit = unit or ""
             eff = o.get("effectiveDateTime") or o.get("issued")
             if code not in out:
-                out[code] = {"value": value, "unit": unit, "when": eff}
+                out[code] = {"value": value, "unit": unit or "", "when": eff}
         return out
 
-    summary = {
-        "conditions": [{"id": x.get("id"), "text": x.get("code", {}).get("text")} for x in entries(cond.json())],
-        "medications": [{"id": x.get("id"), "text": (x.get("medicationCodeableConcept", {}).get("text") or "")} for x in entries(meds.json())],
-        "allergies": [{"id": x.get("id"), "text": (x.get("code", {}).get("text") or "")} for x in entries(alg.json())],
-        "vitals": latest_vitals(entries(vit.json())),
+    return {
+        "conditions": [{"id": x.get("id"), "text": (x.get("code", {}) or {}).get("text")} for x in entries(cond)],
+        "medications": [{"id": x.get("id"), "text": (x.get("medicationCodeableConcept", {}) or {}).get("text", "")} for x in entries(meds)],
+        "allergies": [{"id": x.get("id"), "text": (x.get("code", {}) or {}).get("text", "")} for x in entries(alg)],
+        "vitals": latest_vitals(entries(vit)),
     }
-    return summary
 
-# ───────────────── Realtime Voice (WebRTC) session token
+# ───────────── Realtime Voice (WebRTC) session token
 @app.post("/api/rt-token")
 async def rt_token():
     if not OPENAI_API_KEY:

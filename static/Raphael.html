@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Raphael — Clinical Copilot</title>
+  <style>
+    :root{
+      --teal:#0e7f79; --bg:#f6f7f8; --ink:#0f2327; --muted:#6b7a80; --card:#ffffff;
+      --ring:#cfe9e7; --border:#e7ebee;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--ink)}
+    .app{display:flex;height:100vh}
+    .sidebar{width:280px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column}
+    .brand{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+    .brand img{width:36px;height:36px;border-radius:8px}
+    .brand h1{font-size:18px;margin:0}
+    .brand small{display:block;color:var(--muted);font-weight:500}
+    .patients{padding:10px;overflow:auto}
+    .patients h3{margin:8px 0 6px 6px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+    .patient{padding:10px;border:1px solid var(--border);border-radius:10px;margin:6px;background:var(--card);cursor:pointer}
+    .patient:hover{border-color:var(--ring);box-shadow:0 0 0 3px var(--ring)}
+    .main{flex:1;display:flex;flex-direction:column}
+    .topbar{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:#fff}
+    .topbar .title{font-size:18px;font-weight:700}
+    .chip{padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted)}
+    .chip.primary{border-color:var(--teal);color:var(--teal)}
+    .content{flex:1;overflow:auto;padding:18px}
+    .bubble{max-width:800px;margin:8px auto;padding:14px 16px;border-radius:14px;background:#fff;border:1px solid var(--border)}
+    .bubble.you{background:#eaf6f5;border-color:#d6eeec}
+    .composer{display:flex;gap:10px;max-width:840px;margin:8px auto 18px}
+    textarea{flex:1;resize:vertical;min-height:56px;padding:12px;border-radius:12px;border:1px solid var(--border)}
+    button{border:none;background:var(--teal);color:#fff;padding:12px 16px;border-radius:12px;font-weight:600;cursor:pointer}
+    button.secondary{background:#fff;color:var(--ink);border:1px solid var(--border)}
+    a{color:var(--teal);text-decoration:none}
+    .links{margin-left:auto;display:flex;gap:10px}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="/static/logo.png" alt="R"/>
+      <div>
+        <h1>Raphael</h1>
+        <small>Clinical Copilot — v0.1</small>
+      </div>
+    </div>
+    <div class="patients">
+      <h3>Patients (demo)</h3>
+      <div class="patient" onclick="selectPatient('123','Mila Example')">
+        <strong>Mila Example</strong><br/><small>DOB 2019-06-01 • ID 123</small>
+      </div>
+      <div class="patient" onclick="selectPatient('abc','John Doe')">
+        <strong>John Doe</strong><br/><small>DOB 1975-04-12 • ID ABC-42</small>
+      </div>
+      <p style="padding:8px;color:var(--muted);font-size:12px">
+        Connect EHR to load your real patients.
+      </p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title">Dialogue</div>
+      <span id="ehrChip" class="chip">EHR: <strong>disconnected</strong></span>
+      <div class="links">
+        <a class="chip primary" href="/fhir/login">Connect EHR</a>
+        <button class="secondary" id="btnRealtime">Start Realtime Voice</button>
+      </div>
+    </div>
+
+    <div id="feed" class="content"></div>
+
+    <div class="composer">
+      <textarea id="box" placeholder="Type a message…"></textarea>
+      <button id="send">Send</button>
+      <button class="secondary" id="ptt">🎙 Hold to talk</button>
+    </div>
+  </main>
+</div>
+
+<script>
+  const feed = document.getElementById('feed');
+  const box = document.getElementById('box');
+  const send = document.getElementById('send');
+  const ptt = document.getElementById('ptt');
+  const ehrChip = document.getElementById('ehrChip');
+
+  let messages = [];
+  let currentPatient = null;
+
+  function bubble(text, you=false){
+    const div = document.createElement('div');
+    div.className = 'bubble' + (you?' you':'');
+    div.textContent = text;
+    feed.appendChild(div);
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  function selectPatient(id, name){
+    currentPatient = { id, name };
+    bubble(`🩺 Patient selected: ${name} (ID ${id})`);
+  }
+
+  // mark EHR status if redirected with ?ehr=connected
+  if (new URL(location.href).searchParams.get('ehr') === 'connected') {
+    ehrChip.innerHTML = 'EHR: <strong style="color:var(--teal)">connected</strong>';
+  }
+
+  send.onclick = async () => {
+    const text = box.value.trim();
+    if(!text) return;
+    box.value = "";
+    messages.push({role:'user', content:text});
+    bubble(text, true);
+
+    const res = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages, patient: currentPatient})
+    });
+    const data = await res.json();
+    messages.push({role:'assistant', content:data.reply});
+    bubble(data.reply);
+  };
+
+  // ---- Push-to-talk (Web Speech API where supported) ----
+  let media, rec, chunks=[];
+  ptt.onmousedown = async () => {
+    try{
+      media = await navigator.mediaDevices.getUserMedia({audio:true});
+      const ctx = new(window.AudioContext||window.webkitAudioContext)();
+      const dest = ctx.createMediaStreamDestination();
+      const source = ctx.createMediaStreamSource(media);
+      source.connect(dest);
+      rec = new MediaRecorder(dest.stream);
+      chunks=[];
+      rec.ondataavailable = e => chunks.push(e.data);
+      rec.onstop = async () => {
+        // Optional: upload and call ASR; for now we just indicate captured
+        bubble("🎙️ Voice note captured (demo). Use Realtime for live voice.");
+      };
+      rec.start();
+      ptt.textContent='Recording… release to send';
+    }catch(e){ alert('Mic error: '+e.message); }
+  };
+  ptt.onmouseup = () => { try{ rec && rec.stop(); media.getTracks().forEach(t=>t.stop()); }catch{}; ptt.textContent='🎙 Hold to talk'; };
+
+  // ---- Realtime Voice over WebRTC ----
+  const btnRealtime = document.getElementById('btnRealtime');
+  let pc, dataChannel, remoteAudio;
+  btnRealtime.onclick = async () => {
+    btnRealtime.disabled = true;
+    try{
+      // 1) fetch ephemeral token from server
+      const tokRes = await fetch('/api/rt-token', {method:'POST'});
+      const session = await tokRes.json();
+      const EPHEMERAL = session?.client_secret?.value;
+      if(!EPHEMERAL){ throw new Error('No ephemeral token'); }
+
+      // 2) Peer connection
+      pc = new RTCPeerConnection();
+      remoteAudio = document.createElement('audio');
+      remoteAudio.autoplay = true;
+      document.body.appendChild(remoteAudio);
+      pc.ontrack = (e)=>{ remoteAudio.srcObject = e.streams[0]; };
+
+      // 3) Local mic
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      stream.getTracks().forEach(t => pc.addTrack(t, stream));
+
+      // 4) Data channel (for text)
+      dataChannel = pc.createDataChannel("oai-events");
+      dataChannel.onmessage = (e)=>{ try{
+        const msg = JSON.parse(e.data);
+        if(msg?.type === "response.delta" && msg?.delta?.text){
+          // stream into the UI
+        }
+      }catch{} };
+
+      // 5) Offer → Realtime
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${EPHEMERAL}`,
+          "Content-Type": "application/sdp"
+        },
+        body: offer.sdp
+      });
+
+      const answer = { type: "answer", sdp: await sdpRes.text() };
+      await pc.setRemoteDescription(answer);
+
+      bubble("🔊 Realtime voice connected. Say “Raphael…” and speak.");
+      btnRealtime.textContent = "Realtime Connected";
+    }catch(err){
+      console.error(err);
+      alert("Realtime error: " + err.message);
+      btnRealtime.disabled = false;
+    }
+  };
+</script>
+</body>
+</html>

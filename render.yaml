@@ -1,14 +1,19 @@
 services:
-- type: web
-  name: raphael-ai
-  env: python
-  buildCommand: "pip install -U pip && pip install -e ."
-  startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
-  autoDeploy: true
-  envVars:
-  - key: PYTHONUNBUFFERED
-    value: "1"
-  - key: STATIC_PATH
-    value: "/static"
-  - key: FRONTEND_URL
-    value: "https://raphael-ai.onrender.com"
+  - type: web
+    name: raphael-ai
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt || pip install .
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: STATIC_PATH
+        value: static
+      - key: APP_NAME
+        value: Raphael
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: VOICE_DEFAULT
+        value: verse
+      - key: FRONTEND_URL
+        value: https://raphael-ai.onrender.com
+      # Set OPENAI_API_KEY, DATABASE_URL, FHIR_* in dashboard (secrets)

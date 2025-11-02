@@ -1,157 +1,60 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Raphael — Clinical Copilot</title>
-  <link rel="manifest" href="/manifest.json">
-  <style>
-    :root{
-      --teal:#0e7d78; --teal-dark:#0e3c3a; --ink:#0f172a; --bg:#f7faf9; --card:#ffffff;
-      --ring: rgba(14,125,120,.35);
-    }
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
-    .app{display:grid;grid-template-columns:280px 1fr;height:100vh}
-    .sidebar{background:#fff;border-right:1px solid #e8efee;padding:16px;overflow:auto}
-    .brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-    .brand img{width:28px;height:28px;border-radius:6px}
-    .brand h1{font-size:18px;margin:0;font-weight:700;color:var(--teal-dark)}
-    .small{font-size:12px;color:#667}
-    .btn{background:var(--teal);color:#fff;border:0;border-radius:10px;padding:10px 12px;cursor:pointer}
-    .btn.secondary{background:#eef5f4;color:var(--teal-dark)}
-    .btn.block{width:100%}
-    .patients{margin-top:12px}
-    .patients h3{font-size:12px;text-transform:uppercase;color:#778;margin:10px 0 6px}
-    .pill{padding:8px 10px;border-radius:8px;background:#f1f6f5;margin-bottom:6px;cursor:pointer}
-    .active{outline:2px solid var(--ring)}
-    .main{display:grid;grid-template-rows:auto 1fr auto}
-    header{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;border-bottom:1px solid #e8efee;padding:10px}
-    header img{width:24px;height:24px}
-    header .title{font-weight:700;color:var(--teal-dark)}
-    header .ver{font-size:12px;color:#667}
-    .chat{padding:20px;overflow:auto}
-    .bubble{max-width:780px;background:var(--card);border:1px solid #e8efee;border-radius:14px;padding:14px;margin:8px auto}
-    .me{background:#eaf7f6}
-    .composer{display:flex;gap:10px;padding:12px;border-top:1px solid #e8efee;background:#fff}
-    textarea{flex:1;resize:none;border:1px solid #dfe7e6;border-radius:12px;padding:12px;min-height:54px;outline:none}
-    textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--ring)}
-    .row{display:flex;gap:8px}
-    .link{color:var(--teal);text-decoration:none}
-  </style>
+  <meta charset="utf-8" />
+  <title>Raphael</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/static/logo.png.PNG">
+  <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand">
-      <img src="/static/logo.png.PNG" alt="Raphael logo"/>
-      <h1>Raphael</h1>
-    </div>
-    <div class="small">Guidance. Clarity. Care.</div>
-
-    <div class="patients">
-      <h3>Patients</h3>
-      <div id="pt-list"></div>
-      <button class="btn block" onclick="addDemoPatients()">Load Demo Patients</button>
-    </div>
-
-    <div style="margin-top:16px">
-      <h3>EHR</h3>
-      <button class="btn block" onclick="window.location.href='/fhir/login'">Connect EHR (SMART)</button>
-      <button class="btn block secondary" onclick="summary()">Get Summary</button>
-    </div>
-  </aside>
-
-  <section class="main">
-    <header>
-      <img src="/static/logo.png.PNG" alt="">
-      <span class="title">Raphael</span>
-      <span class="ver">v0.1 (alpha)</span>
-    </header>
-
-    <div id="chat" class="chat"></div>
-
-    <div class="composer">
-      <textarea id="msg" placeholder="Message Raphael…"></textarea>
-      <div class="row">
-        <button class="btn" onclick="send()">Send</button>
-        <button class="btn secondary" onclick="startVoice()">🎙️ Voice</button>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand">
+        <img src="/static/logo.png.PNG" alt="Raphael" />
+        <div>
+          <h1>Raphael</h1>
+          <span class="version">v1.0</span>
+        </div>
       </div>
-    </div>
-  </section>
-</div>
 
-<script>
-let messages = [{role:"system",content:"You are Raphael."}];
-let currentPatient = null;
+      <div class="section">
+        <div class="section-title">Patients</div>
+        <div id="patient-list"></div>
+        <button id="add-patient">+ New patient</button>
+      </div>
 
-function bubble(text, me=false){
-  const div = document.createElement('div');
-  div.className = 'bubble' + (me?' me':'');
-  div.textContent = text;
-  document.getElementById('chat').appendChild(div);
-  div.scrollIntoView({behavior:'smooth',block:'end'});
-}
+      <div class="section">
+        <div class="section-title">Conversations</div>
+        <div id="conv-list"></div>
+        <button id="add-conv">+ New chat</button>
+      </div>
 
-async function send(){
-  const t = document.getElementById('msg');
-  const content = t.value.trim(); if(!content) return;
-  t.value = ""; bubble(content,true);
-  const res = await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({messages: messages.concat([{role:"user",content}]), patient: currentPatient||{}})});
-  const data = await res.json();
-  messages.push({role:"user",content},{role:"assistant",content:data.reply});
-  bubble(data.reply);
-}
+      <div class="section">
+        <div class="section-title">Guidelines / Notes</div>
+        <form id="doc-upload">
+          <input type="text" name="title" placeholder="Title" required />
+          <input type="file" name="file" accept=".txt,.md" required />
+          <button type="submit">Upload</button>
+        </form>
+        <input id="doc-search" placeholder="Search guidelines…" />
+        <div id="doc-results"></div>
+      </div>
+    </aside>
 
-async function startVoice(){
-  // WebRTC token fetch (hooks up your future WebRTC client)
-  try {
-    const tok = await (await fetch('/api/rt-token', {method:'POST'})).json();
-    alert('Realtime session token issued. WebRTC client hookup is next step.\nSession ID: '+tok.id);
-  } catch(e){
-    alert('Voice token error. Check OPENAI_API_KEY on Render.');
-  }
-}
+    <main id="chat">
+      <div id="center-title">
+        <div class="center-logo">Raphael</div>
+        <div class="center-subtitle">Multimodal Clinical Copilot</div>
+      </div>
+      <div id="messages"></div>
+      <div id="composer">
+        <textarea id="prompt" rows="1" placeholder="Message Raphael…"></textarea>
+        <button id="send">Send</button>
+      </div>
+    </main>
+  </div>
 
-function addDemoPatients(){
-  const demo = [
-    {id:"pat-001",name:"Jane Doe",dob:"1980-05-01"},
-    {id:"pat-002",name:"John Smith",dob:"1975-11-23"}
-  ];
-  const list = document.getElementById('pt-list');
-  list.innerHTML="";
-  demo.forEach(p=>{
-    const el = document.createElement('div');
-    el.className='pill';
-    el.textContent = `${p.name} (${p.dob})`;
-    el.onclick=()=>selectPatient(p, el);
-    list.appendChild(el);
-  });
-}
-
-function selectPatient(p, el){
-  [...document.querySelectorAll('.pill')].forEach(d=>d.classList.remove('active'));
-  el.classList.add('active');
-  currentPatient = p;
-  bubble(`📁 Patient selected: ${p.name} (${p.dob}).`);
-}
-
-async function summary(){
-  if(!currentPatient){ alert("Select a patient first (demo or real)."); return; }
-  const q = new URLSearchParams({patient: currentPatient.id});
-  const r = await fetch('/api/fhir/summary?'+q.toString());
-  if(r.status !== 200){
-    bubble("EHR not connected (or sandbox creds missing). Use Connect EHR first.");
-    return;
-  }
-  const s = await r.json();
-  bubble("Clinical summary:\n\n"+
-    "- Conditions: " + (s.conditions.map(c=>c.text).filter(Boolean).join(", ")||"—") + "\n"+
-    "- Medications: " + (s.medications.map(m=>m.text).filter(Boolean).join(", ")||"—") + "\n"+
-    "- Allergies: " + (s.allergies.map(a=>a.text).filter(Boolean).join(", ")||"—") + "\n"+
-    "- Vitals: " + Object.entries(s.vitals).map(([k,v])=>`${k}: ${v.value??"?"} ${v.unit??""}`).join("; ")
-  );
-}
-</script>
+  <script src="/static/app.js"></script>
 </body>
 </html>

@@ -5,19 +5,19 @@ SQLAlchemy==2.0.35
 openai==2.6.1
 python-dotenv==1.2.1
 
-# Vector store + embeddings + pdf parsing
+# Vector store + embeddings + PDF parsing
 qdrant-client==1.9.1
 sentence-transformers==3.0.1
 numpy==1.26.4
 pypdf==4.3.1
 
-# Auth (JWT)
+# Auth (JWT) - already used in your integration build
 python-jose==3.3.0
 passlib[bcrypt]==1.7.4
 
-# DICOM ingestion + image helpers
+# DICOM helpers
 pydicom==2.4.4
 pillow==10.4.0
 
-# Billing
+# Billing scaffold
 stripe==10.12.0

@@ -5,8 +5,19 @@ SQLAlchemy==2.0.35
 openai==2.6.1
 python-dotenv==1.2.1
 
-# NEW: vector store + embeddings + pdf parsing for real evidence RAG
+# Vector store + embeddings + pdf parsing
 qdrant-client==1.9.1
 sentence-transformers==3.0.1
 numpy==1.26.4
 pypdf==4.3.1
+
+# Auth (JWT)
+python-jose==3.3.0
+passlib[bcrypt]==1.7.4
+
+# DICOM ingestion + image helpers
+pydicom==2.4.4
+pillow==10.4.0
+
+# Billing
+stripe==10.12.0

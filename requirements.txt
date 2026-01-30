@@ -1,9 +1,17 @@
+# Core API
 fastapi==0.120.4
 uvicorn==0.38.0
 httpx==0.28.1
-SQLAlchemy==2.0.35
-openai==2.6.1
 python-dotenv==1.2.1
+
+# REQUIRED for FastAPI file uploads (THIS FIXES YOUR ERROR)
+python-multipart==0.0.9
+
+# Database / ORM
+SQLAlchemy==2.0.35
+
+# LLM
+openai==2.6.1
 
 # Vector store + embeddings + PDF parsing
 qdrant-client==1.9.1
@@ -11,7 +19,7 @@ sentence-transformers==3.0.1
 numpy==1.26.4
 pypdf==4.3.1
 
-# Auth (JWT) - already used in your integration build
+# Auth (JWT)
 python-jose==3.3.0
 passlib[bcrypt]==1.7.4
 

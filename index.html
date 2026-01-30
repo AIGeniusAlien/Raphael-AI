@@ -1,9 +1,88 @@
 <!doctype html>
 <html lang="en">
+<head>
   <meta charset="utf-8" />
   <title>Raphael</title>
-  <script>
-    // Root redirects to the branded ChatGPT-style UI.
-    location.replace("/static/Raphael.html");
-  </script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Main app styles -->
+  <link rel="stylesheet" href="static/styles.css" />
+</head>
+
+<body>
+  <div id="app">
+    <!-- ───────────── Sidebar ───────────── -->
+    <div id="sidebar">
+      <div class="brand">
+        <img src="static/logo.png" alt="Raphael" onerror="this.style.display='none'" />
+        <div>
+          <h1>Raphael</h1>
+          <div class="version">Clinical AI Copilot</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Mode</div>
+        <select id="modeSelect">
+          <option value="radiology">Radiology</option>
+          <option value="general">General medicine</option>
+        </select>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Evidence ingestion</div>
+        <input id="evTitle" placeholder="Evidence title (e.g. AHA ACS 2024)" />
+        <textarea id="evText" placeholder="Paste guideline / protocol text here"></textarea>
+        <button id="evIngestBtn">Ingest evidence</button>
+        <div id="evStatus" class="muted"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Notes</div>
+        <div class="muted">
+          • Evidence-grounded only<br />
+          • Citations required<br />
+          • Safety-first output
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────── Main panel ───────────── -->
+    <div id="chat">
+      <!-- Toolbar -->
+      <div class="r-toolbar">
+        <input
+          id="conversationId"
+          placeholder="conversation_id (auto-fill next step)"
+        />
+        <input
+          id="question"
+          placeholder="Ask Raphael a clinical question…"
+        />
+        <button id="runRaphael">Run Raphael</button>
+      </div>
+
+      <!-- Output -->
+      <div id="assistantPane" class="r-output">
+        <div id="center-title">
+          <div class="center-logo">Raphael</div>
+          <div class="center-subtitle">
+            Evidence-based clinical reasoning with citations
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer / composer placeholder -->
+      <div id="composer">
+        <div class="muted">
+          Output is decision support only. Clinician judgment required.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renderer logic -->
+  <script src="renderer.js"></script>
+</body>
 </html>

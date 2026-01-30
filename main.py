@@ -1,52 +1,59 @@
 import os, json, base64, secrets, httpx, hashlib, io, re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional, List, Dict, Any
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 
 from sqlalchemy import create_engine, text
 
-# NEW: RAG + evidence store
+# Evidence + Vector DB
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qm
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from pypdf import PdfReader
 
+# Integrations
+from auth.jwt_auth import create_token, require_user
+from compliance.audit import audit_event
+from integrations.fhir.smart import build_auth_url, exchange_code, fhir_get
+from integrations.pacs.dicom_local import ingest_local_dicom_folder
+from integrations.pacs.dicomweb import qido_search_studies
+from integrations.billing.stripe_api import create_checkout_session
+
 # ───────────────── CONFIG
 APP_NAME = os.getenv("APP_NAME", "Raphael")
 STATIC_PATH = os.getenv("STATIC_PATH", "static")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 
-# LLM via OpenAI-compatible server (vLLM/TGI/llama.cpp server)
+# LLM via OpenAI-compatible server
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "").rstrip("/")
-LLM_MODEL = os.getenv("LLM_MODEL", "meta-llama/Meta-Llama-3.1-8B-Instruct")
+LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "EMPTY")
 
-# Voice toggle (not implemented in this build)
 VOICE_ENABLED = os.getenv("VOICE_ENABLED", "false").lower() == "true"
 
-# FHIR (optional; left idle for v1)
+# FHIR (optional)
 FHIR_BASE_URL = os.getenv("FHIR_BASE_URL", "").rstrip("/")
 FHIR_AUTH_URL = os.getenv("FHIR_AUTH_URL", "")
 FHIR_TOKEN_URL = os.getenv("FHIR_TOKEN_URL", "")
 FHIR_CLIENT_ID = os.getenv("FHIR_CLIENT_ID", "")
 FHIR_CLIENT_SECRET = os.getenv("FHIR_CLIENT_SECRET", "")
 FHIR_REDIRECT_URI = os.getenv("FHIR_REDIRECT_URI", f"{FRONTEND_URL}/fhir/callback")
-FHIR_SCOPES = os.getenv(
-    "FHIR_SCOPES",
-    "launch/patient patient/*.read patient/*.write offline_access openid profile fhirUser",
-)
+FHIR_SCOPES = os.getenv("FHIR_SCOPES", "launch/patient patient/*.read offline_access openid profile fhirUser")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./raphael.db")
 
-# NEW: Evidence + Vector DB (Qdrant)
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333").rstrip("/")
+# Qdrant
+QDRANT_URL = os.getenv("QDRANT_URL", "").rstrip("/")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "").strip()
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "raphael_evidence_v1").strip()
+
+# Embeddings
 EMBED_MODEL = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 EMBED_DIM = int(os.getenv("EMBED_DIM", "384"))
 
@@ -90,13 +97,12 @@ CREATE TABLE IF NOT EXISTS conversations (
 CREATE TABLE IF NOT EXISTS messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   conversation_id INTEGER NOT NULL,
-  role TEXT NOT NULL,           -- 'user' | 'assistant' | 'system'
+  role TEXT NOT NULL,
   content TEXT NOT NULL,
   created_at TEXT,
   FOREIGN KEY(conversation_id) REFERENCES conversations(id)
 );
 
--- Simple documents table for guidance/notes
 CREATE TABLE IF NOT EXISTS documents (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT,
@@ -104,7 +110,6 @@ CREATE TABLE IF NOT EXISTS documents (
   created_at TEXT
 );
 
--- SQLite FTS5 virtual table for fast keyword search over documents
 CREATE VIRTUAL TABLE IF NOT EXISTS doc_fts USING fts5(
   title, body, content='documents', content_rowid='id'
 );
@@ -123,7 +128,7 @@ CREATE TRIGGER IF NOT EXISTS doc_au AFTER UPDATE ON documents BEGIN
 END;
 """
 
-# ───────────────── Internal helpers (NEW: Evidence + RAG)
+# ───────────────── RAG helpers
 _ST_MODEL: Optional[SentenceTransformer] = None
 
 def get_st_model() -> SentenceTransformer:
@@ -138,6 +143,10 @@ def embed_texts(texts: List[str]) -> np.ndarray:
     return np.array(vecs, dtype=np.float32)
 
 def qdrant_client() -> QdrantClient:
+    if not QDRANT_URL:
+        raise RuntimeError("QDRANT_URL is not set.")
+    if QDRANT_API_KEY:
+        return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
     return QdrantClient(url=QDRANT_URL)
 
 def ensure_qdrant_collection():
@@ -251,15 +260,13 @@ def format_evidence(chunks: List[Dict[str, Any]], max_chars: int = MAX_CONTEXT_C
     return "\n---\n".join(blocks)
 
 def enforce_citations(output_dict: dict):
-    # Require citations for each differential item
     for item in output_dict.get("ranked_differential", []):
         if not item.get("citations"):
-            raise ValueError("Safety violation: differential item missing citations.")
-    # If working diagnosis exists, ensure at least one cited item exists
+            raise HTTPException(500, "Safety violation: differential item missing citations.")
     if output_dict.get("working_diagnosis"):
         any_cited = any(i.get("citations") for i in output_dict.get("ranked_differential", []))
         if not any_cited:
-            raise ValueError("Safety violation: working diagnosis without cited evidence.")
+            raise HTTPException(500, "Safety violation: working diagnosis without cited evidence.")
 
 SYSTEM_PROMPT_RAPHAEL = """You are Raphael, a safety-first evidence-grounded clinical AI copilot.
 NON-NEGOTIABLE RULES:
@@ -273,12 +280,29 @@ NON-NEGOTIABLE RULES:
 CRITIC_SYSTEM = """You are Raphael-SafetyCritic.
 Detect unsafe output: missing red flags, missing can't-miss diagnoses, unsupported claims, missing citations, overconfidence.
 Return JSON only:
-{
-  "ok": true/false,
-  "issues": ["..."],
-  "required_fixes": ["..."]
-}
+{"ok": true/false, "issues": ["..."], "required_fixes": ["..."]}
 """
+
+def llm_client() -> OpenAI:
+    if not LLM_BASE_URL:
+        raise HTTPException(500, "LLM_BASE_URL not configured.")
+    return OpenAI(base_url=LLM_BASE_URL, api_key=LLM_API_KEY)
+
+def call_llm_json(system: str, user: str) -> dict:
+    client = llm_client()
+    resp = client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        temperature=0.2,
+    )
+    raw = resp.choices[0].message.content
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        raise HTTPException(500, "Model did not return valid JSON.")
 
 def build_user_prompt(mode: str, case_context: str, question: str, evidence_block: str) -> str:
     return f"""MODE: {mode}
@@ -305,7 +329,6 @@ EVIDENCE:
 Return JSON only.
 """
 
-# Output schema contract (kept lightweight but strict)
 OUTPUT_KEYS = [
     "problem_representation",
     "ranked_differential",
@@ -319,33 +342,11 @@ OUTPUT_KEYS = [
     "safety_notes",
 ]
 
-def llm_client() -> OpenAI:
-    if not LLM_BASE_URL:
-        raise HTTPException(500, "LLM_BASE_URL not configured.")
-    return OpenAI(base_url=LLM_BASE_URL, api_key=LLM_API_KEY)
-
-def call_llm_json(system: str, user: str) -> dict:
-    client = llm_client()
-    resp = client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        temperature=0.2,
-    )
-    raw = resp.choices[0].message.content
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        raise HTTPException(500, "Model did not return valid JSON.")
-    return data
-
 def raphael_generate(case_context: str, question: str, mode: str = "radiology") -> dict:
     chunks = retrieve_evidence(question, top_k=TOP_K)
     ok, safety_notes = safety_check(chunks)
+
     if not ok:
-        # Safe refusal output (schema)
         return {
             "problem_representation": "Insufficient evidence retrieved to safely generate a diagnostic output.",
             "ranked_differential": [],
@@ -365,7 +366,7 @@ def raphael_generate(case_context: str, question: str, mode: str = "radiology") 
 
     evidence_block = format_evidence(chunks, MAX_CONTEXT_CHARS)
 
-    # Pass 1: draft
+    # Pass 1 draft
     draft = call_llm_json(
         SYSTEM_PROMPT_RAPHAEL,
         build_user_prompt(mode, case_context, question, evidence_block),
@@ -376,6 +377,7 @@ def raphael_generate(case_context: str, question: str, mode: str = "radiology") 
         CRITIC_SYSTEM,
         build_critic_prompt(json.dumps(draft), evidence_block),
     )
+
     if not critique.get("ok", False):
         fixes = "\n".join(f"- {x}" for x in critique.get("required_fixes", []))
         regen_q = question + "\n\nSAFETY_FIXES_REQUIRED:\n" + fixes
@@ -384,20 +386,17 @@ def raphael_generate(case_context: str, question: str, mode: str = "radiology") 
             build_user_prompt(mode, case_context, regen_q, evidence_block),
         )
 
-    # Enforce schema keys (soft guard) + citations (hard guard)
     for k in OUTPUT_KEYS:
         if k not in draft:
             raise HTTPException(500, f"Model output missing required key: {k}")
 
     enforce_citations(draft)
-
-    # Attach retrieved evidence + safety notes (ensure included)
     draft["evidence_used"] = chunks
-    merged_notes = list(dict.fromkeys((draft.get("safety_notes") or []) + safety_notes + (critique.get("issues") or [])))
-    draft["safety_notes"] = merged_notes
+    draft["safety_notes"] = list(dict.fromkeys((draft.get("safety_notes") or []) + safety_notes + (critique.get("issues") or [])))
+
     return draft
 
-
+# ───────────────── Startup
 @app.on_event("startup")
 def startup():
     with engine.begin() as c:
@@ -409,42 +408,46 @@ def startup():
             if s:
                 c.execute(text(s))
 
-    # Ensure Qdrant exists (if reachable)
     try:
-        ensure_qdrant_collection()
-    except Exception:
-        # Don't fail startup if qdrant isn't up yet (Render/local)
-        pass
+        if QDRANT_URL:
+            ensure_qdrant_collection()
+    except Exception as e:
+        print("QDRANT_STARTUP_WARNING", str(e))
 
-
+# ───────────────── Basic Routes
 @app.get("/")
 def root():
     return RedirectResponse("/static/Raphael.html")
-
 
 @app.get("/healthz")
 def healthz():
     return {"status": "ok", "ts": datetime.utcnow().isoformat()}
 
-
 @app.get("/api/env")
 def read_env():
     return {"app": APP_NAME, "voice_enabled": VOICE_ENABLED, "model": LLM_MODEL}
 
+# ───────────────── Auth (JWT)
+@app.post("/api/auth/login")
+def login(body: dict):
+    email = (body.get("email") or "").strip().lower()
+    tenant_id = (body.get("tenant_id") or "default").strip()
+    if not email:
+        raise HTTPException(400, "Missing email.")
+    token = create_token(sub=email, tenant_id=tenant_id, role="admin")
+    audit_event("auth_login", {"email": email, "tenant_id": tenant_id})
+    return {"token": token}
 
 # ───────────────── Patients CRUD
 @app.get("/api/patients")
 def list_patients(q: Optional[str] = None):
     with engine.begin() as c:
         if q:
-            rows = c.execute(
-                text("SELECT * FROM patients WHERE name LIKE :q ORDER BY created_at DESC"),
-                {"q": f"%{q}%"},
-            ).mappings().all()
+            rows = c.execute(text("SELECT * FROM patients WHERE name LIKE :q ORDER BY created_at DESC"),
+                             {"q": f"%{q}%"}).mappings().all()
         else:
             rows = c.execute(text("SELECT * FROM patients ORDER BY created_at DESC")).mappings().all()
         return list(rows)
-
 
 @app.post("/api/patients")
 def create_patient(body: dict):
@@ -454,36 +457,28 @@ def create_patient(body: dict):
     if not name:
         raise HTTPException(400, "Missing patient name.")
     with engine.begin() as c:
-        c.execute(
-            text("INSERT INTO patients(name, dob, mrn, created_at) VALUES (:n,:d,:m,:t)"),
-            {"n": name, "d": dob, "m": mrn, "t": datetime.utcnow().isoformat()},
-        )
+        c.execute(text("INSERT INTO patients(name, dob, mrn, created_at) VALUES (:n,:d,:m,:t)"),
+                  {"n": name, "d": dob, "m": mrn, "t": datetime.utcnow().isoformat()})
         row = c.execute(text("SELECT * FROM patients ORDER BY id DESC LIMIT 1")).mappings().first()
+    audit_event("patient_created", {"name": name})
     return row
-
 
 @app.delete("/api/patients/{pid}")
 def delete_patient(pid: int):
     with engine.begin() as c:
-        c.execute(
-            text("DELETE FROM messages WHERE conversation_id IN (SELECT id FROM conversations WHERE patient_id=:p)"),
-            {"p": pid},
-        )
+        c.execute(text("DELETE FROM messages WHERE conversation_id IN (SELECT id FROM conversations WHERE patient_id=:p)"), {"p": pid})
         c.execute(text("DELETE FROM conversations WHERE patient_id=:p"), {"p": pid})
         c.execute(text("DELETE FROM patients WHERE id=:p"), {"p": pid})
+    audit_event("patient_deleted", {"patient_id": pid})
     return {"ok": True}
-
 
 # ───────────────── Conversations & Messages
 @app.get("/api/conversations")
 def list_conversations(patient_id: int):
     with engine.begin() as c:
-        rows = c.execute(
-            text("SELECT * FROM conversations WHERE patient_id=:p ORDER BY created_at DESC"),
-            {"p": patient_id},
-        ).mappings().all()
+        rows = c.execute(text("SELECT * FROM conversations WHERE patient_id=:p ORDER BY created_at DESC"),
+                         {"p": patient_id}).mappings().all()
         return list(rows)
-
 
 @app.post("/api/conversations")
 def create_conversation(body: dict):
@@ -492,29 +487,24 @@ def create_conversation(body: dict):
     if not pid:
         raise HTTPException(400, "Missing patient_id.")
     with engine.begin() as c:
-        c.execute(
-            text("INSERT INTO conversations(patient_id, title, created_at) VALUES (:p,:t,:c)"),
-            {"p": pid, "t": title, "c": datetime.utcnow().isoformat()},
-        )
+        c.execute(text("INSERT INTO conversations(patient_id, title, created_at) VALUES (:p,:t,:c)"),
+                  {"p": pid, "t": title, "c": datetime.utcnow().isoformat()})
         row = c.execute(text("SELECT * FROM conversations ORDER BY id DESC LIMIT 1")).mappings().first()
+    audit_event("conversation_created", {"patient_id": pid, "title": title})
     return row
-
 
 @app.get("/api/messages")
 def get_messages(conversation_id: int):
     with engine.begin() as c:
-        rows = c.execute(
-            text("SELECT * FROM messages WHERE conversation_id=:c ORDER BY id ASC"),
-            {"c": conversation_id},
-        ).mappings().all()
+        rows = c.execute(text("SELECT * FROM messages WHERE conversation_id=:c ORDER BY id ASC"),
+                         {"c": conversation_id}).mappings().all()
     return list(rows)
 
-
-# ───────────────── Chat (LLM) - keep as general chat
+# ───────────────── Chat (LLM general chat)
 @app.post("/api/chat")
 def chat(body: dict):
     conversation_id = body.get("conversation_id")
-    user_text = body.get("text", "").strip()
+    user_text = (body.get("text") or "").strip()
     patient = body.get("patient") or {}
 
     if not conversation_id:
@@ -525,56 +515,38 @@ def chat(body: dict):
     system = (
         "You are Raphael, a multimodal clinical copilot for physicians. "
         "Use clear, cautious, evidence-aligned language. "
-        "Offer differential considerations, clinical reasoning, and next-step guidance. "
-        "Be explicit and concise when referencing evidence."
+        "Offer differential considerations and next-step guidance."
     )
     if patient:
         system += f" Patient context: {json.dumps(patient)[:1200]}"
 
     now = datetime.utcnow().isoformat()
     with engine.begin() as c:
-        c.execute(
-            text("INSERT INTO messages(conversation_id, role, content, created_at) VALUES (:cid,'user',:ct,:ts)"),
-            {"cid": conversation_id, "ct": user_text, "ts": now},
-        )
+        c.execute(text("INSERT INTO messages(conversation_id, role, content, created_at) VALUES (:cid,'user',:ct,:ts)"),
+                  {"cid": conversation_id, "ct": user_text, "ts": now})
 
     with engine.begin() as c:
-        hist = c.execute(
-            text("SELECT role, content FROM messages WHERE conversation_id=:cid ORDER BY id ASC"),
-            {"cid": conversation_id},
-        ).all()
+        hist = c.execute(text("SELECT role, content FROM messages WHERE conversation_id=:cid ORDER BY id ASC"),
+                         {"cid": conversation_id}).all()
 
     messages = [{"role": "system", "content": system}] + [{"role": r, "content": c} for (r, c) in hist][-30:]
 
-    client = llm_client()
     try:
-        resp = client.chat.completions.create(
-            model=LLM_MODEL,
-            messages=messages,
-            temperature=0.2,
-        )
+        resp = llm_client().chat.completions.create(model=LLM_MODEL, messages=messages, temperature=0.2)
         reply = resp.choices[0].message.content
     except Exception as e:
         raise HTTPException(500, f"LLM error: {e}")
 
     with engine.begin() as c:
-        c.execute(
-            text("INSERT INTO messages(conversation_id, role, content, created_at) VALUES (:cid,'assistant',:ct,:ts)"),
-            {"cid": conversation_id, "ct": reply, "ts": datetime.utcnow().isoformat()},
-        )
+        c.execute(text("INSERT INTO messages(conversation_id, role, content, created_at) VALUES (:cid,'assistant',:ct,:ts)"),
+                  {"cid": conversation_id, "ct": reply, "ts": datetime.utcnow().isoformat()})
+
+    audit_event("chat", {"conversation_id": conversation_id})
     return {"reply": reply}
 
-
-# ───────────────── NEW: Raphael Clinical Query (evidence-grounded + citations)
+# ───────────────── Raphael Clinical Query
 @app.post("/api/raphael/query")
 def raphael_query(body: dict):
-    """
-    body:
-      - conversation_id (required)
-      - question (required)
-      - mode: 'radiology'|'general' (optional)
-    Uses the conversation history as case_context + evidence from Qdrant.
-    """
     conversation_id = body.get("conversation_id")
     question = (body.get("question") or "").strip()
     mode = body.get("mode") or "radiology"
@@ -584,39 +556,23 @@ def raphael_query(body: dict):
     if not question:
         raise HTTPException(400, "Missing question.")
 
-    # Build case_context from conversation history
     with engine.begin() as c:
-        hist = c.execute(
-            text("SELECT role, content FROM messages WHERE conversation_id=:cid ORDER BY id ASC"),
-            {"cid": conversation_id},
-        ).all()
+        hist = c.execute(text("SELECT role, content FROM messages WHERE conversation_id=:cid ORDER BY id ASC"),
+                         {"cid": conversation_id}).all()
 
     case_context = "\n".join([f"{r.upper()}: {ct}" for (r, ct) in hist][-50:])
-
     out = raphael_generate(case_context=case_context, question=question, mode=mode)
 
-    # Persist assistant output as JSON string for auditability
     with engine.begin() as c:
-        c.execute(
-            text("INSERT INTO messages(conversation_id, role, content, created_at) VALUES (:cid,'assistant',:ct,:ts)"),
-            {"cid": conversation_id, "ct": json.dumps(out), "ts": datetime.utcnow().isoformat()},
-        )
+        c.execute(text("INSERT INTO messages(conversation_id, role, content, created_at) VALUES (:cid,'assistant',:ct,:ts)"),
+                  {"cid": conversation_id, "ct": json.dumps(out), "ts": datetime.utcnow().isoformat()})
 
+    audit_event("raphael_query", {"conversation_id": conversation_id, "mode": mode})
     return out
 
-
-# ───────────────── NEW: Evidence ingestion endpoints (Qdrant)
+# ───────────────── Evidence ingestion (Qdrant)
 @app.post("/api/evidence/ingest")
 def evidence_ingest(body: dict):
-    """
-    body:
-      - title (required)
-      - text (required)
-      - tier: TIER_1|TIER_2|TIER_3 (optional, default TIER_1)
-      - source_date (optional)
-      - url (optional)
-      - section (optional)
-    """
     title = (body.get("title") or "").strip()
     text_body = (body.get("text") or "").strip()
     tier = body.get("tier") or "TIER_1"
@@ -628,10 +584,9 @@ def evidence_ingest(body: dict):
         raise HTTPException(400, "Missing title.")
     if not text_body:
         raise HTTPException(400, "Missing text.")
-
     n = ingest_evidence_text(title=title, tier=tier, source_date=source_date, url=url, section=section, text_body=text_body)
+    audit_event("evidence_ingest", {"title": title, "chunks": n})
     return {"status": "ok", "chunks_indexed": n}
-
 
 @app.post("/api/evidence/ingest_pdf")
 async def evidence_ingest_pdf(
@@ -655,20 +610,11 @@ async def evidence_ingest_pdf(
         section=section or None,
         text_body=txt,
     )
+    audit_event("evidence_ingest_pdf", {"title": title, "chunks": n})
     return {"status": "ok", "chunks_indexed": n}
-
 
 @app.post("/api/evidence/ingest_url")
 async def evidence_ingest_url(body: dict):
-    """
-    body:
-      - title (required)
-      - url (required)
-      - tier (optional)
-      - source_date (optional)
-      - section (optional)
-    Fetches URL; if PDF extracts text; if HTML strips tags.
-    """
     title = (body.get("title") or "").strip()
     url = (body.get("url") or "").strip()
     tier = body.get("tier") or "TIER_1"
@@ -699,50 +645,79 @@ async def evidence_ingest_url(body: dict):
     if not txt:
         raise HTTPException(400, "No text extracted from URL.")
 
-    n = ingest_evidence_text(
-        title=title,
-        tier=tier,
-        source_date=source_date,
-        url=url,
-        section=section,
-        text_body=txt,
-    )
+    n = ingest_evidence_text(title=title, tier=tier, source_date=source_date, url=url, section=section, text_body=txt)
+    audit_event("evidence_ingest_url", {"title": title, "chunks": n, "url": url})
     return {"status": "ok", "content_type": ctype, "chunks_indexed": n}
 
-
-# ───────────────── Guidance documents + FTS search (lightweight RAG you already had)
+# ───────────────── Docs + FTS (your original lightweight RAG)
 @app.post("/api/docs/upload")
 async def upload_doc(title: str = Form(...), file: UploadFile = File(...)):
     text_bytes = await file.read()
     body = text_bytes.decode("utf-8", errors="ignore")
     with engine.begin() as c:
-        c.execute(
-            text("INSERT INTO documents(title, body, created_at) VALUES (:t,:b,:ts)"),
-            {"t": title, "b": body, "ts": datetime.utcnow().isoformat()},
-        )
+        c.execute(text("INSERT INTO documents(title, body, created_at) VALUES (:t,:b,:ts)"),
+                  {"t": title, "b": body, "ts": datetime.utcnow().isoformat()})
+    audit_event("doc_upload", {"title": title})
     return {"ok": True}
-
 
 @app.get("/api/docs/search")
 def search_docs(q: str = Query(..., min_length=2)):
     with engine.begin() as c:
-        rows = c.execute(
-            text(
-                "SELECT d.id, d.title, snippet(doc_fts, 1, '[', ']', '…', 10) AS snippet "
-                "FROM doc_fts JOIN documents d ON d.id = doc_fts.rowid "
-                "WHERE doc_fts MATCH :q LIMIT 10"
-            ),
-            {"q": q},
-        ).mappings().all()
+        rows = c.execute(text(
+            "SELECT d.id, d.title, snippet(doc_fts, 1, '[', ']', '…', 10) AS snippet "
+            "FROM doc_fts JOIN documents d ON d.id = doc_fts.rowid "
+            "WHERE doc_fts MATCH :q LIMIT 10"
+        ), {"q": q}).mappings().all()
     return list(rows)
 
+# ───────────────── SMART-on-FHIR endpoints (ready when you set FHIR env vars)
+@app.get("/api/fhir/authorize")
+def fhir_authorize():
+    state = secrets.token_urlsafe(16)
+    audit_event("fhir_authorize", {"state": state})
+    return {"auth_url": build_auth_url(state)}
 
-# ───────────────── Voice token endpoint placeholder
+@app.get("/api/fhir/callback")
+async def fhir_callback(code: str):
+    tok = await exchange_code(code)
+    audit_event("fhir_callback", {"ok": True})
+    return tok
+
+@app.get("/api/fhir/patient/{patient_id}")
+async def fhir_patient(patient_id: str, access_token: str):
+    audit_event("fhir_get_patient", {"patient_id": patient_id})
+    return await fhir_get(f"Patient/{patient_id}", access_token)
+
+# ───────────────── PACS / DICOM
+@app.get("/api/pacs/dicom/local_ingest")
+def pacs_local_ingest(folder: str):
+    audit_event("dicom_local_ingest", {"folder": folder})
+    return ingest_local_dicom_folder(folder)
+
+@app.get("/api/pacs/dicomweb/studies")
+async def pacs_search_studies(patient_id: str = "", accession: str = ""):
+    params = {}
+    if patient_id:
+        params["PatientID"] = patient_id
+    if accession:
+        params["AccessionNumber"] = accession
+    audit_event("dicomweb_qido", {"params": params})
+    return await qido_search_studies(params)
+
+# ───────────────── Billing (Stripe)
+@app.post("/api/billing/checkout")
+def billing_checkout(body: dict):
+    price_id = body.get("price_id")
+    success_url = body.get("success_url")
+    cancel_url = body.get("cancel_url")
+    if not (price_id and success_url and cancel_url):
+        raise HTTPException(400, "Missing price_id/success_url/cancel_url")
+    audit_event("billing_checkout", {"price_id": price_id})
+    return create_checkout_session(price_id, success_url, cancel_url)
+
+# ───────────────── Voice placeholder
 @app.post("/api/rt-token")
 def rt_token():
     if not VOICE_ENABLED:
         raise HTTPException(400, "Voice is disabled in this build.")
     raise HTTPException(501, "Voice backend not implemented yet.")
-
-# ───────────────── (Optional) Minimal SMART-on-FHIR stubs kept for later
-# (Routes omitted for brevity; safe to leave out until you enable EHR)

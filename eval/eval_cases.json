@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Example chest pain",
+    "patient_id": "demo1",
+    "context": {"setting": "ED"},
+    "artifacts": [
+      {"kind": "note", "text": "45M chest pain radiating to left arm, diaphoresis. HTN, smoker."},
+      {"kind": "labs", "text": "Troponin pending. HR 102 BP 158/92."}
+    ],
+    "question": "Provide ranked differential and immediate rule-in/rule-out plan; include can't-miss diagnoses.",
+    "mode": "general"
+  }
+]

@@ -53,3 +53,56 @@ input:focus, textarea:focus { border-color: var(--accent); }
 .hit { border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
 .h-title { font-weight: 700; margin-bottom: 4px; }
 .h-snippet { color: var(--muted); }
+
+/* ─────────────────────────────────────────────
+   Raphael structured output UI (NEW)
+───────────────────────────────────────────── */
+.r-toolbar {
+  display: grid;
+  grid-template-columns: 260px 1fr auto;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.r-output {
+  padding: 16px;
+  overflow: auto;
+}
+
+.r-wrap { max-width: 980px; }
+.r-section { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.r-section h3 { margin: 0 0 8px 0; font-size: 15px; }
+
+.r-card { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin: 10px 0; background: #0f1116; }
+.r-card-title { font-weight: 800; display: flex; gap: 10px; align-items: center; }
+.r-line { margin-top: 6px; font-size: 13px; }
+
+.r-pill {
+  font-size: 12px;
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #0b1d17;
+  color: var(--accent);
+}
+
+.r-divider { height: 1px; background: var(--border); margin: 10px 0; }
+
+.r-evidence-ingest { padding: 16px; }
+.r-evidence-ingest textarea { min-height: 140px; }
+
+.r-evidence { border: 1px dashed var(--border); border-radius: 12px; padding: 10px 12px; margin: 10px 0; background: #0f1116; }
+.r-evidence-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.r-chunk { margin-top: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: #0e0f12; }
+
+.muted { color: var(--muted); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; white-space: pre-wrap; }
+
+.r-error {
+  padding: 10px 12px;
+  border: 1px solid #a33;
+  border-radius: 10px;
+  background: rgba(255, 0, 0, 0.08);
+}

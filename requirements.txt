@@ -4,3 +4,9 @@ httpx==0.28.1
 SQLAlchemy==2.0.35
 openai==2.6.1
 python-dotenv==1.2.1
+
+# NEW: vector store + embeddings + pdf parsing for real evidence RAG
+qdrant-client==1.9.1
+sentence-transformers==3.0.1
+numpy==1.26.4
+pypdf==4.3.1

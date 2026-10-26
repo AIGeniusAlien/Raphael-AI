@@ -24,7 +24,6 @@ ENABLE_USER_SCRIPT_SANDBOXING = YES
 // bundle locations. Never search a writable global directory or remote path.
 LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks @loader_path/Frameworks @executable_path
 
-// Xcode16.4's simulator may lack the optional Swift WebKit overlay. The app uses
-// the public Objective-C bridge,not symbols from this optional overlay.
-OTHER_LDFLAGS = $(inherited) -Wl,-weak-lswiftWebKit
-LIBRARY_SEARCH_PATHS = $(inherited) $(SDKROOT)/usr/lib/swift
+// The public Objective-C bridge avoids the absent optional Swift WebKit overlay.
+// Drop unreferenced overlay dylibs rather than trying to link a missing stub.
+OTHER_LDFLAGS = $(inherited) -Wl,-dead_strip_dylibs

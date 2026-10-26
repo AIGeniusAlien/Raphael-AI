@@ -39,6 +39,12 @@ final class ServerConfigurationTests: XCTestCase {
         await fulfillment(of: [loaded], timeout: 10)
         let value = try await WebKitScriptBridge.call("return await Promise.resolve(true)", in: web)
         XCTAssertEqual(value as? Bool, true)
+        do {
+            _ = try await WebKitScriptBridge.call("throw new Error('Synthetic bridge rejection')", in: web)
+            XCTFail("Rejected JavaScript must not be accepted as successful server revocation")
+        } catch {
+            // Expected:the native sign-out caller takes its warning/local-clear path.
+        }
     }
 
 }

@@ -43,7 +43,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     func signOut() {
         finishConfirmation(false)
         // JavaScript uses HttpOnly cookies through same-origin fetch;native code never reads tokens.
-        let script = "const r = await fetch('/api/dev/logout', {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'}); return r.ok;"
+        let script = "const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 10000); try { const r = await fetch('/api/dev/logout', {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}',signal:controller.signal}); return r.ok; } finally { clearTimeout(timer); }"
         Task { @MainActor [weak self] in
             guard let self else { return }
             let remotelyRevoked: Bool

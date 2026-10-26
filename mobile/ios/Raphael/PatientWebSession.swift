@@ -44,21 +44,21 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         finishConfirmation(false)
         // JavaScript uses HttpOnly cookies through same-origin fetch;native code never reads tokens.
         let script = "const r = await fetch('/api/dev/logout', {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'}); return r.ok;"
-        webView.callAsyncJavaScript(script, arguments: [:], in: nil, contentWorld: .page) { [weak self] result in
-            Task { @MainActor in
-                guard let self else { return }
-                let remotelyRevoked: Bool
-                switch result {
-                case .success(let value): remotelyRevoked = value as? Bool == true
-                case .failure: remotelyRevoked = false
-                }
-                self.webView.stopLoading()
-                self.webView.configuration.websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) {
-                    Task { @MainActor in
-                        self.open(.dashboard)
-                        if !remotelyRevoked {
-                            self.problem = "Local session cleared. The server could not confirm revocation. Review active sessions after signing in again."
-                        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let remotelyRevoked: Bool
+            do {
+                let value = try await self.webView.callAsyncJavaScript(script, arguments: [:], in: nil, contentWorld: .page)
+                remotelyRevoked = value as? Bool == true
+            } catch {
+                remotelyRevoked = false
+            }
+            self.webView.stopLoading()
+            self.webView.configuration.websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) {
+                Task { @MainActor in
+                    self.open(.dashboard)
+                    if !remotelyRevoked {
+                        self.problem = "Local session cleared. The server could not confirm revocation. Review active sessions after signing in again."
                     }
                 }
             }

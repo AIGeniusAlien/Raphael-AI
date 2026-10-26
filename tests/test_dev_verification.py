@@ -26,6 +26,17 @@ class VerificationTests(unittest.TestCase):
     def test_summary_does_not_count_skips_as_passes(self):
         self.assertEqual(counts('Ran 4 tests in 1s\nOK (skipped=2)'),{'tests':4,'skipped':2})
         self.assertEqual(counts('ℹ tests 3\nℹ pass 2\nℹ fail 0\nℹ skipped 1'),{'tests':3,'pass':2,'fail':0,'skipped':1})
+    def test_ci_failure_annotation_redacts_secrets_and_escapes_untrusted_commands(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as directory:
+            log=Path(directory)/'native.log';log.write_text('error: Synthetic-CI-secret\n::notice::untrusted injected line\n')
+            env=isolated_environment();env['LLM_API_KEY']='Synthetic-CI-secret'
+            result=subprocess.run([sys.executable,'.github/scripts/publish_diagnostics.py',str(log)],env=env,text=True,capture_output=True,check=True)
+            self.assertNotIn('Synthetic-CI-secret',result.stdout)
+            self.assertEqual(len(result.stdout.splitlines()),1)
+            self.assertTrue(result.stdout.startswith('::error title=Raphael failure diagnostics::'))
+            self.assertIn('[REDACTED]',result.stdout)
+
     def test_safety_protocol_has_explicit_unvalidated_medical_categories(self):
         from eval.safety_eval import evaluate
         result=evaluate();self.assertEqual(result['status'],'passed');self.assertFalse(result['clinical_validation']);self.assertEqual(result['live_model_calls'],0)

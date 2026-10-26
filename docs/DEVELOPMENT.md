@@ -1,5 +1,13 @@
 # Development recovery and verification
 
+The recovery results below are the historical baseline. The current opt-in
+synthetic patient/physician portal, full integrated test results, updated service
+gates and secure account-provisioning commands are in [RELEASE_READINESS.md](RELEASE_READINESS.md).
+Legacy mode remains unauthed; portal mode blocks those APIs, adds scoped cookie
+sessions and uses dedicated `dev_*` tables. [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md)
+and the requirements matrix are the current capability checklist. No live inference
+or clinical validation is established by mock tests.
+
 The API now imports and completes normal startup with SQLite. All tables and all three FTS5 triggers are retained. Schema initialization uses `sqlite3.complete_statement` to preserve complete trigger bodies and executes each statement through the existing SQLAlchemy connection, without DBAPI `executescript`'s implicit commit. Repeated startup does not drop tables or erase records.
 
 The UI boot no longer calls an absent `/api/env` endpoint. Changing patients selects a conversation belonging to the newly selected patient or clears the old selection. `run_local.sh` starts the actual `main:app` entrypoint, uses the activated Python environment, and keeps its default database outside the checkout. Qdrant ingestion uses typed points with deterministic UUID storage IDs while preserving full SHA-256 citation IDs in payloads. Reingesting identical chunks upserts instead of duplicating them. Existing Qdrant collections are not deleted or migrated.

@@ -20,3 +20,28 @@ Next implementation tasks, in priority order:
 5. **DEV-05 — Reproducible release checks (EP-010, ER-010/011).** Align pyproject/requirements runtime dependencies, establish a reviewed dependency lock and CI, replace the obsolete `/cases` evaluation harness with current API evaluation, add dedicated-service smoke gates, document and review a development release candidate. Electron and FHIR demo pages currently have integration gaps.
 
 Later implementation tasks should be split by each matrix ID, with explicit acceptance tests, source licensing and clinician review where relevant. Maintain statuses as evidence changes. Publishing a cloud environment is separate from deploying the application.
+
+
+# Expanded reconciliation and release sequencing
+
+All six milestones and DEV-01–05 above remain required. The original next-task descriptions are retained as planning history; the table below records the expanded release work and its dependencies. Basic synthetic portal implementation does not fulfill the complete PP/PH/MSG requirement groups.
+
+| Increment | Requirement IDs | Exit evidence | Dependencies and remaining work |
+| --- | --- | --- | --- |
+| R1 — Retain recovery | REC-001–006, REL-001/005/009 | Normal startup, health, FTS triggers and synthetic persistence still pass | Do not discard existing recovery fixes; all follow-on changes rerun the relevant suites |
+| R2 — Isolated synthetic accounts and portals | TEST-002/003/008/013/014; PP-001/003; PH-001/002; SEC-001/002/004 | Opt-in development bootstrap, session login/logout, authorized assigned chart access, role/cross-tenant denial tests, safe UI rendering | No real registration, identity proofing, production credentials or real-patient data; full PP/PH security remains M5 |
+| R3 — Internal synthetic messaging | TEST-009; MSG-001–004/006/008/011/012/014/016/017 | Two synthetic users share authorized durable threads, unauthorized recipients are rejected, AI drafts require explicit clinician approval | Internal storage only; delivery services, routing, attachments, notifications, urgent policies and EHR integration stay open |
+| R4 — Draft clinical documentation | TEST-010; PH-012/015; VD-003/006 | Draft/save/review behavior and patient visibility restrictions tested with synthetic content | No autonomous orders, external writeback or implied clinical validation |
+| R5 — Evidence contract hardening | TEST-007; KNOW-021/026; CI-006; MK-009 | Structured output and citation membership reject malformed or unknown references; low-evidence abstention tests pass | Valid schema and membership do not prove clinical factuality, source licensing, comprehensive coverage or citation support |
+| R6 — Live development inference and verified retrieval | TEST-005/006; REL-006/007; KNOW-017–026 | Dedicated development OpenAI/compatible provider and Qdrant/model execute real requests; reviewed reusable sources and citations independently verified | Requires scoped bindings/model downloads/provider choice; no production credentials; remain blocked until actual evidence |
+| R7 — Reviewable release package | TEST-011/012; GOV-001–012; SEC-019 | Complete evidence report, documentation consistency checks and authorized draft PR | GitHub API access is restored; draft PR creation must be confirmed separately; no auto merge/deploy |
+
+## Platform implementation after the first test release
+
+- **M2:** complete KNOW/MK source licensing/provenance/versioning/freshness/deduplication/coverage and retrieval evaluation; restore direct PDF ingestion safely (HIST-003/004/022).
+- **M3:** complete ADV/CI reasoning, patient-specific applicability, contradiction and guideline comparison, medication/interaction/contraindication safeguards, clinician-reviewed order drafts and coding (PH-013/014, HIST-011). Each output capability needs specialist-reviewed fixtures.
+- **M4:** expand PP/PH beyond basic records: longitudinal timelines, labs, meds, allergies, reports, summaries, appointments, sharing, caregiver and care-team workflows. Complete MSG attachments/routing/notifications/urgent policies/EHR transport and clear provider-confirmed delivery semantics. Implement MM/RI/VD/PACS/FHIR/desktop/voice features with sandbox services and synthetic multimodal fixtures; preserve HIST-005–020.
+- **M5:** complete identity verification, account recovery, consent, RBAC/ABAC, independent tenant/security review, audit integrity, operations, backup/restore, evaluation/clinical note quality and bias/subgroup studies; replace historical evaluation harness (HIST-023); permit billing integration only with explicit separate approval.
+- **M6:** intended-use and jurisdictional regulatory assessment, HIPAA/BAA and applicable IRB review, independent clinical validation, operational release controls and explicit deployment approval. Plan Kubernetes only after a reviewed deployment architecture (HIST-021), not as an untested manifest claim.
+
+Requirements may proceed in parallel once their dependencies and ownership boundaries are explicit. Security/evaluation design begins early; clinical deployment completion cannot be inferred from an M1 demonstration. Every unmet or blocked requirement stays visible in REQUIREMENTS_MATRIX.md.

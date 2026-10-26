@@ -1,0 +1,80 @@
+# Release readiness and remaining gates
+
+**Current classification: tested synthetic-data development increment; full M1 test-release acceptance remains incomplete.** The complete clinical platform is not complete, clinically validated or approved for deployment. Feature-level status and acceptance criteria are authoritative in REQUIREMENTS_MATRIX.md; FEATURE_INVENTORY.md records current and historical gaps.
+
+## Scope that can be exercised
+
+The recovery branch preserves normal SQLite/FastAPI startup, repeatable schema creation, search triggers and synthetic-record persistence. An opt-in isolated portal adds local patient/clinician development accounts, cookie sessions, tenant/patient/thread authorization, synthetic records, internal conversation history, and draft/approved notes. The clinician assessment endpoint uses the existing structured evidence pipeline through a callback; its presence does not establish working live inference or verified clinical evidence.
+
+The new portal uses `dev_*` tables and does not adopt legacy patient records. `RAPHAEL_DEV_PORTAL=1` selects the portal mode; `RAPHAEL_DEV_SYNTHETIC_ONLY=1` is an explicit operator attestation and the module requires SQLite. Before creating portal tables, populated legacy patients/conversations/messages/documents/feedback cause a fail-closed startup error without changing those records. In portal mode legacy `/api` paths are denied; default legacy compatibility mode is still unauthenticated. Responses use no-store and same-origin CSP, validation does not echo password/input values, portal CORS is not wildcard, and HTTPS session cookies are Secure (local HTTP cookies are not). These flags cannot detect whether a person pastes real information. Never enter real patient data or use production database paths/accounts.
+
+The patient and clinician interfaces are intentionally basic. Patient records are linked by a clinician to a locally provisioned synthetic patient username. Patient users see only their linked records/authorized threads and approved notes. Clinician users can create synthetic charts/threads, draft notes and explicitly approve them. Note generation from thread text is a deterministic draft template, not AI transcription or a clinical summary model. Messages are persisted internal portal messages, not email, SMS, EHR delivery or a confirmed clinical communication channel. The UI warns against urgent/real clinical use.
+
+## Test evidence ledger
+
+| Evidence | Result and interpretation |
+| --- | --- |
+| Full integrated Python suite | `python -m unittest discover -s tests -v`: **36 passed in38.237s**. Includes original16 recovery tests,14 portal backend tests,5 structured-assessment safety tests and1 real main-app HTTP integration test. No tests skipped or unexplained failures reported. |
+| Portal and legacy frontend controller tests | `node --test tests/*.test.cjs`: **19 passed** (15 portal,4 legacy). Includes markup rendered literally, role controls, stale/delayed chart/thread responses, error handling and assessment resets. Minimal DOM doubles; this is distinct from the browser test below. |
+| Real browser workflow | `python -m unittest discover -s e2e -v`: **1 passed in13.300s**, using optional requirements-dev.txt (`playwright==1.64.1`) and installed `/usr/bin/chromium`. Two isolated clinician/patient browser contexts exercised login, synthetic record/thread, two-way internal messages, literal markup, draft hidden from patient until explicit approval,390px mobile no-overflow, legacy API403, no-store, missing-service503, logout revocation and no page JavaScript errors. The first browser run exposed mobile overflow; CSS was corrected and the unchanged test passed. |
+| Dependency compatibility | All74 installed packages compatible after optional browser-test tooling installation; no dependency verification bypass was used. |
+| Clinical or external service tests | No live OpenAI development inference, external Qdrant server/model cache, verified source ingestion/retrieval, medical factuality, real PACS/FHIR, voice/image-model or independent clinical validation claim. Mock/local protocol tests do not satisfy these gates. |
+
+
+## Immediate release gate assessment
+
+| Requirement | Current conclusion | Remaining acceptance evidence |
+| --- | --- | --- |
+| TEST-001 working backend/frontend | Both legacy and opt-in portal modes verified with real HTTP; real Chromium portal workflow passed | Retain regressions; broader accessibility and feature gates remain open |
+| TEST-002 development authentication | Bounded synthetic accounts/session controls verified in backend, main-app HTTP and real browser | No throttling/MFA/recovery/licensure proofing or enterprise identity assurance |
+| TEST-003 synthetic patient records | Basic create/list/link behavior implemented | Full patient management and longitudinal chart features remain partial |
+| TEST-004 persistent clinical conversations | Existing AI history plus new authorized internal thread storage | Repeat initialization/history and real-browser conversations verified; synthetic workflows only |
+| TEST-005 OpenAI development inference | **Blocked by missing dedicated development service configuration** | Real approved development-provider request with synthetic input and recorded result |
+| TEST-006 evidence retrieval with verified citations | **Blocked by absent independently verified evidence corpus/model/service validation** | Licensed sources, source/version verification and factual citation support evaluation |
+| TEST-007 structured clinical assessments | Active schema and citation membership hardening; mocked protocol behavior only | Live inference and independently reviewed content/safety evaluation |
+| TEST-008 patient/physician interfaces | Basic role views verified in real Chromium | Full accessibility/usability and complete PP/PH groups remain unvalidated/partial |
+| TEST-009 internal synthetic messaging | Local participant-authorized two-way threads verified in backend/main/browser | No external delivery, EHR transport, urgent messaging or provider receipt service |
+| TEST-010 clinical note drafting | Manual/deterministic template drafts and explicit atomic approval verified | Clinical note quality evaluation and AI drafting remain incomplete |
+| TEST-011 automated tests | 36 Python,19 Node and1 real Chromium E2E passed | Retain regression coverage; live-service and clinical suites remain unrun |
+| TEST-012 incomplete capabilities labeled | UI notice, matrix, inventory and this report identify gaps | Keep labels synchronized as behavior changes |
+| TEST-013/014 synthetic-only/no real delivery | Explicit flags, dev-only schema and no external message transport | Operator must keep input and configured services synthetic; flags are not PHI detection |
+
+## Safe local setup
+
+Use the retained Python 3.12 environment at `/workspace/.raphael/venv` in this cloud machine, or install requirements.txt in a fresh virtual environment as documented in DEVELOPMENT.md. Work from the repository root. Use an isolated development file and never point DATABASE_URL at production.
+
+```bash
+. /workspace/.raphael/venv/bin/activate
+export RAPHAEL_DEV_PORTAL=1
+export RAPHAEL_DEV_SYNTHETIC_ONLY=1
+mkdir -p /workspace/.raphael/state
+export DATABASE_URL=sqlite:////workspace/.raphael/state/portal-synthetic.db
+python -m auth.dev_bootstrap --database-url "$DATABASE_URL" --tenant synthetic --username dev-clinician --role clinician
+python -m auth.dev_bootstrap --database-url "$DATABASE_URL" --tenant synthetic --username dev-patient --role patient
+bash run_local.sh
+```
+
+run_local.sh defaults portal mode to a separate portal-synthetic.db path when an explicit DATABASE_URL is absent; the command above makes the isolated path explicit. The bootstrap prompts privately for a unique development password (12–128 characters). No default password or raw command-line password is supplied. `--password-stdin` supports controlled test automation; do not write passwords in source/chat/logs. Duplicate bootstrap attempts reject rather than overwrite accounts/data. Log in to the portal using the selected local tenant/username/password. No real-patient signup or identity-proofing service exists.
+
+Tests use temporary synthetic databases and do not require production credentials:
+
+```bash
+python -m unittest discover -s tests -v
+node --test tests/*.test.cjs
+# Optional browser test: install requirements-dev.txt and provide Chromium first.
+python -m unittest discover -s e2e -v
+```
+
+Keep the loopback binding used by run_local.sh. Legacy mode remains a development compatibility mode and is not authenticated for a shared environment. The portal is not hardened for public exposure: there is no login throttling/MFA/account recovery/verified clinician license, independent threat assessment, full consent/proxy model, operational key/session management, at-rest encryption/backup/restore or production audit assurance.
+
+## Live-service and clinical release gaps
+
+1. An environment draft now records an `LLM_API_KEY` requirement scoped to `api.openai.com`, suggested `LLM_BASE_URL=https://api.openai.com/v1`, suggested `LLM_MODEL=gpt-4o-mini`, and an unset `QDRANT_URL` requirement. It also saves install/start instructions and adds the API destination to network requirements. Saving does not supply values, run scripts, apply settings or publish. Enter a dedicated development key and real development Qdrant URL securely, review/save relevant settings, then validate live behavior. If choosing another provider, review the scoped destination and settings first. Configure optional `QDRANT_API_KEY` if that development service requires it. Inspect existing binding names/presence first. Scope network/secret destinations to the selected services. Do not use production keys or put secret values in code/chat.
+2. Cache the chosen `EMBED_MODEL` with matching `EMBED_DIM`; prepare reviewed legally reusable source excerpts with provenance and source versions. Run real retrieval and check that every cited passage supports the statement. Citation membership in retrieved chunks does not verify truth or licensing.
+3. Complete the remaining patient/physician/messaging feature groups in the matrix: registration/recovery and identity proofing, consent/proxy/authorized document sharing, longitudinal lab/imaging/medication records, notification/routing/status/urgent policies and external/EHR messaging delivery. No delivery claim is permitted without provider confirmation.
+4. Complete M2–M5 clinical reasoning, modality integration, role/attribute/tenant assurance, PostgreSQL migration/recovery/monitoring, expert-reviewed clinical benchmarks and independent security/clinical evaluation. Assess intended use, HIPAA/BAA, applicable IRB and FDA pathway before any clinical deployment claim.
+5. Review and explicitly approve any future deployment/merge. Publishing the cloud environment only snapshots the development environment; it is not Raphael application deployment or clinical approval.
+
+## Authorized pull-request process
+
+The branch remains `fix/sqlite-startup-recovery`; existing fixes were not discarded. The earlier GitHub API `Forbidden` error was documented and `api.github.com` was added through the environment settings draft. Root's current read-only API test succeeds and reports push permission, so the earlier failure is no longer listed as a current network blocker. Do not extract proxy credentials or bypass authorization. Create the draft PR only through the available repository-scoped GitHub API/CLI, verify the resulting PR URL/state, and report any remaining API denial accurately. Push success alone does not prove PR creation. No merge or deployment is authorized.

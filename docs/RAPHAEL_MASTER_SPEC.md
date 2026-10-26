@@ -221,3 +221,243 @@ At completion, provide:
 7. A pull request for review
 
 The goal is a working Raphael test release now, with a permanent engineering system that systematically delivers the entire long-term vision.
+
+# Canonical reconciliation: expanded platform directive
+
+This section adds to every requirement above. No earlier requirement or ID is retired. The matrix remains the authoritative implementation checklist; a source registry, scaffold, mocked service, historical route or documentation entry does not prove a feature works. The canonical source set is the two owner-supplied directives, tracked current source/configuration/tests/docs, and locally available Git history. No access to unprovided ChatGPT conversation history is claimed.
+
+The sanitized repository origin is `AIGeniusAlien/Raphael-AI`. The owner text uses a visually similar spelling; repository identity is taken from Git, not guessed. Continue on `fix/sqlite-startup-recovery`; do not merge or deploy automatically.
+
+Status vocabulary is defined in REQUIREMENTS_MATRIX.md. Every new ID below has implementation status, dependencies, test coverage, acceptance criteria and milestone there. IDs CI/MK/RI/PI/VD/CS/EP/ER/REC/REL retain their prior meanings.
+
+## Complete patient portal
+
+- **PP-001** — Secure patient registration and authentication
+- **PP-002** — Identity verification and account recovery
+- **PP-003** — Patient profiles and authorized chart access
+- **PP-004** — Medical histories and longitudinal records
+- **PP-005** — Laboratory results and trends
+- **PP-006** — Imaging results and reports
+- **PP-007** — Medication lists and allergies
+- **PP-008** — Clinical notes and visit summaries
+- **PP-009** — Document upload and authorized sharing
+- **PP-010** — Patient-friendly explanations of approved medical information
+- **PP-011** — Care plans and follow-up instructions
+- **PP-012** — Appointment-related workflows and reminders
+- **PP-013** — Patient consent and information-sharing permissions
+- **PP-014** — Secure communication with physicians and care teams
+- **PP-015** — Message history and notification preferences
+- **PP-016** — Accessibility and responsive mobile/desktop design
+- **PP-017** — Proxy/caregiver access with appropriate authorization
+- **PP-018** — Auditable access and privacy controls
+- **PP-019** — Patient-facing AI explanations distinguish general information from clinician-reviewed advice
+
+## Complete physician portal
+
+- **PH-001** — Secure clinician authentication and role verification
+- **PH-002** — Patient worklists and search
+- **PH-003** — Clinical chart review
+- **PH-004** — Longitudinal patient timelines
+- **PH-005** — Clinical summaries
+- **PH-006** — Laboratory and medication review
+- **PH-007** — Clinical AI chat with patient context
+- **PH-008** — Ranked differential diagnoses and working diagnoses
+- **PH-009** — Supporting and contradicting evidence
+- **PH-010** — Clinical red flags and diagnostic recommendations
+- **PH-011** — Evidence citations and source verification
+- **PH-012** — Medical note drafting and editing
+- **PH-013** — Clinical coding assistance
+- **PH-014** — Draft order sets and care plans
+- **PH-015** — Clinician approval and electronic sign-off workflows
+- **PH-016** — Radiology interpretation support
+- **PH-017** — Prior imaging comparison
+- **PH-018** — Report generation and review
+- **PH-019** — Follow-up tracking
+- **PH-020** — Secure patient and care-team messaging
+- **PH-021** — Critical finding communication workflows
+- **PH-022** — Institutional protocols
+- **PH-023** — Audit trails and user activity records
+- **PH-024** — No autonomous clinical orders or unauthorized clinical decisions
+
+## Complete secure messaging
+
+- **MSG-001** — Two-way secure messaging
+- **MSG-002** — Conversation threads
+- **MSG-003** — Patient-to-doctor messages
+- **MSG-004** — Doctor-to-patient messages
+- **MSG-005** — Authorized clinician-to-clinician communication
+- **MSG-006** — Attachments and clinical documents
+- **MSG-007** — Message routing and inbox management
+- **MSG-008** — Read, delivery, and response status
+- **MSG-009** — Notifications
+- **MSG-010** — Escalation and urgent-message policies
+- **MSG-011** — Communication audit logs
+- **MSG-012** — Consent and recipient authorization
+- **MSG-013** — Clinician-reviewed AI-assisted drafting
+- **MSG-014** — Explicit approval before AI-assisted messages are sent
+- **MSG-015** — EHR messaging integration where supported
+- **MSG-016** — Clear distinction between internal portal messages and externally delivered messages
+- **MSG-017** — Do not claim delivery unless the delivery service confirms it
+
+## Comprehensive medical knowledge
+
+- **KNOW-001** — PubMed and PubMed Central
+- **KNOW-002** — ClinicalTrials.gov
+- **KNOW-003** — FDA labeling and safety communications
+- **KNOW-004** — NIH and CDC
+- **KNOW-005** — WHO
+- **KNOW-006** — NICE
+- **KNOW-007** — USPSTF
+- **KNOW-008** — Medical specialty societies
+- **KNOW-009** — Clinical guidelines and consensus statements
+- **KNOW-010** — Peer-reviewed journals
+- **KNOW-011** — Systematic reviews and meta-analyses
+- **KNOW-012** — Medical education and teaching cases
+- **KNOW-013** — Institutional clinical protocols
+- **KNOW-014** — Licensed medical textbooks and references
+- **KNOW-015** — Drug and medication terminology databases
+- **KNOW-016** — ICD-10-CM, SNOMED CT, and CPT resources where licensing permits
+- **KNOW-017** — Evidence provenance
+- **KNOW-018** — Licensing checks before ingestion
+- **KNOW-019** — Source versioning
+- **KNOW-020** — Evidence quality appraisal
+- **KNOW-021** — Citation verification
+- **KNOW-022** — Evidence deduplication
+- **KNOW-023** — Evidence freshness checks
+- **KNOW-024** — Evidence contradiction detection
+- **KNOW-025** — Retrieval evaluation
+- **KNOW-026** — Never fabricate citations or claim comprehensive coverage without verification
+
+## Advanced clinical intelligence
+
+- **ADV-001** — Multispecialty diagnostic reasoning
+- **ADV-002** — Working and differential diagnoses
+- **ADV-003** — Emergency red flags
+- **ADV-004** — Clinical uncertainty and abstention
+- **ADV-005** — Treatment decision support
+- **ADV-006** — Medication safety
+- **ADV-007** — Contraindication and interaction detection
+- **ADV-008** — Laboratory and vital-sign analysis
+- **ADV-009** — Longitudinal clinical reasoning
+- **ADV-010** — Patient-specific evidence applicability
+- **ADV-011** — Guideline comparison
+- **ADV-012** — Clinician-reviewed order sets
+- **ADV-013** — Clinical coding
+- **ADV-014** — Medical education
+- **ADV-015** — Clinical documentation
+
+## Multimodal capabilities
+
+- **MM-001** — DICOM processing
+- **MM-002** — CT, MRI, X-ray, and ultrasound workflows
+- **MM-003** — Validated imaging-model integration
+- **MM-004** — PACS connectivity
+- **MM-005** — Prior imaging comparison
+- **MM-006** — Structured radiology reports
+- **MM-007** — Voice transcription
+- **MM-008** — Speech synthesis
+- **MM-009** — Conversational voice interaction
+- **MM-010** — Optional wake-phrase activation
+- **MM-011** — SMART-on-FHIR and EHR interoperability
+- **MM-012** — Clinical time-series data
+- **MM-013** — Multimodal evidence synthesis
+
+## Security, regulation and quality
+
+- **SEC-001** — Role-based and attribute-based access controls
+- **SEC-002** — Multi-tenant data isolation
+- **SEC-003** — Patient consent management
+- **SEC-004** — Authentication and authorization testing
+- **SEC-005** — Encryption and secure secrets management
+- **SEC-006** — Audit logs
+- **SEC-007** — PostgreSQL migrations
+- **SEC-008** — Backups and disaster recovery
+- **SEC-009** — Secure message delivery
+- **SEC-010** — Clinical risk management
+- **SEC-011** — HIPAA and BAA readiness assessment
+- **SEC-012** — FDA intended-use and regulatory pathway assessment
+- **SEC-013** — IRB requirements where applicable
+- **SEC-014** — Independent security and clinical validation
+- **SEC-015** — Bias and subgroup performance evaluations
+- **SEC-016** — Clinical regression testing
+- **SEC-017** — Model and dataset versioning
+- **SEC-018** — Clinician-feedback review
+- **SEC-019** — Controlled releases
+
+## Immediate synthetic-data test release
+
+- **TEST-001** — Working backend and frontend
+- **TEST-002** — Development authentication
+- **TEST-003** — Synthetic patient records
+- **TEST-004** — Persistent clinical conversations
+- **TEST-005** — OpenAI development inference
+- **TEST-006** — Evidence retrieval with verified citations
+- **TEST-007** — Structured clinical assessments
+- **TEST-008** — Basic patient and physician portal interfaces
+- **TEST-009** — Internal test messaging between synthetic patient and clinician accounts
+- **TEST-010** — Clinical note drafting
+- **TEST-011** — Automated tests
+- **TEST-012** — Explicitly labeled incomplete capabilities
+- **TEST-013** — Use synthetic data only in the immediate release
+- **TEST-014** — No real patient accounts, real clinical message delivery or real-patient care workflows
+
+## Delivery and governance
+
+- **GOV-001** — Reconcile all available repository, documentation, tests, configuration and historical artifacts without claiming unavailable conversation history
+- **GOV-002** — Keep one canonical additive specification and preserve incomplete, blocked and unimplemented requirements
+- **GOV-003** — Maintain the authoritative requirements matrix with status, dependencies, tests, criteria and milestones
+- **GOV-004** — Maintain a complete feature inventory and explicit gap analysis
+- **GOV-005** — Continue on fix/sqlite-startup-recovery without discarding existing fixes
+- **GOV-006** — Do not deploy, merge or modify production data without approval
+- **GOV-007** — Resolve pull-request access only through documented authorized settings and review
+- **GOV-008** — Implement the immediate release in manageable, tested changes
+- **GOV-009** — Classify each feature as tested, unvalidated, partial, missing, externally blocked or awaiting independent validation
+- **GOV-010** — Do not report Raphael complete until every requirement independently meets its acceptance criteria
+- **GOV-011** — Preserve no-real-data, no-secrets-in-source, clinician-oversight and regression-test engineering instructions
+- **GOV-012** — Maintain the required five canonical documents
+
+## Historical and repository artifact requirements
+
+- **HIST-001** — Safe public application/model/voice capability configuration
+- **HIST-002** — Authorized patient removal with safe dependent-record policy
+- **HIST-003** — Direct uploaded-PDF evidence ingestion
+- **HIST-004** — URL evidence ingestion compatibility and safe destinations
+- **HIST-005** — SMART-on-FHIR authorization and callback workflow
+- **HIST-006** — FHIR patient create/read adapters
+- **HIST-007** — FHIR observations retrieval
+- **HIST-008** — FHIR DocumentReference upload
+- **HIST-009** — FHIR condition/medication/allergy/vitals summary
+- **HIST-010** — FHIR note drafting without automatic clinical submission
+- **HIST-011** — FHIR order drafting without autonomous ordering
+- **HIST-012** — Authorized local DICOM metadata ingestion adapter
+- **HIST-013** — DICOMweb study search and instance retrieval adapter
+- **HIST-014** — Reviewed subscription checkout integration
+- **HIST-015** — Realtime voice session negotiation
+- **HIST-016** — Voice intent parsing with explicit confirmation before actions
+- **HIST-017** — Voice WebSocket transport and streaming protocol
+- **HIST-018** — Frontend discovery and legacy handsfree/FHIR-demo navigation
+- **HIST-019** — Electron desktop shell and isolated preload API bridge
+- **HIST-020** — Browser extension and optional wake phrase
+- **HIST-021** — Kubernetes deployment architecture planning
+- **HIST-022** — Source registry update cadence and curated PubMed query packs
+- **HIST-023** — Reproducible case/artifact-based evaluation workflow
+- **HIST-024** — OIDC, restricted CORS and licensed reference/drug integration for pilots
+
+## Clinical and release boundaries
+
+The immediate deliverable is a synthetic-data development test application, with distinct patient and physician roles, authorized internal messaging and clinician-reviewed drafts. It must not connect real patient identities, deliver clinical messages externally, place autonomous orders or imply that AI-generated text is clinician-approved. Live development inference and verified evidence retrieval are separate gates from mocked protocol tests.
+
+The complete patient portal, physician portal, messaging system and clinical platform remain required after the test release. Clinical, security, regulatory and operational acceptance require independent evaluation, not merely passing developer tests. M1 is not M6. Historical dangerous shortcuts are recorded as requirements for secure replacement, not instructions to restore unsafe code verbatim.
+
+## Source-to-ID reconciliation
+
+| Source | Preserved IDs |
+| --- | --- |
+| Previous owner master directive, original eight feature categories | CI, MK, RI, PI, VD, CS, EP, ER |
+| Prior recovery and first-release gates | REC, REL |
+| New patient/physician portals and secure messaging | PP, PH, MSG |
+| Expanded knowledge, reasoning, multimodal and quality requirements | KNOW, ADV, MM, SEC |
+| New immediate release and delivery rules | TEST, GOV |
+| Current repository artifacts and historical routes | HIST |
+
+The explicit gap analysis is in FEATURE_INVENTORY.md and RELEASE_READINESS.md; sequenced implementation and release dependencies are in ROADMAP.md.

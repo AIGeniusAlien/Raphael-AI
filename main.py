@@ -6,6 +6,10 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
+from starlette.responses import JSONResponse
+from pydantic import ValidationError
 from openai import OpenAI
 
 from sqlalchemy import create_engine, text
@@ -25,6 +29,7 @@ from pubmed.query_packs import QUERY_PACKS
 from pubmed.ingest import ingest_pubmed_query
 from feedback.store import ensure_feedback_table, insert_feedback, list_feedback
 from radiology.cant_miss import get_checklist
+from rag.assessment_schema import Assessment, Critique
 
 # ───────────────── CONFIG
 APP_NAME = os.getenv("APP_NAME", "Raphael")
@@ -51,15 +56,16 @@ MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "26000"))
 
 # Optional: protect corpus endpoints
 CORPUS_RUN_TOKEN = os.getenv("CORPUS_RUN_TOKEN", "").strip()
+DEV_PORTAL = os.getenv("RAPHAEL_DEV_PORTAL", "") == "1"
 
 # ───────────────── APP
 app = FastAPI(title=APP_NAME)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[] if DEV_PORTAL else ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_credentials=True,
+    allow_credentials=not DEV_PORTAL,
 )
 app.mount("/static", StaticFiles(directory=STATIC_PATH), name="static")
 engine = create_engine(DATABASE_URL, future=True)
@@ -253,8 +259,9 @@ def retrieve_evidence(query: str, top_k: int = TOP_K) -> List[Dict[str, Any]]:
 
 def safety_check(chunks: List[Dict[str, Any]]) -> (bool, List[str]):
     notes: List[str] = []
-    if len(chunks) < MIN_SOURCES:
-        notes.append(f"Insufficient sources retrieved: {len(chunks)} < {MIN_SOURCES}.")
+    sources = {c.get("doc_id") or c.get("url") or c["chunk_id"] for c in chunks}
+    if len(sources) < MIN_SOURCES:
+        notes.append(f"Insufficient distinct sources retrieved: {len(sources)} < {MIN_SOURCES}.")
         return False, notes
     avg = sum(float(c["score"]) for c in chunks) / max(1, len(chunks))
     if avg < MIN_AVG_SIM:
@@ -279,11 +286,14 @@ def format_evidence(chunks: List[Dict[str, Any]], max_chars: int = MAX_CONTEXT_C
         total += len(block)
     return "\n---\n".join(blocks)
 
-def enforce_citations(output_dict: dict):
+def enforce_citations(output_dict: dict, chunks: Optional[List[dict]] = None):
+    allowed = {chunk["chunk_id"] for chunk in chunks} if chunks is not None else None
     # Require citations for each differential item
     for item in output_dict.get("ranked_differential", []):
         if not item.get("citations"):
             raise HTTPException(500, "Safety violation: differential item missing citations.")
+        if allowed is not None and any(citation not in allowed for citation in item["citations"]):
+            raise HTTPException(502, "Safety violation: citation is not in retrieved evidence.")
     # If working diagnosis exists, require at least one cited evidence
     if output_dict.get("working_diagnosis"):
         any_cited = any(i.get("citations") for i in output_dict.get("ranked_differential", []))
@@ -332,9 +342,12 @@ def call_llm_json(system: str, user: str) -> dict:
     )
     raw = resp.choices[0].message.content
     try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        raise HTTPException(500, "Model did not return valid JSON.")
+        result = json.loads(raw)
+        if not isinstance(result, dict):
+            raise ValueError("Expected JSON object")
+        return result
+    except (ValueError, TypeError):
+        raise HTTPException(502, "Model did not return a valid JSON object.")
 
 def build_user_prompt(mode: str, case_context: str, question: str, evidence_block: str) -> str:
     return f"""MODE: {mode}
@@ -389,17 +402,31 @@ def raphael_generate(case_context: str, question: str, mode: str = "radiology") 
     draft = call_llm_json(SYSTEM_PROMPT_RAPHAEL, build_user_prompt(mode, case_context, question, evidence_block))
 
     # Critic pass
-    critique = call_llm_json(CRITIC_SYSTEM, build_critic_prompt(json.dumps(draft), evidence_block))
+    def critique_draft(candidate):
+        result = call_llm_json(CRITIC_SYSTEM, build_critic_prompt(json.dumps(candidate), evidence_block))
+        try:
+            return Critique.model_validate(result).model_dump()
+        except ValidationError:
+            raise HTTPException(502, "Model critic output does not match the safety schema.")
+
+    critique = critique_draft(draft)
     if not critique.get("ok", False):
         fixes = "\n".join(f"- {x}" for x in critique.get("required_fixes", []))
         regen_q = question + "\n\nSAFETY_FIXES_REQUIRED:\n" + fixes
         draft = call_llm_json(SYSTEM_PROMPT_RAPHAEL, build_user_prompt(mode, case_context, regen_q, evidence_block))
+        critique = critique_draft(draft)
+        if not critique["ok"]:
+            raise HTTPException(502, "Model critic did not approve the revised assessment.")
 
     for k in OUTPUT_KEYS:
         if k not in draft:
             raise HTTPException(500, f"Model output missing required key: {k}")
 
-    enforce_citations(draft)
+    try:
+        draft = Assessment.model_validate(draft).model_dump()
+    except ValidationError:
+        raise HTTPException(502, "Model output does not match the assessment schema.")
+    enforce_citations(draft, chunks)
     draft["evidence_used"] = chunks
     draft["safety_notes"] = list(dict.fromkeys((draft.get("safety_notes") or []) + safety_notes + (critique.get("issues") or [])))
 
@@ -423,6 +450,9 @@ def startup():
         execute_sqlite_script(c, DDL)
         execute_sqlite_script(c, TRIGGERS)
     ensure_feedback_table(engine)
+    if DEV_PORTAL:
+        from dev_portal import init_portal_schema
+        init_portal_schema(engine)
     try:
         if QDRANT_URL:
             ensure_qdrant_collection()
@@ -432,7 +462,7 @@ def startup():
 # ───────────────── Base routes
 @app.get("/")
 def root():
-    return RedirectResponse("/static/Raphael.html")
+    return RedirectResponse("/static/portal.html" if DEV_PORTAL else "/static/Raphael.html")
 
 @app.get("/healthz")
 def healthz():
@@ -679,3 +709,40 @@ def search_docs(q: str = Query(..., min_length=2)):
             "WHERE doc_fts MATCH :q LIMIT 10"
         ), {"q": q}).mappings().all()
     return list(rows)
+
+
+if DEV_PORTAL:
+    from dev_portal import install_dev_portal
+
+    @app.exception_handler(RequestValidationError)
+    async def safe_portal_validation(request, exc):
+        if request.url.path.startswith("/api/dev/"):
+            # FastAPI's default validation body includes submitted input values,
+            # which could echo a mistyped password. Keep portal errors generic.
+            return JSONResponse({"detail": "Invalid portal request. Check required fields and lengths."}, status_code=422)
+        return await request_validation_exception_handler(request, exc)
+
+    @app.middleware("http")
+    async def isolate_development_portal(request, call_next):
+        # Legacy APIs have no role/tenant boundaries. Preserve them in legacy
+        # mode, but never expose them alongside authenticated portal sessions.
+        if request.url.path.startswith("/api/") and not request.url.path.startswith("/api/dev/"):
+            return JSONResponse({"detail": "Legacy APIs are disabled in development portal mode."}, status_code=403)
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+        return response
+
+    def development_assessment(**kwargs):
+        if not (LLM_BASE_URL and QDRANT_URL):
+            raise HTTPException(503, "Configure dedicated development LLM and Qdrant services before requesting assessments.")
+        try:
+            return raphael_generate(**kwargs)
+        except HTTPException:
+            raise
+        except Exception:
+            # Never reflect provider errors, URLs or credentials to the portal.
+            raise HTTPException(503, "Development assessment services are unavailable.")
+
+    install_dev_portal(app, engine, assessment_generator=development_assessment)

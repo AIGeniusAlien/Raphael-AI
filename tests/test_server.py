@@ -20,6 +20,7 @@ class LiveServerTests(unittest.TestCase):
             env = dict(os.environ, DATABASE_URL="sqlite:///" + directory + "/synthetic.db",
                        QDRANT_URL="", QDRANT_API_KEY="", LLM_BASE_URL="", LLM_API_KEY="",
                        STATIC_PATH="static", PYTHONDONTWRITEBYTECODE="1",
+                       RAPHAEL_DEV_PORTAL="0",
                        XDG_STATE_HOME=directory, PATH=str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"])
             for iteration in range(2):
                 with self.subTest(start=iteration + 1), socket.socket() as sock:

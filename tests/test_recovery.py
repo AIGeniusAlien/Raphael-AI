@@ -33,6 +33,7 @@ with patch.dict(os.environ, {
     "DATABASE_URL": "sqlite://", "QDRANT_URL": "", "QDRANT_API_KEY": "",
     "LLM_BASE_URL": "", "LLM_API_KEY": "", "STATIC_PATH": "static",
     "JWT_SECRET": "synthetic-unit-test-key-only",
+    "RAPHAEL_DEV_PORTAL": "0",
 }):
     main = importlib.import_module("main")
     auth = importlib.import_module("auth.jwt_auth")

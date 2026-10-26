@@ -6,5 +6,9 @@ cd "$(dirname "$0")"
 # Keep local state outside the checkout by default; preserve explicit overrides.
 state_dir="${XDG_STATE_HOME:-${HOME}/.local/state}/raphael"
 mkdir -p "$state_dir"
-export DATABASE_URL="${DATABASE_URL:-sqlite:///$state_dir/raphael.db}"
+if [ "${RAPHAEL_DEV_PORTAL:-0}" = "1" ]; then
+  export DATABASE_URL="${DATABASE_URL:-sqlite:///$state_dir/portal-synthetic.db}"
+else
+  export DATABASE_URL="${DATABASE_URL:-sqlite:///$state_dir/raphael.db}"
+fi
 exec python -m uvicorn main:app --reload --host 127.0.0.1 --port "${PORT:-8000}"

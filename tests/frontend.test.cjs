@@ -46,6 +46,18 @@ test('browser boot loads patients and binds controls without a nonexistent /api/
   assert.equal(typeof elements.get('send').onclick, 'function');
 });
 
+test('patient names and messages render markup as text', async () => {
+  const malicious = '<img src=x onerror=alert(1)>';
+  const { elements } = await frontend({
+    '/api/patients': [{id: 1, name: malicious}],
+    '/api/conversations?patient_id=1': [{id: 2, title: malicious}],
+    '/api/messages?conversation_id=2': [{role: 'assistant', content: malicious}],
+  });
+  assert.equal(elements.get('patient-list').children[0].textContent, malicious);
+  assert.equal(elements.get('conv-list').children[0].textContent, malicious);
+  assert.equal(elements.get('messages').children[0].children[1].textContent, malicious);
+});
+
 test('selecting a patient with no conversations clears the prior conversation and messages', async () => {
   const { context } = await frontend({ '/api/patients': [], '/api/conversations?patient_id=2': [] });
   await vm.runInContext(`

@@ -4,5 +4,11 @@ See [development setup and tested limitations](docs/DEVELOPMENT.md), the
 [master requirements](docs/RAPHAEL_MASTER_SPEC.md),
 [requirements matrix](docs/REQUIREMENTS_MATRIX.md), and [roadmap](docs/ROADMAP.md).
 
-This recovery build supports local development with synthetic data. API authentication
-and tenant isolation are not integrated; do not expose it as a clinical service.
+The opt-in synthetic patient/physician portal and its account-provisioning steps
+are described in [release readiness](docs/RELEASE_READINESS.md).
+The [feature inventory](docs/FEATURE_INVENTORY.md) distinguishes present capabilities,
+historical routes, mocks and missing clinical platform features.
+
+This build supports local development with synthetic data. Portal mode adds scoped
+development authentication and blocks legacy APIs. Legacy mode remains unauthenticated;
+neither mode is approved for clinical use or public deployment.

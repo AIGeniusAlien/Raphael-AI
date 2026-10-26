@@ -128,7 +128,13 @@
     "new_native_tests": "NOT_RUN",
     "ci": "First actual macOS Xcode test attempt failed exit65;diagnostics publication added;not build-verified",
     "device_signing": "NOT_RUN",
-    "app_store_ready": false
+    "app_store_ready": false,
+    "compiler_defect": {
+      "file": "mobile/ios/Raphael/PatientWebSession.swift",
+      "cause": "Completion closure passed to async callAsyncJavaScript overload",
+      "fix_commit": "766d3e7e747c29de8f39b945bd0b57a370c7dbbd",
+      "status": "Awaiting actual new Xcode job"
+    }
   },
   "cross_platform": {
     "linux_launcher_http_restart": "passed",
@@ -170,6 +176,12 @@
   "owner_commands": "docs/AUTOMATED_DEVELOPMENT.md",
   "security_scan_artifact": "docs/PRODUCTION_SOURCE_SCAN.json",
   "dependency_audit_artifact": "docs/PRODUCTION_DEPENDENCY_AUDIT.json",
-  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40416787347",
-  "ci_observed_status": "dependency-audit passed;ios-simulator failed exit65;regression in progress"
+  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40417447388",
+  "ci_observed_status": "queued after compiler fix;prior advisory job passed,prior native compile failed,prior regression run cancelled by newer push",
+  "additional_final_python_suite": {
+    "passed": 193,
+    "failed": 0,
+    "duration_seconds": 73.984,
+    "reason": "Added CI diagnostic redaction/annotation security regression after the192test consolidated run"
+  }
 }

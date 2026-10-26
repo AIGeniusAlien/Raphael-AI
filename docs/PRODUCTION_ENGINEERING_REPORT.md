@@ -60,3 +60,7 @@ Current real OpenAI/Qdrant/Chromium workflow passed its technical checks:patient
 Remote GitHub Actions run40416787347 was observed actually executing all three jobs after checkpoint1076310. Its final result must be read from the machine report/PR checks;in-progress is not success. This Linux environment cannot execute an iOS compiler.
 
 Cloud startup instructions were saved as a draft. Review/save environment settings and publish separately to activate them;that does not deploy the application.
+
+### Native compiler finding and latest Python coverage
+
+Actual macOS Xcode CI (run40417210385) reported a Swift compile failure in PatientWebSession.swift:extra trailing closure passed to the asynchronous callAsyncJavaScript overload. Commit766d3e7 switches sign-out to async/await while preserving server revocation,ephemeral store clearing and failure warnings. Run40417447388 is the actual corrective simulator run;its final status is recorded separately. Neither structural checks nor the source fix alone proves compilation. Added diagnostic-redaction regression brings the subsequently rerun full local Python suite to193passed in73.984seconds. The original consolidated runner's192count is retained accurately in its raw artifact. A final focused3-test request-security rerun covers actual singular assessment and draft-assist endpoint budgeting.

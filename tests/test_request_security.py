@@ -8,6 +8,10 @@ class RequestSecurityTests(unittest.TestCase):
     def request(self,path='/api/dev/patients',client='127.0.0.1',headers=()):
         return Request({'type':'http','scheme':'http','path':path,'method':'POST','headers':headers,'server':('test',80),'client':(client,1),'query_string':b''})
     def test_model_budget_is_separate_bounded_and_forwarded_headers_cannot_bypass(self):
+        for path in ('/api/dev/patients/1/assessment','/api/dev/intelligence/threads/1/assessment','/api/dev/conversations/1/draft-assist'):
+            endpoint_budget=RequestBudget(expensive_limit=1)
+            endpoint_budget.check(self.request(path))
+            with self.assertRaises(HTTPException):endpoint_budget.check(self.request(path))
         budget=RequestBudget(limit=4,expensive_limit=1)
         budget.check(self.request('/api/dev/patient-ai/threads/1/stream'))
         with self.assertRaises(HTTPException) as error:budget.check(self.request('/api/dev/patient-ai/threads/2/stream',headers=[(b'x-forwarded-for',b'other')]))

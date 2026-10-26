@@ -12,7 +12,7 @@ class RequestBudget:
         # Do not trust caller-supplied Forwarded/X-Forwarded-For headers.
         host=request.client.host if request.client else 'unknown'
         key=hashlib.sha256(host.encode()).digest();at=self.clock()
-        expensive=request.method=='POST' and any(request.url.path.endswith(p) for p in ('/stream','/assessments','/draft','/summarize'))
+        expensive=request.method=='POST' and any(request.url.path.endswith(p) for p in ('/stream','/assessment','/draft-assist'))
         with self.lock:
             while self.clients and next(iter(self.clients.values()))[2]<=at-self.window:self.clients.popitem(last=False)
             entry=self.clients.get(key)

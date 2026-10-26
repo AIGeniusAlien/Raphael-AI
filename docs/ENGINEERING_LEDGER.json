@@ -15682,7 +15682,7 @@
       "description": "Bounded portal request budgets,Fetch Metadata CSRF rejection and security headers on denied routes",
       "state": "VERIFIED",
       "code_location": "dev_security.py;dev_portal.py;main.py",
-      "test_coverage": "test_request_security.py;test_start_launcher.py;all192Python;6Chromium",
+      "test_coverage": "test_request_security.py;test_start_launcher.py;all193Python;6Chromium",
       "external_dependency": "Direct peer address;reviewed reverse proxy for deployment",
       "remaining_work": "Single process/NAT shared limits;distributed gateway and independent security assessment remain",
       "acceptance_criteria": "Bounded memory;separate expensive request budget;spoofed forwarding cannot bypass;malformed origins denied",

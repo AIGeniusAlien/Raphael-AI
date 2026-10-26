@@ -1,3 +1,7 @@
+## Current production-engineering increment
+
+Read PRODUCTION_ENGINEERING_REPORT.md and AUTOMATED_DEVELOPMENT.md first. New one-command verification/startup,request budgets/CSRF/header safeguards,safety protocol evaluation,native readiness utility,CI and compliance evidence are integrated. Local189Python/26frontend/6Chromium/5mobile source tests pass. Native compilation,Windows/macOS runtime and clinical validation are not established. Source assets preserved;no merge/deploy. Earlier results below are historical checkpoints.
+
 ## Current verified recovery result — 2026-10-26
 
 See [recovery implementation report](RECOVERY_IMPLEMENTATION_REPORT.md) for exact owner commands and next actions,and IMPLEMENTATION_REPORT.json/RECOVERY_LIVE_RESULTS.json for current results. Python181/181,frontend26/26,Chromium6/6 and mobileLinux5/5passed. Actual physician AND patient Chromium workflows completed with realOpenAI/Qdrant,384-dimensional text-embedding-3-small,6CDCdocuments/31vectors,repeat0writes,resolving citations,fresh original-source checks and automated support screens passed. Earlier failed screens are retained in RECOVERY_LIVE_ATTEMPTS.json. This does not establish clinical accuracy. Chart grants/revocation,patient AI and account controls are integrated. Account deletion is review-only;iOS source exists but Xcode/device/signing unverified;Android native absent. No staging deployment,AppStore readiness,merge or production-data claim. All1,112prior requirement IDs/descriptions preserved;machine ledger now1,117rows.

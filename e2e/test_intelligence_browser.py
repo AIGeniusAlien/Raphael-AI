@@ -73,6 +73,12 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             page.locator('#title').fill('Synthetic clinical thread');page.locator('#thread-form button').click();expect(page.locator('#thread-title')).to_have_text('Synthetic clinical thread')
                             page.locator('#prompt').fill('violet calibrator');page.locator('#prompt-form button').click();expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete')
                             expect(page.locator('#evidence')).to_contain_text('Nonclinical synthetic fixture');expect(page.locator('#evidence a[href^="/api/dev/knowledge/citations/"]')).to_have_attribute('href',__import__('re').compile(r'/api/dev/knowledge/citations/'))
+                            # Explicit browser-only SSE fixture tests the blocked terminal UI,
+                            # never used as proof of provider or clinical validation.
+                            page.route('**/api/dev/intelligence/threads/*/stream',lambda route:route.fulfill(status=200,content_type='text/event-stream',body='event: blocked\ndata: '+json.dumps({'detail':'Synthetic unsupported-claim fixture. Not approved.'})+'\n\n'),times=1)
+                            page.locator('#prompt').fill('Synthetic blocked UI case');page.locator('#prompt-form button').click()
+                            expect(page.locator('#status')).to_contain_text('Draft blocked: Synthetic unsupported-claim fixture.')
+                            expect(page.locator('#send')).to_be_enabled()
                             page.locator('#prompt').fill('violet calibrator cancel');page.locator('#prompt-form button').click()
                             expect(page.locator('#messages .chat-entry').last.locator('.chat-text')).to_contain_text('Synthetic nonclinical fixture response.')
                             expect(page.locator('#send')).to_be_disabled();page.locator('#cancel').click();expect(page.locator('#status')).to_contain_text('Generation stopped')

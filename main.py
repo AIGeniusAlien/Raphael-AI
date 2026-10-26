@@ -774,10 +774,15 @@ if DEV_PORTAL:
         # Legacy APIs have no role/tenant boundaries. Preserve them in legacy
         # mode, but never expose them alongside authenticated portal sessions.
         if request.url.path.startswith("/api/") and not request.url.path.startswith("/api/dev/"):
-            return JSONResponse({"detail": "Legacy APIs are disabled in development portal mode."}, status_code=403)
-        response = await call_next(request)
+            response = JSONResponse({"detail": "Legacy APIs are disabled in development portal mode."}, status_code=403)
+        else:
+            response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Permissions-Policy"] = "camera=(), geolocation=(), microphone=(self)"
+        if request.url.scheme=="https":response.headers["Strict-Transport-Security"]="max-age=31536000"
         response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'self'"
         return response
 

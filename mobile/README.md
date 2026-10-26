@@ -62,3 +62,9 @@ Release configurations execute a validation phase that rejects missing/unusable 
 `submission/` contains a privacy/data-flow draft, terms/safety draft, metadata/review notes, build/signing/screenshot/TestFlight instructions and a machine-readable readiness ledger. These are review inputs, not published legal policies or an accepted submission. The geometric R icon is an original source asset; brand/trademark approval is an owner gate.
 
 Android native source/build is **not implemented in this increment**. Java is present, but Gradle, adb and Android SDK variables were absent. The shared backend/mobile web continues to work on supported browsers; it is not an APK result. A future Android client should reuse these same origin/session/consent contracts rather than duplicate the server. Android packaging did not delay the iOS source deliverable.
+
+## Production-engineering source increment
+
+Native settings now offers an explicit no-cookie/no-PHI backend readiness check against the configured HTTPS origin. It rejects redirects,uses an ephemeral session with10second timeouts,bounds the body to64KiB and accepts only synthetic-development readiness. This checks database service availability,not provider readiness or clinical safety. Added a native response-validation XCTest;it has NOT run on Linux. Existing icon assets are preserved as provisional;the different web logo and iOS geometric R are recorded in docs/DESIGN_ASSET_INVENTORY.json and require owner brand authority before distribution.
+
+A macos-15 CI job now selects an installed simulator and runs the shared scheme without signing. Workflow configuration is not a successful build. Native test results go into unique mobile/artifacts/NativeRun.*/NativeTests.xcresult bundles so repeat runs preserve prior evidence. See docs/PRODUCTION_ENGINEERING_REPORT.md for actual CI status and remaining gates.

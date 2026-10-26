@@ -18,4 +18,11 @@ final class ServerConfigurationTests: XCTestCase {
         XCTAssertEqual(PatientSection.intelligence.path, "static/patient-ai.html")
         XCTAssertEqual(PatientSection.account.path, "static/account.html")
     }
+    func testReadinessRejectsLegacyMissingAndMalformedServiceResponses() {
+        XCTAssertTrue(ReadinessPayload.isSyntheticReady(Data(#"{"status":"ready","scope":"synthetic-development"}"#.utf8)))
+        for text in [#"{"status":"ready","scope":"legacy-development"}"#, #"{"status":"not_ready","scope":"synthetic-development"}"#, #"{"status":"ready"}"#, "not JSON"] {
+            XCTAssertFalse(ReadinessPayload.isSyntheticReady(Data(text.utf8)))
+        }
+    }
+
 }

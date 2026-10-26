@@ -7,4 +7,6 @@ if ! command -v xcodebuild >/dev/null || ! command -v xcrun >/dev/null; then
 fi
 : "${RAPHAEL_SIMULATOR_DESTINATION:?Set an installed iOS Simulator destination,for example platform=iOS Simulator,id=YOUR-SIMULATOR-UDID}"
 python3 "$mobile_root/scripts/project_audit.py"
-xcodebuild -project "$mobile_root/ios/Raphael.xcodeproj" -scheme Raphael -configuration Debug -sdk iphonesimulator -destination "$RAPHAEL_SIMULATOR_DESTINATION" -derivedDataPath "$mobile_root/artifacts/DerivedData" -resultBundlePath "$mobile_root/artifacts/NativeTests.xcresult" CODE_SIGNING_ALLOWED=NO test
+mkdir -p "$mobile_root/artifacts"
+result_dir="$(mktemp -d "$mobile_root/artifacts/NativeRun.XXXXXX")"
+xcodebuild -project "$mobile_root/ios/Raphael.xcodeproj" -scheme Raphael -configuration Debug -sdk iphonesimulator -destination "$RAPHAEL_SIMULATOR_DESTINATION" -derivedDataPath "$mobile_root/artifacts/DerivedData" -resultBundlePath "$result_dir/NativeTests.xcresult" CODE_SIGNING_ALLOWED=NO test

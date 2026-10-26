@@ -65,7 +65,7 @@
           if(type==='evidence')renderEvidence(data);
           if(type==='canonical'){full=data.text;renderMarkdown(output,full);}
           if(type==='support_check')status('Automated claim-support screening: '+data.status+'. This is not clinical validation.');
-          if(type==='blocked'){status(data.detail);output.textContent=full;}
+          if(type==='blocked'){status('Draft blocked: '+data.detail);output.textContent=full;}
           if(type==='error'||type==='abstained'){status(data.detail);output.textContent=full||data.detail;}
           if(type==='complete'){status('Draft complete. Citation membership checked; clinical factuality remains unvalidated.');if($('speak').checked)voice.speak(full);}
           if(type==='cancelled')status('Generation cancelled.');

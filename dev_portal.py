@@ -299,12 +299,19 @@ def install_dev_portal(app, engine, assessment_generator=None):
     _require_synthetic(engine)
     router = APIRouter(prefix="/api/dev", tags=["synthetic development portal"])
 
+    from dev_security import RequestBudget
+    request_budget=RequestBudget()
+
     async def same_origin_json(request: Request):
+        request_budget.check(request)
+        if request.headers.get('sec-fetch-site')=='cross-site':
+            raise HTTPException(403,'Cross-site portal requests are forbidden.')
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             origin = request.headers.get("origin")
             expected = urlsplit(str(request.url))
             if origin:
-                supplied = urlsplit(origin)
+                try:supplied = urlsplit(origin)
+                except ValueError:raise HTTPException(403,'Invalid request origin.') from None
                 if (supplied.scheme, supplied.netloc) != (expected.scheme, expected.netloc):
                     raise HTTPException(403, "Cross-origin portal mutations are forbidden.")
             if request.headers.get("content-type", "").split(";", 1)[0].strip().lower() != "application/json":

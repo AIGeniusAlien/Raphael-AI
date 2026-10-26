@@ -150,11 +150,24 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
         ctx.patient_for(c, row['patient_id'], user)
         return dict(row)
 
+    @router.get('/evidence/{chunk_id}')
+    def external_citation(chunk_id: str, user=Depends(ctx.clinician)):
+        from curated_evidence import citation
+        try:
+            result=citation(chunk_id)
+        except Exception:
+            raise HTTPException(503,'Evidence source retrieval unavailable.')
+        if not result:raise HTTPException(404,'Current public citation not found.')
+        with engine.begin() as c:ctx.audit(c,user,'resolve_public_evidence_citation','public_evidence')
+        return result
+
     @router.get('/config')
     def config(user=Depends(ctx.clinician)):
         return {'model': os.getenv('LLM_MODEL', 'gpt-4o-mini'),
                 'provider_configured': bool(os.getenv('LLM_BASE_URL') and os.getenv('LLM_API_KEY') not in (None, '', 'EMPTY')),
-                'speech': 'browser_capability_required', 'output': 'provisional_clinician_draft'}
+                'speech': 'browser_capability_required', 'output': 'provisional_clinician_draft',
+                'evidence_backend': os.getenv('RAPHAEL_STREAM_EVIDENCE_BACKEND','sqlite'),
+                'evidence_notice': 'Source: CDC. Original material is available free on CDC websites. Raphael is not endorsed by CDC,HHS or the U.S. Government.' if os.getenv('RAPHAEL_STREAM_EVIDENCE_BACKEND')=='qdrant' else ''}
 
     @router.get('/threads')
     def threads(q: str = '', user=Depends(ctx.clinician)):
@@ -213,7 +226,11 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                 intake = authorized_intake(c, current_thread['intake_id'], user, require_ai=True)
                 context = {'consented_snapshot_only': intake['snapshot'], 'reported_symptoms': intake['symptoms'], 'purpose': intake['purpose']}
         try:
-            evidence = search_evidence(engine, user['tenant'], body.content[:1000])
+            if os.getenv('RAPHAEL_STREAM_EVIDENCE_BACKEND','sqlite') == 'qdrant':
+                from curated_evidence import search
+                evidence = search(body.content[:1000])
+            else:
+                evidence = search_evidence(engine, user['tenant'], body.content[:1000])
             with engine.begin() as c:
                 c.execute(text('INSERT INTO dev_ai_generation_evidence(generation_id,evidence) VALUES (:g,:v)'), {'g': generation, 'v': json.dumps(evidence)})
         except Exception:
@@ -221,7 +238,15 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                 c.execute(text("UPDATE dev_ai_messages SET status='failed' WHERE generation_id=:g"), {'g': generation})
                 ctx.audit(c, user, 'ai_retrieval_failed', 'ai_thread', identifier)
             raise HTTPException(503, 'Reviewed evidence retrieval is unavailable. No provider request was made.')
-        messages = [{'role': 'system', 'content': 'You are Raphael clinical decision support for synthetic development. Output is a provisional draft for clinician review. Distinguish evidence, inference, uncertainty and missing information. Never invent references. Use only the supplied excerpts for medical claims, cite exact IDs as [chunk_id]. No orders or external messages. If evidence is insufficient, abstain. Authorized synthetic chart entries (reported data, not verified findings): ' + json.dumps(context)[:20000] + '\nEVIDENCE: ' + json.dumps(evidence)}] + history + [{'role': 'user', 'content': body.content}]
+        aliases={}
+        model_evidence=evidence
+        if os.getenv('RAPHAEL_STREAM_EVIDENCE_BACKEND')=='qdrant':
+            aliases={'E'+str(index+1):item['chunk_id'] for index,item in enumerate(evidence)}
+            # The model sees short registered labels,not incidental provenance hashes.
+            model_evidence=[{**{key:item.get(key) for key in ('title','url','text','source_date','evidence_quality','freshness_status','source_type','jurisdiction')},'chunk_id':alias} for alias,item in zip(aliases,evidence)]
+        messages = [{'role': 'system', 'content': 'You are Raphael clinical decision support for synthetic development. Respond concisely in at most 350 words. Output is a provisional draft for clinician review. Distinguish evidence, inference, uncertainty and missing information. Never invent references. Use only the supplied excerpts for medical claims, cite exact IDs as [chunk_id]. No orders or external messages. If evidence is insufficient, abstain. State evidence quality, source dates and limitations. Identify conflicting sources or applicability to different populations explicitly; do not invent a consensus. Distinguish chart facts, external evidence, inference and uncertainty. Do not infer absent symptoms or turn educational guidance into an approved treatment plan. Never instruct this patient to start a medication. Uncertainty must identify missing case-specific exam,testing and allergy information;do not invent statements that guidelines lack recommendations. Explicitly report source dates and age warnings without claiming that older material is withdrawn. Authorized synthetic chart entries (reported data, not verified findings): ' + json.dumps(context)[:20000] + '\nEVIDENCE: ' + json.dumps(model_evidence)}] + history + [{'role': 'user', 'content': body.content}]
+
+        messages[0]['content'] = ('Citation syntax examples: ' + json.dumps(['[' + item['chunk_id'] + ']' for item in model_evidence[:2]]) + '. Brackets must contain only the exact chunk ID:never add chunk_id:,source:,numbers or titles inside brackets. Case-reported facts and unknown exam/testing/allergy information are not external-source claims:label them reported or missing without inventing a reference.\n' + messages[0]['content'])
 
         def events():
             content, status = '', 'failed'
@@ -261,9 +286,12 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                     content += delta
                     yield event('delta', {'text': delta})
                 citations = re.findall(r'\[([^\[\]]+)\]', content)
-                allowed = {e['chunk_id'] for e in evidence}
+                allowed = {e['chunk_id'] for e in evidence} | set(aliases)
                 if not citations or any(x not in allowed for x in citations):
                     raise ValueError('Unsupported citation membership')
+                if aliases:
+                    content=re.sub(r'\[([^\[\]]+)\]',lambda match:'['+aliases.get(match.group(1),match.group(1))+']',content)
+                    yield event('canonical',{'text':content,'resolution':'registered_retrieved_labels_only'})
                 status = 'complete'
                 yield event('complete', {'generation_id': generation, 'review_required': True, 'citation_check': 'retrieved_id_membership_only'})
             except GeneratorExit:

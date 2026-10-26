@@ -139,6 +139,9 @@ def get_st_model() -> SentenceTransformer:
     return _ST_MODEL
 
 def embed_texts(texts: List[str]) -> np.ndarray:
+    if os.getenv('RAPHAEL_EMBEDDING_BACKEND') == 'openai':
+        from rag.hosted_embeddings import encode
+        return encode(texts)
     model = get_st_model()
     vecs = model.encode(texts, normalize_embeddings=True)
     return np.array(vecs, dtype=np.float32)
@@ -157,11 +160,18 @@ def ensure_qdrant_collection():
         vectors = client.get_collection(QDRANT_COLLECTION).config.params.vectors
         if not hasattr(vectors, 'size') or vectors.size != EMBED_DIM or str(vectors.distance).lower() != 'cosine':
             raise ValueError('Existing collection is incompatible with unnamed cosine embeddings.')
+        if os.getenv('RAPHAEL_EMBEDDING_BACKEND') != 'openai':
+            from qdrant_config import verify_legacy_encoder
+            verify_legacy_encoder(client,QDRANT_COLLECTION,EMBED_MODEL)
     # Verify actual model output before any creation/upsert path. A configured
     # dimension alone is not proof the selected encoder produces that shape.
     probe = embed_texts(['Raphael nonclinical embedding compatibility probe.'])
     if probe.shape != (1, EMBED_DIM) or not np.isfinite(probe).all():
         raise ValueError('Actual embedding dimensions do not match configured collection dimensions.')
+    if os.getenv('RAPHAEL_EMBEDDING_BACKEND') == 'openai':
+        from curated_evidence import inventory
+        if QDRANT_COLLECTION in existing:
+            inventory(client)
     if QDRANT_COLLECTION in existing:
         return
     client.create_collection(
@@ -196,6 +206,8 @@ def ingest_evidence_text(*,
     evidence_strength: Optional[str],  # high/moderate/low/very_low
     text_body: str
 ) -> int:
+    if os.getenv('RAPHAEL_EMBEDDING_BACKEND') == 'openai':
+        raise HTTPException(409, 'Use the reviewed curated ingestion CLI for the hosted embedding collection; legacy untagged ingestion requires a separate collection.')
     ensure_qdrant_collection()
     client = qdrant_client()
 
@@ -222,6 +234,7 @@ def ingest_evidence_text(*,
             evidence_strength=evidence_strength,
             text=txt,
         )
+        payload.update(embedding_model=EMBED_MODEL,embedding_dimensions=EMBED_DIM)
         points.append(qm.PointStruct(id=point_id_for(chunk_id), vector=v.tolist(), payload=payload))
 
     client.upsert(collection_name=QDRANT_COLLECTION, points=points)
@@ -240,6 +253,9 @@ def rerank(chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return sorted(chunks, key=score, reverse=True)
 
 def retrieve_evidence(query: str, top_k: int = TOP_K) -> List[Dict[str, Any]]:
+    if os.getenv('RAPHAEL_EMBEDDING_BACKEND') == 'openai':
+        from curated_evidence import search
+        return search(query, min(top_k, 12))
     ensure_qdrant_collection()
     client = qdrant_client()
     qv = embed_texts([query])[0].tolist()

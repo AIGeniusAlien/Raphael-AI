@@ -1,3 +1,5 @@
+The first actual hosted-embedding/Qdrant/OpenAI physician workflow now passes;read LIVE_MEDICAL_INTELLIGENCE.md for exact backend exports,source provenance,counts and live result. The isolated diagnostic setup below unsetsQdrantdeliberately;retain configuredQdrantandthe explicitopenai/qdrantbackend exports for the live workflow. This bounded capability does not complete the broader checklist.
+
 # Connected synthetic development candidate
 
 This is a tested local synthetic workflow candidate,not full-product or live-service release acceptance. Real OpenAI inference/stream and QdrantHTTPS443collection access now pass. Model/source downloads remainProxyErrorblocked,so an actual evidence-grounded medical interaction remains incomplete. See INFRASTRUCTURE_STATUS.md and TEST_RESULTS.md for current evidence;never present a local provider fixture as authenticated external inference.
@@ -40,8 +42,8 @@ Source response ID,thread,generation,model and retrieved evidence persist with t
 - [x] Versioned editing,separate current-version approval,approved patient summary and follow-up.
 - [x] Real390px Chromium journey plus restart persistence regression;current counts in TEST_RESULTS.md.
 - [x] Successful authenticated OpenAI inference/stream and Qdrant collection listing overHTTPS443.
-- [ ] Actual Qdrant medical search and evidence-grounded clinical interaction.
-- [ ] Actual embedding-model/schema verification and curated legally reusable medical corpus.
+- [x] Actual Qdrant retrieval and OpenAI response with resolving citations in physicianChromium;unapproved clinical draft.
+- [x] Actual hosted384-dimensional encoder/schema and bounded3documentCDCcorpus;not comprehensive literature coverage.
 - [ ] Whole-chart patient-level clinician assignment/guardian/cross-organization policy;current snapshot consent does not replace the broader tenant chart policy.
 - [ ] Participating facility directory/transport,real delivery acknowledgments and international controls.
 - [ ] Patient-facing AI,physical iPhone/Android/microphone verification,native build/account deletion/App Store requirements.

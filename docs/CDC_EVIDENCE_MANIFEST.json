@@ -1,0 +1,56 @@
+{
+  "first": {
+    "collection": "raphael_evidence_v1",
+    "actual_dimensions": 384,
+    "embedding_model": "text-embedding-3-small",
+    "vectors_before": 4,
+    "vectors_after": 20,
+    "active_vectors": 20,
+    "active_documents": 3,
+    "vectors_written": 16,
+    "vectors_deduplicated": 4
+  },
+  "repeat": {
+    "collection": "raphael_evidence_v1",
+    "actual_dimensions": 384,
+    "embedding_model": "text-embedding-3-small",
+    "vectors_before": 20,
+    "vectors_after": 20,
+    "active_vectors": 20,
+    "active_documents": 3,
+    "vectors_written": 0,
+    "vectors_deduplicated": 20
+  },
+  "sources": [
+    {
+      "url": "https://www.cdc.gov/antibiotic-use/about/index.html",
+      "title": "Healthy Habits: Antibiotic Do's and Don'ts",
+      "source_date": "2025-09-23",
+      "content_sha256": "57c9c24fbc5943653b5f11b3f9d257070ff09ea46b62f20450c7639b6ff8058c",
+      "license": "CDC public-domain government text;exceptions reviewed;no images/logos/third-party works",
+      "license_url": "https://www.cdc.gov/other/agencymaterials.html",
+      "license_policy_sha256": "6c6a132b6dff3b4835da4b93f6948a1d1c775e8f7a0dcab78935a0758eb33686",
+      "retrieved_at": "2026-10-26T17:13:50.277578+00:00"
+    },
+    {
+      "url": "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/adult-outpatient.html",
+      "title": "Outpatient Clinical Care for Adults",
+      "source_date": "2024-04-16",
+      "content_sha256": "0d4dbc57df368b61a4ae6f76a09de4ff840b364f1090363a6bbe148369d10a7b",
+      "license": "CDC public-domain government text;exceptions reviewed;no images/logos/third-party works",
+      "license_url": "https://www.cdc.gov/other/agencymaterials.html",
+      "license_policy_sha256": "6c6a132b6dff3b4835da4b93f6948a1d1c775e8f7a0dcab78935a0758eb33686",
+      "retrieved_at": "2026-10-26T17:13:50.334098+00:00"
+    },
+    {
+      "url": "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/pediatric-outpatient.html",
+      "title": "Outpatient Clinical Care for Pediatric Populations",
+      "source_date": "2024-04-22",
+      "content_sha256": "475be6a68b8ac1409c7217833dc688fc1401793de01c5fbf583f07515fabdd9b",
+      "license": "CDC public-domain government text;exceptions reviewed;no images/logos/third-party works",
+      "license_url": "https://www.cdc.gov/other/agencymaterials.html",
+      "license_policy_sha256": "6c6a132b6dff3b4835da4b93f6948a1d1c775e8f7a0dcab78935a0758eb33686",
+      "retrieved_at": "2026-10-26T17:13:50.379367+00:00"
+    }
+  ]
+}

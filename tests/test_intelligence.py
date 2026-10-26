@@ -3,7 +3,7 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch,MagicMock
 
 import httpx
 from fastapi import FastAPI
@@ -152,3 +152,33 @@ class IntelligenceTests(unittest.TestCase):
         self.assertEqual(self.client.post(path,json={'content':'Synthetic'}).status_code,502)
         self.login('second')
         self.assertEqual(self.client.post(path,json={'content':'Synthetic'}).status_code,404)
+
+    def test_qdrant_backend_passes_conflicting_evidence_with_uncertainty_policy(self):
+        seen=[];thread=self.thread()
+        def provider(messages,model):seen.append(messages);yield 'Synthetic conflict and uncertainty [fixture-1] [fixture-2]'
+        self.provider=provider
+        evidence=[{'chunk_id':'fixture-1','text':'Synthetic population A fixture supports option A','source_date':'2024-01-01'},{'chunk_id':'fixture-2','text':'Synthetic population B fixture contradicts option A','source_date':'2025-01-01'}]
+        with patch.dict(os.environ,{'RAPHAEL_STREAM_EVIDENCE_BACKEND':'qdrant'}),patch('curated_evidence.search',return_value=evidence):
+            response=self.client.post(f'/api/dev/intelligence/threads/{thread}/stream',json={'content':'Synthetic conflicting evidence question'})
+        self.assertIn('event: complete',response.text);self.assertIn('Identify conflicting sources',seen[0][0]['content']);self.assertIn('[E1]',seen[0][0]['content']);self.assertIn('never add chunk_id:',seen[0][0]['content']);self.assertIn('population A',seen[0][0]['content']);self.assertIn('population B',seen[0][0]['content'])
+
+    def test_qdrant_failure_is_redacted_and_missing_evidence_never_calls_provider(self):
+        thread=self.thread();provider=MagicMock();self.provider=provider
+        with patch.dict(os.environ,{'RAPHAEL_STREAM_EVIDENCE_BACKEND':'qdrant'}),patch('curated_evidence.search',return_value=[]):
+            response=self.client.post(f'/api/dev/intelligence/threads/{thread}/stream',json={'content':'Synthetic missing evidence'})
+        self.assertIn('event: abstained',response.text);provider.assert_not_called()
+        with patch.dict(os.environ,{'RAPHAEL_STREAM_EVIDENCE_BACKEND':'qdrant'}),patch('curated_evidence.search',side_effect=RuntimeError('SECRET-FIXTURE-MUST-NOT-LEAK')):
+            response=self.client.post(f'/api/dev/intelligence/threads/{thread}/stream',json={'content':'Synthetic provider outage'})
+        self.assertEqual(response.status_code,503);self.assertNotIn('SECRET-FIXTURE',response.text);provider.assert_not_called()
+
+    def test_registered_qdrant_labels_are_canonicalized_and_unknown_labels_fail(self):
+        thread=self.thread();path=f'/api/dev/intelligence/threads/{thread}'
+        with patch.dict(os.environ,{'RAPHAEL_STREAM_EVIDENCE_BACKEND':'qdrant'}),patch('curated_evidence.search',return_value=[{'chunk_id':'immutable-fixture-id','text':'Synthetic nonclinical fixture'}]):
+            self.provider=lambda m,v:iter(['Synthetic draft [E1]'])
+            response=self.client.post(path+'/stream',json={'content':'Synthetic alias check'})
+            self.assertIn('event: canonical',response.text);self.assertIn('event: complete',response.text)
+            self.assertEqual(self.client.get(path).json()['messages'][-1]['content'],'Synthetic draft [immutable-fixture-id]')
+            self.provider=lambda m,v:iter(['Unsupported [E999]'])
+            response=self.client.post(path+'/stream',json={'content':'Synthetic invalid alias'})
+            self.assertIn('event: error',response.text);self.assertNotIn('event: complete',response.text)
+            self.assertEqual(self.client.get(path).json()['messages'][-1]['status'],'failed')

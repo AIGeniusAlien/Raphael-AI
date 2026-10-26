@@ -1,4 +1,5 @@
 {
+  "checked_on": "2026-10-26",
   "runtime_presence": {
     "LLM_API_KEY": true,
     "LLM_BASE_URL": true,
@@ -6,44 +7,41 @@
     "QDRANT_URL": true,
     "QDRANT_API_KEY": true
   },
-  "live_requested": true,
   "openai": {
     "status": "passed",
-    "inference_nonempty": true,
-    "returned_model": "gpt-4o-mini-2024-07-18",
-    "stream_nonempty": true
+    "streaming": "passed_real_physician_portal",
+    "model_requested": "gpt-4o-mini"
   },
   "qdrant": {
-    "route": "HTTPS443",
-    "no_mutations": true,
     "status": "passed",
-    "target_collection": "raphael_evidence_v1",
-    "target_exists": false
+    "collection": "raphael_evidence_v1",
+    "vector_configuration": {
+      "size": 384,
+      "distance": "Cosine"
+    },
+    "active_documents": 3,
+    "active_vectors": 20,
+    "repeat_vectors_written": 0
   },
-  "checked_on": "2026-10-26",
-  "initial_qdrant_route_result": {
+  "embedding": {
+    "status": "passed",
+    "provider": "openai",
+    "model": "text-embedding-3-small",
+    "actual_dimensions": 384,
+    "input_count": 1
+  },
+  "local_minilm": {
     "status": "failed",
-    "error_type": "UnexpectedResponse",
-    "http_status": 403
+    "error_type": "OSError"
   },
-  "qdrant_route_root_cause": "pinned SDK defaults an HTTPS URL without a nondefault explicit port to6333;HTTPS443authenticated read succeeds",
-  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-  "configured_dimensions": 384,
-  "actual_embedding_dimensions_verified": false,
-  "embedding_cached": false,
-  "embedding_metadata_fetch": {
-    "status": "blocked",
-    "error_type": "ProxyError"
+  "cdc_fetch": "HTTP200;reuse policy inspected;returned source hashes/excerpts checked against fresh fetch",
+  "live_physician_browser": {
+    "status": "passed",
+    "uses_mock_services": false,
+    "citation_count": 3,
+    "retrieved_excerpts": 6,
+    "missing_evidence_results": 0,
+    "clinician_approved": false
   },
-  "cdc_source_fetch": {
-    "status": "blocked",
-    "error_type": "ProxyError"
-  },
-  "ingestion_count_this_execution": 0,
-  "evidence_grounded_conversation": "not_attempted_without_model_and_verified_evidence",
-  "collection_mutations": 0,
-  "offline_model_cache_lookup": {
-    "available": false,
-    "error_type": "LocalEntryNotFoundError"
-  }
+  "source_verification": "publisher/reuse-policy/text/hash checks only;not independent clinical/GRADE/legal certification"
 }

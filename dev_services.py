@@ -53,7 +53,7 @@ def check_services(live=False):
             client=QdrantClient(url=os.environ['QDRANT_URL'],api_key=os.getenv('QDRANT_API_KEY') or None,timeout=20,**connection_options(os.environ['QDRANT_URL']))
             try:
                 names={c.name for c in client.get_collections().collections};target=os.getenv('QDRANT_COLLECTION','raphael_evidence_v1')
-                result['qdrant']={'status':'passed','target_collection':target,'target_exists':target in names,'embedding_model_configured':os.getenv('EMBED_MODEL','sentence-transformers/all-MiniLM-L6-v2'),'expected_dimensions':int(os.getenv('EMBED_DIM','384')),'no_mutations':True}
+                result['qdrant']={'status':'passed','target_collection':target,'target_exists':target in names,'embedding_model_configured':('text-embedding-3-small' if os.getenv('RAPHAEL_EMBEDDING_BACKEND')=='openai' else os.getenv('EMBED_MODEL','sentence-transformers/all-MiniLM-L6-v2')),'expected_dimensions':int(os.getenv('EMBED_DIM','384')),'no_mutations':True}
                 if target in names:
                     vectors=client.get_collection(target).config.params.vectors
                     result['qdrant']['actual_vectors']=vectors.model_dump(mode='json') if hasattr(vectors,'model_dump') else {name:v.model_dump(mode='json') for name,v in vectors.items()}

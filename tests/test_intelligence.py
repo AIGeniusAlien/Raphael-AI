@@ -1,0 +1,154 @@
+"""Synthetic streaming-provider, consent and immutable documentation regressions."""
+import json
+import os
+import tempfile
+import unittest
+from unittest.mock import patch
+
+import httpx
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from openai import OpenAI
+from sqlalchemy import create_engine, text
+
+from dev_portal import init_portal_schema, install_dev_portal, create_dev_user
+from dev_chart import init_chart_schema, install_chart
+from dev_knowledge import init_knowledge_schema
+from dev_intelligence import init_intelligence_schema, install_intelligence
+
+
+class IntelligenceTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory(prefix='raphael-intelligence-');self.addCleanup(self.temp.cleanup)
+        self.engine=create_engine('sqlite:///'+self.temp.name+'/synthetic.db');self.addCleanup(self.engine.dispose)
+        env=patch.dict(os.environ,{'RAPHAEL_DEV_SYNTHETIC_ONLY':'1','LLM_BASE_URL':'https://llm.invalid/v1','LLM_API_KEY':'synthetic-test-only'});env.start();self.addCleanup(env.stop)
+        for init in (init_portal_schema,init_chart_schema,init_knowledge_schema,init_intelligence_schema):init(self.engine)
+        self.password='Synthetic-only-testing-password'
+        for tenant,name,role in [('one','doctor','clinician'),('one','second','clinician'),('one','patient','patient'),('two','foreign','clinician')]:create_dev_user(self.engine,tenant,name,self.password,role)
+        self.app=FastAPI();self.ctx=install_dev_portal(self.app,self.engine);install_chart(self.app,self.ctx)
+        self.provider=lambda messages,model:iter(['Synthetic draft ', '[fixture-1]'])
+        self.assessment = None
+        def assess(**kwargs):
+            if self.assessment is None:
+                from fastapi import HTTPException
+                raise HTTPException(503, 'Test assessment service is not configured.')
+            return self.assessment(**kwargs)
+        install_intelligence(self.app,self.ctx,token_provider=lambda m,v:self.provider(m,v),assessment_generator=assess)
+        self.client=TestClient(self.app);self.addCleanup(self.client.close);self.login()
+        self.patient=self.client.post('/api/dev/patients',json={'name':'Synthetic','patient_username':'patient'}).json()
+        self.encounter=self.client.post(f"/api/dev/patients/{self.patient['id']}/encounters",json={'title':'Synthetic encounter'}).json()
+        evidence=patch('dev_knowledge.search_evidence',return_value=[{'chunk_id':'fixture-1','title':'Synthetic nonclinical fixture','text':'Nonclinical test data','url':'https://example.org/fixture'}]);evidence.start();self.addCleanup(evidence.stop)
+
+    def login(self,name='doctor',tenant='one'):
+        r=self.client.post('/api/dev/login',json={'tenant':tenant,'username':name,'password':self.password});self.assertEqual(r.status_code,200,r.text)
+
+    def thread(self):
+        r=self.client.post('/api/dev/intelligence/threads',json={'title':'Synthetic conversation','patient_id':self.patient['id']});self.assertEqual(r.status_code,200,r.text);return r.json()['id']
+
+    def session(self):
+        r=self.client.post(f"/api/dev/intelligence/patients/{self.patient['id']}/sessions",json={'encounter_id':self.encounter['id'],'consent':True});self.assertEqual(r.status_code,200,r.text);return r.json()['id']
+
+    def test_stream_persists_followups_and_model_trace(self):
+        identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}'
+        seen=[]
+        def provider(messages,model):seen.append(messages);yield 'Synthetic draft [fixture-1]'
+        self.provider=provider
+        for question in ['First synthetic question','Followup']:
+            r=self.client.post(path+'/stream',json={'content':question});self.assertEqual(r.status_code,200);self.assertIn('event: delta',r.text);self.assertIn('event: complete',r.text)
+        history=self.client.get(path).json()['messages'];self.assertEqual([m['role'] for m in history],['user','assistant','user','assistant']);self.assertTrue(all(m['status']=='complete' for m in history));self.assertIn('First synthetic question',str(seen[1]));self.assertTrue(history[-1]['generation_id'])
+        init_intelligence_schema(self.engine);self.assertEqual(len(self.client.get(path).json()['messages']),4)
+
+    def test_real_openai_sdk_stream_over_mock_http(self):
+        requests=[]
+        def transport(request):
+            requests.append(json.loads(request.content));return httpx.Response(200,headers={'Content-Type':'text/event-stream'},text='data: '+json.dumps({'id':'fixture','choices':[{'index':0,'delta':{'content':'Synthetic [fixture-1]'}}]})+'\n\ndata: [DONE]\n\n')
+        with OpenAI(api_key='synthetic',base_url='https://llm.invalid/v1',http_client=httpx.Client(transport=httpx.MockTransport(transport))) as client:
+            with patch('openai.OpenAI',return_value=client):
+                from dev_intelligence import openai_tokens
+                self.provider=openai_tokens
+                r=self.client.post(f'/api/dev/intelligence/threads/{self.thread()}/stream',json={'content':'Synthetic question'})
+        self.assertIn('event: complete',r.text);self.assertTrue(requests[0]['stream']);self.assertIn('EVIDENCE',requests[0]['messages'][0]['content'])
+
+    def test_provider_transport_rejects_cleartext_remote_or_unapproved_local_url(self):
+        from dev_intelligence import openai_tokens
+        for url in ('http://remote.invalid/v1', 'http://127.0.0.1/v1', 'https://user:password@example.org/v1'):
+            with patch.dict(os.environ, {'LLM_BASE_URL': url, 'RAPHAEL_ALLOW_LOCAL_LLM': '0'}):
+                with self.assertRaises(RuntimeError):
+                    next(openai_tokens([], 'synthetic-model'))
+
+    def test_missing_evidence_abstains_without_provider_and_bad_citations_fail(self):
+        identifier=self.thread()
+        with patch('dev_knowledge.search_evidence',return_value=[]):
+            self.provider=lambda *_: (_ for _ in ()).throw(AssertionError('Must not call provider'))
+            r=self.client.post(f'/api/dev/intelligence/threads/{identifier}/stream',json={'content':'Synthetic question'});self.assertIn('event: abstained',r.text)
+        self.provider=lambda *_:iter(['Unsupported [invented]'])
+        r=self.client.post(f'/api/dev/intelligence/threads/{identifier}/stream',json={'content':'Synthetic question'});self.assertIn('event: error',r.text);self.assertNotIn('event: complete',r.text)
+        self.assertEqual(self.client.get(f'/api/dev/intelligence/threads/{identifier}').json()['messages'][-1]['status'],'failed')
+
+    def test_cancellation_and_provider_errors_preserve_failed_status_without_secret(self):
+        identifier=self.thread()
+        def cancelled(*_):
+            yield 'Partial synthetic'
+            with self.engine.connect() as c:g=c.execute(text("SELECT generation_id FROM dev_ai_messages WHERE status='streaming'")).scalar()
+            self.assertEqual(self.client.post('/api/dev/intelligence/generations/'+g+'/cancel',json={}).status_code,200)
+            yield 'Never displayed'
+        self.provider=cancelled
+        r=self.client.post(f'/api/dev/intelligence/threads/{identifier}/stream',json={'content':'Synthetic'});self.assertIn('event: cancelled',r.text);self.assertNotIn('Never displayed',r.text)
+        messages=self.client.get(f'/api/dev/intelligence/threads/{identifier}').json()['messages'];self.assertEqual(messages[-1]['status'],'cancelled');self.assertEqual(messages[-1]['content'],'Partial synthetic')
+        self.provider=lambda *_:(_ for _ in ()).throw(RuntimeError('SECRET-FIXTURE'))
+        r=self.client.post(f'/api/dev/intelligence/threads/{identifier}/stream',json={'content':'Synthetic'});self.assertNotIn('SECRET-FIXTURE',r.text);self.assertIn('event: error',r.text)
+
+    def test_consent_revoke_and_authorization_scope(self):
+        identifier=self.thread();session=self.session()
+        path=f'/api/dev/intelligence/sessions/{session}'
+        self.client.post(path+'/consent',json={'consent':False}).raise_for_status()
+        self.assertEqual(self.client.post(path+'/segments',json={'content':'Synthetic','origin':'browser_speech'}).status_code,403)
+        for user,tenant in [('second','one'),('foreign','two'),('patient','one')]:
+            self.login(user,tenant)
+            self.assertIn(self.client.get(path).status_code,(403,404));self.assertIn(self.client.get(f'/api/dev/intelligence/threads/{identifier}').status_code,(403,404));self.assertIn(self.client.post(path+'/notes',json={'expected_version':0}).status_code,(403,404))
+
+    def test_incremental_notes_keep_edits_versions_and_explicit_approval(self):
+        session=self.session();path=f'/api/dev/intelligence/sessions/{session}'
+        self.client.post(path+'/segments',json={'content':'Synthetic reported symptoms only','origin':'manual_synthetic'}).raise_for_status()
+        note=self.client.post(path+'/notes',json={'expected_version':0,'format':'SOAP'}).json();self.assertEqual(note['version'],1);self.assertIn('Not assessed',note['content'])
+        self.assertEqual(self.client.post(path+'/notes',json={'expected_version':0}).status_code,409)
+        self.client.post(path+'/segments',json={'content':'Additional synthetic information','origin':'manual_synthetic'}).raise_for_status()
+        note=self.client.post(path+'/notes',json={'expected_version':1,'format':'progress'}).json();self.assertIn('Additional synthetic',note['content'])
+        self.client.post(path+'/notes',json={'expected_version':2,'content':'Clinician reviewed synthetic note'}).raise_for_status()
+        self.assertEqual(self.client.post(path+'/notes',json={'expected_version':3}).status_code,409)
+        self.assertEqual(self.client.post(path+'/approve',json={'expected_version':2}).status_code,409)
+        self.client.post(path+'/approve',json={'expected_version':3}).raise_for_status()
+        self.assertEqual(self.client.post(path+'/notes',json={'expected_version':3,'content':'Overwrite'}).status_code,409)
+        record=self.client.get(path).json();self.assertEqual(len(record['notes']),3);self.assertEqual(record['notes'][-1]['status'],'approved');self.assertEqual(record['notes'][-1]['approved_by'],record['owner_id']);self.assertTrue(self.client.get(path+'/audit').json())
+        self.assertTrue(record['notes'][-1]['published_note_id'])
+        self.login('patient')
+        visible=self.client.get(f"/api/dev/patients/{self.patient['id']}/notes").json()
+        self.assertEqual(len(visible),1);self.assertEqual(visible[0]['content'],'Clinician reviewed synthetic note')
+
+    def test_retrieval_failure_does_not_leave_an_unrecoverable_generation(self):
+        identifier=self.thread()
+        with patch('dev_knowledge.search_evidence',side_effect=RuntimeError('SECRET-FIXTURE')):
+            r=self.client.post(f'/api/dev/intelligence/threads/{identifier}/stream',json={'content':'Synthetic'})
+        self.assertEqual(r.status_code,503);self.assertNotIn('SECRET-FIXTURE',r.text)
+        self.assertEqual(self.client.get(f'/api/dev/intelligence/threads/{identifier}').json()['messages'][-1]['status'],'failed')
+        r=self.client.post(f'/api/dev/intelligence/threads/{identifier}/stream',json={'content':'Synthetic'})
+        self.assertIn('event: complete',r.text)
+
+    def test_false_consent_and_other_patient_encounter_rejected(self):
+        path=f"/api/dev/intelligence/patients/{self.patient['id']}/sessions"
+        self.assertEqual(self.client.post(path,json={'encounter_id':self.encounter['id'],'consent':False}).status_code,403)
+        p=self.client.post('/api/dev/patients',json={'name':'Other synthetic'}).json()
+        self.assertEqual(self.client.post(f"/api/dev/intelligence/patients/{p['id']}/sessions",json={'encounter_id':self.encounter['id'],'consent':True}).status_code,404)
+
+    def test_structured_assessment_uses_authorized_context_and_schema(self):
+        identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}/assessment'
+        self.assertEqual(self.client.post(path,json={'content':'Synthetic'}).status_code,503)
+        seen=[]
+        result={'problem_representation':'Synthetic fixture','ranked_differential':[],'working_diagnosis':None,'rule_in_out_plan':[],'cant_miss':[],'red_flags_escalation':[],'missing_data':['Synthetic missing information'],'confidence':'Low — synthetic fixture','evidence_used':[],'safety_notes':['Not a medical model result']}
+        def assess(**kwargs):seen.append(kwargs);return result
+        self.assessment=assess
+        r=self.client.post(path,json={'content':'Synthetic'});self.assertEqual(r.status_code,200,r.text);self.assertEqual(seen[0]['tenant'],'one');self.assertIn('reported_chart',seen[0]['case_context'])
+        self.assessment=lambda **_: {'bad':'unsupported'}
+        self.assertEqual(self.client.post(path,json={'content':'Synthetic'}).status_code,502)
+        self.login('second')
+        self.assertEqual(self.client.post(path,json={'content':'Synthetic'}).status_code,404)

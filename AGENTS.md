@@ -10,3 +10,5 @@
 - Do not deploy to production, merge changes, activate billing or publish clinical claims without explicit approval.
 - Cloud tasks are already isolated. Use the existing checkout and do not create a Git worktree unless explicitly requested.
 - Portal work is opt-in with RAPHAEL_DEV_PORTAL=1 and RAPHAEL_DEV_SYNTHETIC_ONLY=1. Use a new dedicated synthetic SQLite DB and locally provisioned accounts, never default/shared credentials. Keep legacy APIs blocked in portal mode and never equate internal message storage with external delivery.
+
+- Intelligence changes must preserve provisional-stream status, citation membership checks, cancellation/error recovery, clinician-owned threads, consent gating, immutable approved note versions and explicit patient-note publication. Run tests/test_intelligence.py, tests/voice.test.cjs and e2e/test_intelligence_browser.py plus affected existing suites. Browser/provider fixtures are never live speech or medical-model validation.

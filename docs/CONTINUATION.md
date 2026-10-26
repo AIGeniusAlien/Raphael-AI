@@ -32,3 +32,7 @@ The complete platform is not finished while any matrix acceptance criterion rema
 
 ## Latest security checkpoint
 Dependency advisory remediation is implemented,not a pending rerun of the prior vulnerable versions. Use requirements.lock plus torch2.6CPU and SECURITY_REMEDIATION.md. Next executable feature: add an authorized clinician conversation router with persistent generation records,actual OpenAI SSE streaming,cancellation and provider-error handling; test via mock HTTP transport and actual browser,never simulated live streaming. Then connect consent-gated microphone/voice and versioned editable encounter notes. Dedicated live credentials remain missing. Preserve all existing clinical/chart/DICOM/messaging regressions and requirement IDs.
+
+
+## Core intelligence now implemented — resume here
+Do not rebuild streaming,voice-controller or versioned transcript-template code. Read CORE_INTELLIGENCE.md and inspect dev_intelligence.py/static/intelligence.*/static/voice.js. Run full Python,Node andChromium suites. Next:configure dedicated LLM credentials securely and approve a legally usable source set to validate actual streaming and structured medical outputs. Independently exercise real microphone/browser speech with consent. Then implement authorized chat attachments,provider realtime audio/diarization and AI note synthesis with strict provenance/edit-preservation; these are not current capabilities. Maintain clinician signoff,atomic patient-note publication and the existing DICOM/messaging/security checks.

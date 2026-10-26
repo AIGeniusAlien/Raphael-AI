@@ -121,6 +121,7 @@
     byId('note-form').hidden = !clinician();
     byId('assessment-panel').hidden = !clinician();
     byId('knowledge-link').hidden = !clinician();
+    byId('intelligence-link').hidden = !clinician();
     byId('notes-explanation').textContent = clinician()
       ? 'Draft notes require your explicit review and approval before a patient account can view them. Approval here is a development workflow, not a qualified electronic signature.'
       : 'Only notes explicitly approved by a clinician account are shown. General AI output is not a clinician-approved care instruction.';
@@ -173,6 +174,7 @@
     byId('chart-summary').textContent = `Synthetic record ${patient.id}${patient.dob ? ' · DOB ' + patient.dob : ''}${patient.mrn ? ' · MRN ' + patient.mrn : ''}`;
     byId('structured-chart-link').href = `/static/chart.html?patient_id=${encodeURIComponent(patient.id)}`;
     byId('imaging-link').href = `/static/imaging.html?patient=${encodeURIComponent(patient.id)}`;
+    byId('intelligence-link').href = `/static/intelligence.html?patient=${encodeURIComponent(patient.id)}`;
     renderPatients();
     await Promise.all([loadConversations(version, epoch), loadNotes(version, epoch)]);
   }

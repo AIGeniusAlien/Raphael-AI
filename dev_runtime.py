@@ -21,6 +21,7 @@ COMPONENTS = (
     ("messaging", "dev_messaging", "init_messaging_schema"),
     ("imaging", "dev_imaging", "init_imaging_schema"),
     ("knowledge", "dev_knowledge", "init_knowledge_schema"),
+    ("intelligence", "dev_intelligence", "init_intelligence_schema"),
 )
 
 

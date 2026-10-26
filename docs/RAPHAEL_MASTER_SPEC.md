@@ -2453,3 +2453,167 @@ DO NOT STOP AFTER WRITING DOCUMENTATION.
 BUILD, INTEGRATE, TEST, DEBUG, AND DELIVER THE MOST COMPLETE FUNCTIONING RAPHAEL DEVELOPMENT APPLICATION POSSIBLE.
 
 BEGIN NOW.
+
+## Core intelligence implementation directive
+
+# RAPHAEL AI — BUILD THE CORE INTELLIGENCE EXPERIENCE
+
+Continue from the latest tested Raphael-AI development branch and Draft PR #1.
+
+Preserve every existing feature, security improvement, and documented requirement.
+
+This is an implementation assignment, not a planning or security-audit-only task.
+
+The previous execution completed dependency remediation and JWT hardening. Do not repeat that work unless a new regression requires it.
+
+## PRIMARY OBJECTIVE
+
+Deliver a working, integrated Raphael clinical AI experience with:
+
+1. ChatGPT-style streaming conversations.
+2. Realtime voice interaction and configurable "Hey Raphael" activation.
+3. Consent-controlled ambient clinical documentation.
+4. Incrementally updated clinical notes.
+5. Integration with the existing physician and patient portals.
+6. Evidence-grounded clinical responses.
+7. Actual end-to-end browser demonstrations.
+
+Implement working code and tests rather than generating additional roadmaps.
+
+## WORKSTREAM A — CONVERSATIONAL CLINICAL AI
+
+Build a polished ChatGPT-style clinical conversation workspace.
+
+Implement:
+
+- Streaming responses
+- Persistent conversation history
+- Patient-specific clinical threads
+- General medical research threads
+- Context-aware follow-up conversations
+- Conversation titles
+- Markdown and structured clinical rendering
+- Verified medical citations
+- Clinical attachments
+- Stop-generation controls
+- Error recovery
+- Model configuration
+- Appropriate clinical uncertainty
+
+Use the existing OpenAI-compatible API architecture.
+
+When development credentials are available, validate actual provider responses.
+
+Otherwise, implement deterministic integration tests and clearly identify the live-provider blocker.
+
+## WORKSTREAM B — RAPHAEL VOICE AND ACTIVATION
+
+Implement:
+
+- User-controlled microphone permissions
+- Push-to-talk
+- Realtime speech recognition where configured
+- Speech synthesis
+- Interruptible spoken responses
+- Voice activity detection
+- Configurable wake phrase such as "Hey Raphael"
+- Standard and Hands-Free modes
+- Visible listening status
+- Mute, pause, and stop controls
+- Appropriate audio privacy controls
+
+Use real browser APIs and supported provider integrations.
+
+Do not represent mock voice output as live speech recognition.
+
+## WORKSTREAM C — ACTIVE CLINICAL DOCUMENTATION
+
+Implement a working synthetic clinical encounter workflow.
+
+The clinician must be able to:
+
+1. Open a synthetic patient encounter.
+2. Confirm recording consent.
+3. Start an authorized transcription session.
+4. View an evolving transcript.
+5. Generate a structured draft note.
+6. Update the note as additional clinical information arrives.
+7. Review uncertain or unsupported statements.
+8. Edit the note.
+9. Approve and sign the note.
+10. Review the audit history.
+
+Support SOAP and progress-note formats initially, using extensible templates for other note types.
+
+Never automatically sign clinical documentation.
+
+## WORKSTREAM D — INTEGRATION
+
+Connect these experiences to the existing Raphael physician portal.
+
+Ensure:
+
+- Patient authorization is enforced.
+- Encounter data persists.
+- Notes are linked to the correct synthetic patient.
+- Clinical conversations are appropriately scoped.
+- Medical evidence references are traceable.
+- Existing messaging continues working.
+- Existing DICOM functionality remains working.
+- Existing JWT security improvements remain intact.
+
+## WORKSTREAM E — PROFESSIONAL INTERFACE
+
+Create a cohesive clinical workspace with:
+
+- ChatGPT-style conversation panel
+- Voice controls
+- Clinical encounter sidebar
+- Live transcript panel
+- Active documentation editor
+- Evidence viewer
+- Clinician approval controls
+- Responsive layout
+- Accessible interface
+
+Do not leave nonfunctional placeholder buttons.
+
+## WORKSTREAM F — TESTING
+
+Run:
+
+- Existing Python tests
+- Existing frontend tests
+- Existing browser tests
+- Streaming conversation tests
+- Voice permission tests
+- Consent-gating tests
+- Active note update tests
+- Physician approval tests
+- Authorization regression tests
+- Persistence tests
+
+Perform a browser demonstration of a synthetic physician opening a patient chart, starting an authorized encounter, interacting with Raphael, updating a clinical note, and approving the documentation.
+
+Clearly distinguish real integrations from simulated development fixtures.
+
+## DELIVERY REQUIREMENTS
+
+- Implement working code.
+- Fix reproducible defects.
+- Preserve all existing functionality.
+- Push changes to the current development branch.
+- Update Draft PR #1.
+- Provide a working browser preview where supported.
+- Report tests actually executed.
+- Report exactly which features are functional.
+- Report which live services require credentials.
+- Provide the precise steps to test Raphael.
+
+Do not merge or deploy automatically.
+
+Do not use real patient data.
+
+Do not stop after documentation.
+
+PRIORITIZE A WORKING INTEGRATED CLINICAL AI EXPERIENCE OVER ADDITIONAL PLANNING.

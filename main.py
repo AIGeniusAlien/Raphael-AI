@@ -774,10 +774,12 @@ if DEV_PORTAL:
     from dev_imaging import install_imaging
     from dev_messaging import install_messaging
     from dev_knowledge import install_knowledge
+    from dev_intelligence import install_intelligence
     install_chart(app, portal_context)
     install_imaging(app, portal_context)
     install_messaging(app, portal_context)
     install_knowledge(app, portal_context)
+    install_intelligence(app, portal_context, assessment_generator=development_assessment)
 
     @app.get("/api/dev/status")
     def portal_status(user=Depends(portal_context.user)):

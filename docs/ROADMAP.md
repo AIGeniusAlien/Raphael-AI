@@ -62,3 +62,7 @@ The complete-platform directive is reconciled additively in the matrix. All earl
 | P7 — Remaining complete platform | All unmet UIX–OPX and existing CI–GOV rows | Continue role/consent/proxy/security, clinical safety/coding/order contracts, sources/freshness/coverage, audio providers, SMART/OAuth/PACS, PostgreSQL/operations, test billing and independent evaluation. Keep each missing/blocked criterion visible; M1 is not clinical readiness. |
 
 Use CONTINUATION.md for exact resume commands and the next executable integrated acceptance scenarios. Test evidence and source/credential scope, not a generic “implemented” label, determine release readiness.
+
+
+## Completed core intelligence increment
+CORE-001/002/004/005 have bounded tested implementations:provider stream transport with scoped persistence,consent-controlled versioned template notes and explicit patient-note publication. CORE-003 has real browser API wiring with fixture tests,not live speech validation. CORE-006 reuses structured assessment with provider configuration still required. CORE-007 chat attachments remains unimplemented. Do not repeat this implementation when continuing; validate actual configured providers and extend attachment/audio/AI note workflows without overwriting clinician edits.

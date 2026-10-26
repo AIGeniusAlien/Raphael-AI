@@ -135,3 +135,14 @@ Final corrected Chromium run:2 tests passed in29.088s. Expanded platform scenari
 
 ## Dependency remediation superseding earlier audit blockers
 See SECURITY_REMEDIATION.md for pinned upgrades,JWT regression coverage and current audit results.97 full Python tests and2 real Chromium scenarios passed on the upgraded runtime. Historical earlier dependency findings above describe the pre-upgrade build; they are not the current package state. Other deployment and clinical validation gates remain open.
+
+
+## Core intelligence increment
+Clinicians can open the integrated intelligence workspace from the portal. Persistent general/patient streams,structured assessment requests,browser voice permission/mode controls,consent-controlled transcript sessions and SOAP/progress template versions now exist. Approved versions publish to patient notes only on explicit signoff. See CORE_INTELLIGENCE.md for operation and exact boundaries. Core-001–007 remain separate from broader clinical completion. Live LLM_BASE_URL/LLM_API_KEY were absent; no live medical-model or microphone/vendor validation is claimed. Clinical attachments in chat,OpenAI realtime audio/diarization and AI-generated clinical note synthesis remain open. Local synthetic development readiness does not imply public/clinical deployment approval.
+
+
+## Final core intelligence release evidence
+
+Final complete Python discovery:109 tests passed in69.126s. Final Node discovery:26 tests passed. Final complete Chromium discovery:3 scenarios passed in48.338s on the frozen source,including the new local HTTP streaming fixture and retired-session response regression. No tests skipped or expected failures substituted. Dependency compatibility remains clean for86 installed distributions; no new dependency was added and the prior zero-known-advisory snapshot remains the dependency baseline. Requirement preservation check:all872 earlier IDs/descriptions retained,879 total after CORE-001–007.
+
+No real LLM credentials or Qdrant URL were present. Real microphone/speech-vendor accuracy was not tested. Browser speech controller tests use fixtures; documentation templates are deterministic,not AI clinical note generation. Clinical chat attachments,OpenAI realtime audio/diarization,AI note synthesis and independent clinical validation remain incomplete. No merge,deployment,real patient data or external clinical communications.

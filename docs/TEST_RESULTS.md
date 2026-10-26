@@ -54,3 +54,17 @@ Final corrected Chromium run:2 tests passed in29.088s. Expanded platform scenari
 
 ## Dependency remediation superseding earlier audit blockers
 See SECURITY_REMEDIATION.md for pinned upgrades,JWT regression coverage and current audit results.97 full Python tests and2 real Chromium scenarios passed on the upgraded runtime. Historical earlier dependency findings above describe the pre-upgrade build; they are not the current package state. Other deployment and clinical validation gates remain open.
+
+
+## Core intelligence implementation checkpoint
+
+Full Python discovery:108 tests passed in79.334s,including9 new streaming/documentation contract tests. Frontend discovery:26 tests passed,including7 voice-controller fixtures (consent,denial,standard/handsfree,wakephrase,timeout,late permission and retired callback guards). Initial Chromium3-scenario run passed in48.068s; after adding a delayed-response regression,the test interception itself needed correction (unroute had already handled a pending route). The corrected intelligence scenario passed in15.843s; final combined browser result is recorded below. Cancellation testing found a genuine UI abort-error message overwrite,which was fixed. No assertions or CSP protections were disabled.
+
+The intelligence browser uses a local deterministic HTTP streaming fixture through the actual OpenAI SDK and real SQLite knowledge retrieval. It does not demonstrate live medical inference. It demonstrates received stream deltas,cancellation,stored citation links,patient context,encounter consent,incremental transcript templates,editing,explicit approval,audit,reload and stale-response protection. Voice tests are fixtures,not real microphone/speech-vendor evaluation. No dependency versions changed; the prior clean vulnerability snapshot is retained.
+
+
+## Final core intelligence release evidence
+
+Final complete Python discovery:109 tests passed in69.126s. Final Node discovery:26 tests passed. Final complete Chromium discovery:3 scenarios passed in48.338s on the frozen source,including the new local HTTP streaming fixture and retired-session response regression. No tests skipped or expected failures substituted. Dependency compatibility remains clean for86 installed distributions; no new dependency was added and the prior zero-known-advisory snapshot remains the dependency baseline. Requirement preservation check:all872 earlier IDs/descriptions retained,879 total after CORE-001–007.
+
+No real LLM credentials or Qdrant URL were present. Real microphone/speech-vendor accuracy was not tested. Browser speech controller tests use fixtures; documentation templates are deterministic,not AI clinical note generation. Clinical chat attachments,OpenAI realtime audio/diarization,AI note synthesis and independent clinical validation remain incomplete. No merge,deployment,real patient data or external clinical communications.

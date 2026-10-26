@@ -4,7 +4,7 @@
   "branch": "fix/sqlite-startup-recovery",
   "pr": 1,
   "requirements_prior": 1117,
-  "requirements_total": 1127,
+  "requirements_total": 1128,
   "baseline_ids_descriptions_preserved": true,
   "local_verification": {
     "schema_version": 1,
@@ -133,7 +133,12 @@
       "file": "mobile/ios/Raphael/PatientWebSession.swift",
       "cause": "Completion closure passed to async callAsyncJavaScript overload",
       "fix_commit": "766d3e7e747c29de8f39b945bd0b57a370c7dbbd",
-      "status": "Awaiting actual new Xcode job"
+      "status": "Compilation succeeded after async fix;simulator startup then aborted;runtime path fix under new CI verification"
+    },
+    "runtime_followup": {
+      "commit": "78de89b673432bb91ef43494c664814e602b14d6",
+      "changes": "Bundle-relative runtime search paths and bounded crash-report annotations",
+      "verified": false
     }
   },
   "cross_platform": {
@@ -176,12 +181,31 @@
   "owner_commands": "docs/AUTOMATED_DEVELOPMENT.md",
   "security_scan_artifact": "docs/PRODUCTION_SOURCE_SCAN.json",
   "dependency_audit_artifact": "docs/PRODUCTION_DEPENDENCY_AUDIT.json",
-  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40417447388",
-  "ci_observed_status": "queued after compiler fix;prior advisory job passed,prior native compile failed,prior regression run cancelled by newer push",
+  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40418688776",
+  "ci_observed_status": "New corrective run in progress;advisory/security job passed",
   "additional_final_python_suite": {
     "passed": 193,
     "failed": 0,
     "duration_seconds": 73.984,
     "reason": "Added CI diagnostic redaction/annotation security regression after the192test consolidated run"
+  },
+  "evidence_inventory": {
+    "collection": "raphael_evidence_v1",
+    "total_vectors": 31,
+    "active_vectors": 31,
+    "active_documents": 6,
+    "dimensions": 384,
+    "distance": "Cosine",
+    "embedding_models": [
+      "text-embedding-3-small"
+    ],
+    "operation": "read_only_inventory",
+    "collection_mutated": false
+  },
+  "remote_browser_followup": {
+    "failure": "Care page390px overflow on remote Chromium",
+    "fix": "Intrinsic controls shrink and long tokens wrap;no overflow hidden",
+    "local_verified": "320px and390px with20px text;actual Chromium passed",
+    "remote_verified": false
   }
 }

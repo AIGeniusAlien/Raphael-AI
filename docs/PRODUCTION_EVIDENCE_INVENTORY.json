@@ -1,0 +1,13 @@
+{
+  "collection": "raphael_evidence_v1",
+  "total_vectors": 31,
+  "active_vectors": 31,
+  "active_documents": 6,
+  "dimensions": 384,
+  "distance": "Cosine",
+  "embedding_models": [
+    "text-embedding-3-small"
+  ],
+  "operation": "read_only_inventory",
+  "collection_mutated": false
+}

@@ -4,11 +4,11 @@
   "state_counts": {
     "PARTIAL": 859,
     "NOT_IMPLEMENTED": 194,
-    "VERIFIED": 40,
+    "VERIFIED": 41,
     "BLOCKED_EXTERNAL": 11,
     "IMPLEMENTED_UNVERIFIED": 23
   },
-  "requirement_count": 1127,
+  "requirement_count": 1128,
   "clinical_validation": false,
   "requirements": [
     {
@@ -15785,6 +15785,20 @@
       "remaining_work": "Automated screening remains fallible;independent clinical validation required",
       "acceptance_criteria": "Unsupported draft clearly labeled blocked;controls recover;never interpret block as medical approval",
       "next_implementation_action": "Automated screening remains fallible;independent clinical validation required",
+      "priority": "P0",
+      "milestone": "M1",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "PROD-011",
+      "description": "Connected-care mobile layout handles intrinsic controls and long provenance with enlarged text without hidden overflow",
+      "state": "VERIFIED",
+      "code_location": "static/care.css;e2e/test_care_browser.py",
+      "test_coverage": "Remote CI exposed390pxoverflow;local regression now320and390pxwith20pxtext passes",
+      "external_dependency": "Browser font metrics and viewport",
+      "remaining_work": "Corrective remote Chromium verification pending",
+      "acceptance_criteria": "Controls shrink;identifiers and summaries wrap;no hidden-overflow masking;retain approved palette/layout",
+      "next_implementation_action": "Corrective remote Chromium verification pending",
       "priority": "P0",
       "milestone": "M1",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."

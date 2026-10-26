@@ -86,7 +86,7 @@ jobs:
           bash mobile/scripts/native_checks.sh 2>&1 | tee native-build.log
       - name: Publish native failure diagnostics
         if: failure()
-        run: python3 .github/scripts/publish_diagnostics.py native-build.log
+        run: python3 .github/scripts/publish_diagnostics.py native-build.log --native-crashes
       - uses: actions/upload-artifact@v4
         if: always()
         with:

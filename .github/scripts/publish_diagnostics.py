@@ -26,5 +26,17 @@ def main():
         errors=[line for line in lines if 'error:' in line.lower() or 'failed' in line.lower() or 'Testing failed' in line]
         messages.append('\n'.join(errors[-30:])[-7000:] if errors else '\n'.join(lines[-45:])[-7000:])
     else:messages.append('No diagnostic log was produced.')
+    if '--native-crashes' in sys.argv:
+        candidates=list((Path.home()/'Library/Logs/DiagnosticReports').glob('Raphael*.ips'))
+        candidates+=list((Path.home()/'Library/Developer/CoreSimulator/Devices').glob('*/data/Library/Logs/CrashReporter/Raphael*.ips'))
+        for crash in sorted(candidates,key=lambda p:p.stat().st_mtime,reverse=True)[:5]:
+            raw=crash.read_text(errors='replace');decoder=json.JSONDecoder();position=0
+            while position<len(raw):
+                while position<len(raw) and raw[position].isspace():position+=1
+                try:payload,end=decoder.raw_decode(raw,position)
+                except ValueError:break
+                position=end
+                if isinstance(payload,dict) and ('termination' in payload or 'exception' in payload):
+                    messages.append('Native crash '+crash.name+': '+json.dumps({key:payload.get(key) for key in ('procName','exception','termination','asi','faultingThread')})[:5000])
     for message in messages:print('::error title=Raphael failure diagnostics::'+escape(redact(message)))
 if __name__=='__main__':main()

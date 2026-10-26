@@ -83,7 +83,11 @@ class CareBrowserTests(unittest.TestCase):
        thread_id=contexts['receiver'].request.get('/api/dev/intelligence/threads').json()[0]['id']
        patient.once('dialog',lambda dialog:dialog.accept());patient.locator('#revoke').click();expect(patient.locator('#sharing-state')).to_contain_text('REVOKED')
        self.assertEqual(contexts['receiver'].request.get(f'/api/dev/care/intakes/{intake_id}').status,404);self.assertEqual(contexts['receiver'].request.get(f'/api/dev/intelligence/threads/{thread_id}').status,404)
-       self.assertTrue(patient.evaluate('() => document.documentElement.scrollWidth <= innerWidth'))
+       for width in (320,390):
+        patient.set_viewport_size({'width':width,'height':844})
+        patient.evaluate("() => {document.documentElement.style.fontSize='20px'}")
+        overflow=patient.evaluate("() => [...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+0.5).map(e=>({element:e.tagName+'#'+e.id,right:e.getBoundingClientRect().right,viewport:innerWidth})).slice(0,12)")
+        self.assertTrue(patient.evaluate('() => document.documentElement.scrollWidth <= innerWidth'),overflow)
        self.assertFalse(errors,errors)
       finally:browser.close()
     finally:

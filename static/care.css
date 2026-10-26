@@ -1,1 +1,9 @@
 #care{display:grid;grid-template-columns:minmax(220px,1fr) minmax(320px,2fr);gap:1rem;align-items:start}#care>section{background:#fff;padding:1.2rem;border:1px solid #d7e2ea;border-radius:1rem;min-width:0}#care>section:last-child{grid-column:1/-1}.care-card{padding:.8rem;border:1px solid #d7e2ea;border-radius:.6rem;margin:.5rem 0;overflow-wrap:anywhere}select{width:100%;font:inherit;padding:.6rem}input[type=checkbox]{width:auto}#packet p,#emergency-packet p{white-space:pre-wrap}#intakes button{display:block;width:100%;text-align:left}#sharing-state{font-weight:700;color:#075e68}@media(max-width:760px){#care{display:block}#care>section{margin-bottom:1rem}}
+/* Preserve the existing layout while allowing intrinsic controls and source IDs
+   to shrink/wrap at mobile widths and larger accessible text sizes. */
+#care{min-width:0;max-width:100%;overflow-wrap:anywhere}
+#care select,#care input,#care textarea{min-width:0;max-width:100%}
+#intakes button{margin-inline:0;white-space:normal}
+#care details,#care summary{min-width:0;max-width:100%;overflow-wrap:anywhere}
+#care code{white-space:pre-wrap;overflow-wrap:anywhere}
+#status,#identity{overflow-wrap:anywhere}

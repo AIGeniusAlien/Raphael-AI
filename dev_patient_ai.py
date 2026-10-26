@@ -108,7 +108,7 @@ def install_patient_ai(app,ctx,token_provider=None,evidence_provider=None):
     def read(identifier:int,user=Depends(patient_user)):
         with engine.begin() as c:
             result=thread_for(c,identifier,user)
-            result['messages']=[dict(row,evidence=json.loads(row['evidence'])) for row in c.execute(text('SELECT * FROM dev_patient_ai_messages WHERE thread_id=:id ORDER BY id'),{'id':identifier}).mappings()]
+            result['messages']=[dict(row,evidence=json.loads(row['evidence']),claim_screen=json.loads(row['claim_screen']) if row['claim_screen'] else None) for row in c.execute(text('SELECT * FROM dev_patient_ai_messages WHERE thread_id=:id ORDER BY id'),{'id':identifier}).mappings()]
             ctx.audit(c,user,'read_patient_ai','patient_ai_thread',identifier);return result
     @router.post('/threads/{identifier}/revoke')
     def revoke(identifier:int,user=Depends(patient_user)):
@@ -229,7 +229,7 @@ def export_patient_ai(c,user):
         messages=[]
         for row in c.execute(text('SELECT * FROM dev_patient_ai_messages WHERE thread_id=:id ORDER BY id LIMIT 1001'),{'id':thread['id']}).mappings():
             if len(messages)>=1000:raise HTTPException(413,'Educational history exceeds the automated limit.Contact the development operator.')
-            message=dict(row,evidence=json.loads(row['evidence']));size+=len(json.dumps(message).encode())
+            message=dict(row,evidence=json.loads(row['evidence']),claim_screen=json.loads(row['claim_screen']) if row['claim_screen'] else None);size+=len(json.dumps(message).encode())
             if size>10*1024*1024:raise HTTPException(413,'Educational history exceeds the automated export limit.Contact the development operator.')
             messages.append(message)
         thread['messages']=messages

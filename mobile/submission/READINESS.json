@@ -1,0 +1,16 @@
+{
+  "ios_source": "IMPLEMENTED_UNVERIFIED",
+  "linux_structural_audit": "VERIFIED",
+  "linux_project_tests": {"passed": 5},
+  "xcode_compile": "BLOCKED_EXTERNAL",
+  "simulator_and_device_tests": "BLOCKED_EXTERNAL",
+  "apple_signing": "BLOCKED_EXTERNAL",
+  "privacy_legal_clinical_review": "REQUIRES_CLINICAL_VALIDATION",
+  "account_erasure": "NOT_IMPLEMENTED",
+  "native_download_export": "NOT_IMPLEMENTED",
+  "android_native": "NOT_IMPLEMENTED",
+  "staging_deployed": false,
+  "app_store_ready": false,
+  "testflight_uploaded": false,
+  "owner_actions": ["Provide authorized synthetic HTTPS staging origin","Run Xcode build and device tests","Supply registered bundle, signing team and real support/privacy URLs","Complete legal/privacy/clinical review and policy-backed account deletion"]
+}

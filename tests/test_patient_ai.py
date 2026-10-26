@@ -110,7 +110,7 @@ class PatientAITests(unittest.TestCase):
             response=self.ask(identifier)
         self.assertIn('event: safety_blocked',response.text);self.assertNotIn('event: complete',response.text)
         latest=self.client.get(f'/api/dev/patient-ai/threads/{identifier}').json()['messages'][-1]
-        self.assertEqual(latest['status'],'blocked');self.assertIn('unsupported',latest['claim_screen'])
+        self.assertEqual(latest['status'],'blocked');self.assertEqual(latest['claim_screen']['checks'][0]['support'],'unsupported')
         with patch.dict(os.environ,{'RAPHAEL_VERIFY_CLAIMS':'1'}),patch('rag.claim_support.screen_claims',side_effect=RuntimeError('SECRET-VERIFIER-FIXTURE')):
             response=self.ask(identifier)
         self.assertIn('event: error',response.text);self.assertNotIn('SECRET-VERIFIER',response.text);self.assertNotIn('event: complete',response.text)

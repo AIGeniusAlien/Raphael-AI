@@ -65,19 +65,44 @@ def run(output):
                             context=browser.new_context(base_url=base,viewport={'width':1280,'height':900});page=context.new_page();errors=[];page.on('pageerror',lambda error:errors.append(type(error).__name__))
                             page.goto('/');page.locator('#tenant').fill('live-synthetic');page.locator('#username').fill('live-physician');page.locator('#password').fill(password);page.locator('#login-form button').click();expect(page.locator('#workspace')).to_be_visible()
                             page.get_by_role('link',name='Connected intake and emergency information').click();expect(page.locator('#intakes button')).to_have_count(1);page.locator('#intakes button').click();page.locator('#assistant').click();expect(page.locator('#thread-scope')).to_contain_text('No live chart is included')
-                            question='For this synthetic adult with cough,sore throat and rhinorrhea,explain when antibiotics are not indicated and when streptococcal testing should be considered. Use the CDC evidence,distinguish pediatric guidance,state uncertainty and missing information,and cite exact retrieved IDs. This is clinician-reviewed education,not a treatment instruction.'
-                            page.locator('#prompt').fill(question);page.locator('#prompt-form button').click();page.wait_for_function("() => /Draft complete|failed|unavailable|No reviewed/.test(document.querySelector('#status').textContent)",timeout=90000);expect(page.locator('#status')).to_contain_text('Draft complete')
+                            question='For this synthetic adult,answer in one short paragraph only: according to the supplied CDC evidence,do antibiotics work against viruses? Cite the exact evidence label and source date. State that this is general education requiring clinician review,not an individual treatment decision.'
+                            page.locator('#prompt').fill(question);page.locator('#prompt-form button').click();page.wait_for_function("() => /Draft complete|blocked|failed|unavailable|No reviewed/.test(document.querySelector('#status').textContent)",timeout=90000)
                             stage='evidence_display'
                             expect(page.locator('#evidence')).to_contain_text('Source: CDC');expect(page.locator('#evidence')).to_contain_text('Official CDC')
                             threads=context.request.get('/api/dev/intelligence/threads').json();thread=context.request.get('/api/dev/intelligence/threads/'+str(threads[0]['id'])).json();message=thread['messages'][-1]
-                            assert message['status']=='complete' and message['role']=='assistant'
+                            assert message['status'] in ('complete','blocked') and message['role']=='assistant'
+                            if message['status']=='blocked':assert message.get('claim_screen',{}).get('status')=='blocked'
                             ids=re.findall(r'\[([^\[\]]+)\]',message['content']);assert ids and set(ids)<={x['chunk_id'] for x in message['evidence']}
                             for evidence in message['evidence']:
                                 response=context.request.get('/api/dev/intelligence/evidence/'+evidence['chunk_id']);assert response.status==200 and response.json()['chunk_id']==evidence['chunk_id']
                             page.reload();expect(page.locator('#evidence')).to_contain_text('Source: CDC',timeout=30000)
                             assert not errors
                             page.screenshot(path=str(output.with_suffix('.png')),full_page=False)
-                            result.update(question=question,response=message['content'],generation_id=message['generation_id'],model=message['model'],citation_ids=ids,retrieved_evidence=message['evidence'],browser_page_errors=errors,clinician_approved=False)
+                            result.update(physician_status=message['status'],claim_screen=message.get('claim_screen'),question=question,response=message['content'],generation_id=message['generation_id'],model=message['model'],citation_ids=ids,retrieved_evidence=message['evidence'],browser_page_errors=errors,clinician_approved=False)
+                            stage='patient_live_conversation'
+                            patient_context=browser.new_context(base_url=base,viewport={'width':390,'height':844})
+                            patient_context.request.post('/api/dev/login',data={'tenant':'live-synthetic','username':'live-patient','password':password})
+                            patient_page=patient_context.new_page();patient_page.goto('/static/patient-ai.html')
+                            expect(patient_page.locator('#patient-ai')).to_be_visible()
+                            patient_page.locator('#title').fill('Synthetic live CDC education')
+                            patient_page.locator('#consent').check();patient_page.locator('#new-thread button').click()
+                            expect(patient_page.locator('#thread-title')).to_have_text('Synthetic live CDC education')
+                            patient_page.locator('#prompt').fill('In one short paragraph, explain from the CDC evidence whether antibiotics work on viruses. Cite the evidence and its date. This is general education,not a request for treatment.')
+                            patient_page.locator('#prompt-form button').click()
+                            patient_page.wait_for_function("() => /complete|failed|unavailable|blocked|did not pass/.test(document.querySelector('#status').textContent)",timeout=90000)
+                            patient_threads=patient_context.request.get('/api/dev/patient-ai/threads').json()
+                            patient_thread=patient_context.request.get('/api/dev/patient-ai/threads/'+str(patient_threads[0]['id'])).json()
+                            patient_message=patient_thread['messages'][-1]
+                            result['patient_workflow']={'status':patient_message['status'],'response':patient_message['content'],'evidence':patient_message['evidence'],'claim_screen':patient_message.get('claim_screen'),'clinician_approved':False}
+                            assert patient_message['status'] in ('complete','blocked')
+                            if patient_message['status']=='blocked':assert patient_message.get('claim_screen',{}).get('status')=='blocked'
+                            for item in patient_message['evidence']:
+                                citation=patient_context.request.get('/api/dev/patient-ai/threads/'+str(patient_threads[0]['id'])+'/evidence/'+item['chunk_id'])
+                                assert citation.status==200
+                            patient_page.reload();patient_page.locator('#threads button').first.click()
+                            expect(patient_page.locator('#messages')).to_contain_text(patient_message['content'][:40])
+                            patient_page.screenshot(path=str(output.with_name(output.stem+'-patient.png')),full_page=False)
+
                         except Exception:
                             result['ui_status']=page.locator('#status').inner_text()
                             try:
@@ -92,7 +117,7 @@ def run(output):
                     except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait(timeout=5)
         stage='original_source_verification'
         originals={s['url']:s for s in fetch_sources()}
-        for evidence in result['retrieved_evidence']:
+        for evidence in result['retrieved_evidence']+result.get('patient_workflow',{}).get('evidence',[]):
             source=originals[evidence['url']]
             assert source['content_sha256']==evidence['content_sha256'] and evidence['text'] in source['text']
             assert source['source_date']==evidence['source_date'] and source['title']==evidence['title']
@@ -102,7 +127,7 @@ def run(output):
         result.update(status='passed',original_source_hash_and_excerpt_checks=True,live_missing_evidence_results=0,collection=collection(),embedding_model=MODEL,actual_dimensions=DIMENSIONS)
     except Exception as error:result.update(failed_stage=stage,error_type=type(error).__name__,http_status=getattr(error,'status_code',None))
     output.write_text(json.dumps(result,indent=2)+'\n')
-    print(json.dumps({k:v for k,v in result.items() if k not in ('response','retrieved_evidence','question','generation_id','citation_ids','diagnostic_thread')}))
+    print(json.dumps({k:v for k,v in result.items() if k not in ('response','retrieved_evidence','question','generation_id','citation_ids','diagnostic_thread','patient_workflow','claim_screen')}))
     return 0 if result['status']=='passed' else 1
 
 

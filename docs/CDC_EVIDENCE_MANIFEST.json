@@ -3,23 +3,23 @@
     "collection": "raphael_evidence_v1",
     "actual_dimensions": 384,
     "embedding_model": "text-embedding-3-small",
-    "vectors_before": 4,
-    "vectors_after": 20,
-    "active_vectors": 20,
-    "active_documents": 3,
-    "vectors_written": 16,
-    "vectors_deduplicated": 4
+    "vectors_before": 20,
+    "vectors_after": 31,
+    "active_vectors": 31,
+    "active_documents": 6,
+    "vectors_written": 11,
+    "vectors_deduplicated": 20
   },
   "repeat": {
     "collection": "raphael_evidence_v1",
     "actual_dimensions": 384,
     "embedding_model": "text-embedding-3-small",
-    "vectors_before": 20,
-    "vectors_after": 20,
-    "active_vectors": 20,
-    "active_documents": 3,
+    "vectors_before": 31,
+    "vectors_after": 31,
+    "active_vectors": 31,
+    "active_documents": 6,
     "vectors_written": 0,
-    "vectors_deduplicated": 20
+    "vectors_deduplicated": 31
   },
   "sources": [
     {
@@ -30,7 +30,10 @@
       "license": "CDC public-domain government text;exceptions reviewed;no images/logos/third-party works",
       "license_url": "https://www.cdc.gov/other/agencymaterials.html",
       "license_policy_sha256": "6c6a132b6dff3b4835da4b93f6948a1d1c775e8f7a0dcab78935a0758eb33686",
-      "retrieved_at": "2026-10-26T17:13:50.277578+00:00"
+      "retrieved_at": "2026-10-26T17:49:55.786648+00:00",
+      "population": "general",
+      "specialty": "primary_care",
+      "population_scope_note": "General patient education;individual recommendations may still be age-specific."
     },
     {
       "url": "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/adult-outpatient.html",
@@ -40,7 +43,10 @@
       "license": "CDC public-domain government text;exceptions reviewed;no images/logos/third-party works",
       "license_url": "https://www.cdc.gov/other/agencymaterials.html",
       "license_policy_sha256": "6c6a132b6dff3b4835da4b93f6948a1d1c775e8f7a0dcab78935a0758eb33686",
-      "retrieved_at": "2026-10-26T17:13:50.334098+00:00"
+      "retrieved_at": "2026-10-26T17:49:55.871986+00:00",
+      "population": "adult",
+      "specialty": "primary_care",
+      "population_scope_note": "Source explicitly addresses adult outpatient care."
     },
     {
       "url": "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/pediatric-outpatient.html",
@@ -50,7 +56,49 @@
       "license": "CDC public-domain government text;exceptions reviewed;no images/logos/third-party works",
       "license_url": "https://www.cdc.gov/other/agencymaterials.html",
       "license_policy_sha256": "6c6a132b6dff3b4835da4b93f6948a1d1c775e8f7a0dcab78935a0758eb33686",
-      "retrieved_at": "2026-10-26T17:13:50.379367+00:00"
+      "retrieved_at": "2026-10-26T17:49:56.393108+00:00",
+      "population": "pediatric",
+      "specialty": "pediatrics",
+      "population_scope_note": "Source explicitly addresses pediatric outpatient care."
+    },
+    {
+      "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+      "title": "Signs and Symptoms of Stroke",
+      "source_date": "2026-05-19",
+      "content_sha256": "98dc620ac26d9996719bdd10541c0c3e11d8f8c232547a3f7c46703d3dc4f262",
+      "license": "CDC public-domain government text;exceptions reviewed;no images/logos/third-party works",
+      "license_url": "https://www.cdc.gov/other/agencymaterials.html",
+      "license_policy_sha256": "6c6a132b6dff3b4835da4b93f6948a1d1c775e8f7a0dcab78935a0758eb33686",
+      "retrieved_at": "2026-10-26T17:49:56.517709+00:00",
+      "population": "adult",
+      "specialty": "neurology_emergency",
+      "population_scope_note": "Reviewed source describes stroke signs in men and women;no pediatric applicability review is claimed."
+    },
+    {
+      "url": "https://www.cdc.gov/diabetes/signs-symptoms/index.html",
+      "title": "Symptoms of Diabetes",
+      "source_date": "2024-05-15",
+      "content_sha256": "cec37fe7ca868e0cbd38043a376d4f773a00447551258c468d2f4dffee6d4b91",
+      "license": "CDC public-domain government text;exceptions reviewed;no images/logos/third-party works",
+      "license_url": "https://www.cdc.gov/other/agencymaterials.html",
+      "license_policy_sha256": "6c6a132b6dff3b4835da4b93f6948a1d1c775e8f7a0dcab78935a0758eb33686",
+      "retrieved_at": "2026-10-26T17:49:56.639732+00:00",
+      "population": "general",
+      "specialty": "endocrinology",
+      "population_scope_note": "Source explicitly discusses diabetes across ages and pregnancy;subsection applicability requires clinician review."
+    },
+    {
+      "url": "https://www.cdc.gov/asthma/about/index.html",
+      "title": "About Asthma",
+      "source_date": "2026-08-28",
+      "content_sha256": "ae1505ffe05d69ed997acdc495e8b6f98edcd136575a8be8c489e48a71b0801e",
+      "license": "CDC public-domain government text;exceptions reviewed;no images/logos/third-party works",
+      "license_url": "https://www.cdc.gov/other/agencymaterials.html",
+      "license_policy_sha256": "6c6a132b6dff3b4835da4b93f6948a1d1c775e8f7a0dcab78935a0758eb33686",
+      "retrieved_at": "2026-10-26T17:49:56.973677+00:00",
+      "population": "general",
+      "specialty": "pulmonology",
+      "population_scope_note": "Source explicitly discusses asthma in children and adults;subsection applicability requires clinician review."
     }
   ]
 }

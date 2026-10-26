@@ -25,6 +25,12 @@ class ClaimSupportTests(unittest.TestCase):
         for bad in ({'checks':self.response()['checks'][:-1]},{'checks':self.response()['checks']+[self.response()['checks'][0]]},self.response(quote='Invented supporting quotation')):
             with self.assertRaises(ValueError):validate_screen(self.answer,self.evidence,'adult',bad)
 
+    def test_missing_support_for_associated_reference_is_blocked_not_approved(self):
+        response=self.response();response['checks'][1]['supports']=[]
+        result=validate_screen(self.answer,self.evidence,'adult',response)
+        self.assertEqual(result['status'],'blocked');self.assertEqual(result['checks'][1]['verdict'],'unsupported')
+        self.assertEqual(result['checks'][1]['reason_code'],'missing_support')
+
     def test_citation_membership_and_quote_source_mismatch_fail_closed(self):
         with self.assertRaises(ValueError):validate_screen(self.answer.replace('source-1','fabricated-id'),self.evidence,'adult',self.response())
         bad=self.response();bad['checks'][1]['supports'][0]['chunk_id']='another-source'
@@ -44,13 +50,22 @@ class ClaimSupportTests(unittest.TestCase):
             self.assertEqual(result['status'],'blocked');self.assertEqual(result['counts'][verdict],1)
 
     def test_one_bounded_real_adapter_call_uses_untrusted_data_boundary_and_records_usage(self):
-        fixture=NS(choices=[NS(message=NS(content=json.dumps(self.response())),finish_reason='stop')],model='approved-fixture-snapshot',usage=NS(prompt_tokens=100,completion_tokens=50,total_tokens=150))
+        response=self.response();response['checks'][1]['supports']=[{'quote_ref':'E1:Q0'}]
+        fixture=NS(choices=[NS(message=NS(content=json.dumps(response)),finish_reason='stop')],model='approved-fixture-snapshot',usage=NS(prompt_tokens=100,completion_tokens=50,total_tokens=150))
         with patch.dict(os.environ,{'LLM_BASE_URL':'https://provider.invalid/v1','LLM_API_KEY':'SYNTHETIC-KEY','LLM_MODEL':'approved-fixture'}),patch('rag.claim_support.OpenAI') as sdk:
             create=sdk.return_value.__enter__.return_value.chat.completions.create;create.return_value=fixture
             result=screen_claims(self.answer,self.evidence,'adult')
             create.assert_called_once();self.assertEqual(sdk.call_args.kwargs['timeout'],20);self.assertEqual(sdk.call_args.kwargs['max_retries'],0)
-            self.assertEqual(create.call_args.kwargs['model'],'approved-fixture');self.assertIn('untrusted data',create.call_args.kwargs['messages'][0]['content'])
+            self.assertEqual(create.call_args.kwargs['model'],'approved-fixture');self.assertIn('untrusted data',create.call_args.kwargs['messages'][0]['content']);self.assertTrue(create.call_args.kwargs['response_format']['json_schema']['strict'])
             self.assertEqual(result['usage']['total_tokens'],150);self.assertEqual(result['model_requested'],'approved-fixture')
+
+    def test_unknown_registered_quote_or_wrong_source_fails_closed(self):
+        for reference in ('E9:Q0','E1:invented'):
+            response=self.response();response['checks'][1]['supports']=[{'quote_ref':reference}]
+            fixture=NS(choices=[NS(message=NS(content=json.dumps(response)),finish_reason='stop')])
+            with patch.dict(os.environ,{'LLM_BASE_URL':'https://provider.invalid/v1','LLM_API_KEY':'SYNTHETIC-KEY','LLM_MODEL':'fixture'}),patch('rag.claim_support.OpenAI') as sdk:
+                sdk.return_value.__enter__.return_value.chat.completions.create.return_value=fixture
+                with self.assertRaises(ClaimScreenUnavailable):screen_claims(self.answer,self.evidence,'adult')
 
     def test_provider_truncation_invalid_json_and_error_payloads_are_redacted(self):
         for fixture in (NS(choices=[NS(message=NS(content='SECRET-REFLECTION'),finish_reason='length')]),NS(choices=[NS(message=NS(content='SECRET-REFLECTION'),finish_reason='stop')]),RuntimeError('SECRET-REFLECTION')):

@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Raphael internal inbox</title><link rel="stylesheet" href="/static/inbox.css"></head>
+<body><header><h1>Raphael internal inbox</h1><p>Synthetic development accounts only. Routine messages are stored in this portal; no email, SMS or EHR delivery occurs. Never use this portal for emergencies or real patient care.</p><nav><a href="/">Portal home</a> <a href="/static/admin.html">Development administration</a></nav></header>
+<p id="session" class="meta"></p><p id="status" role="status" aria-live="polite"></p>
+<main><aside><h2>Internal conversations</h2><button id="refresh" type="button">Refresh inbox</button><p id="counts"></p><div id="inbox"></div></aside>
+<section id="thread" hidden><h2 id="thread-title"></h2><p id="thread-meta"></p><ol id="messages"></ol>
+<form id="message-form" hidden><h3>Send a patient message internally</h3><label for="message">Message</label><textarea id="message" required maxlength="20000"></textarea><button type="submit">Send internally</button></form>
+<section id="draft-section" hidden><h3>Physician response drafts</h3><p>A draft is not sent automatically. Edit, explicitly approve, then separately send it internally. Approval here is a synthetic test workflow, not a qualified electronic signature.</p>
+<form id="draft-form"><label for="draft-content">Draft response</label><textarea id="draft-content" required maxlength="20000"></textarea><label for="due-at">Routine follow-up date (optional)</label><input id="due-at" type="datetime-local"><button type="submit">Save unapproved draft</button><button id="cancel-edit" type="button" hidden>Cancel edit</button></form>
+<form id="assist-form"><label for="instruction">Instruction for configured AI draft provider</label><textarea id="instruction" maxlength="5000" required></textarea><button type="submit">Request unapproved AI draft</button><p class="meta">An unavailable provider reports an error. No mock or external message is produced.</p></form><div id="drafts"></div></section>
+</section></main><script src="/static/inbox.js"></script></body></html>

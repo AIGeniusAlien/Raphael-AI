@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--database-url", required=True, help="Isolated synthetic SQLite URL, never production")
     parser.add_argument("--tenant", required=True)
     parser.add_argument("--username", required=True)
-    parser.add_argument("--role", required=True, choices=("patient", "clinician"))
+    parser.add_argument("--role", required=True, choices=("patient", "clinician", "org_admin"))
     parser.add_argument("--password-stdin", action="store_true", help="Read one password line from stdin; otherwise prompt privately")
     args = parser.parse_args()
     password = sys.stdin.readline().rstrip("\r\n") if args.password_stdin else getpass.getpass("Synthetic development password (12–128 characters): ")

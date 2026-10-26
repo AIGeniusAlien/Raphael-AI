@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Raphael — reviewed development evidence</title>
+  <link rel="stylesheet" href="/static/knowledge.css">
+  <script src="/static/knowledge.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Reviewed evidence workspace</h1>
+    <p class="warning">Synthetic development only. Supplied source text, permission and quality are clinician attestations; this workspace does not independently verify medical truth or licensing. No medical corpus is preloaded.</p>
+    <nav aria-label="Workspace"><a href="/static/portal.html">Patient and physician portal</a></nav>
+    <p id="account"></p>
+  </header>
+  <p id="status" role="status" aria-live="polite"></p>
+  <main id="workspace" hidden>
+    <section aria-labelledby="search-title">
+      <h2 id="search-title">Search approved excerpts</h2>
+      <p>Actual local SQLite FTS5 lexical search. Scores describe query-token coverage, not semantic similarity or clinical confidence. Results are limited to the current clinician-approved version of each supplied source.</p>
+      <form id="search-form">
+        <label for="query">Search text</label>
+        <input id="query" required minlength="2" maxlength="1000">
+        <button type="submit">Search reviewed text</button>
+      </form>
+      <p id="coverage"></p>
+      <div id="results"></div>
+      <section id="citation" aria-label="Resolved stored citation"></section>
+    </section>
+    <section aria-labelledby="sources-title">
+      <h2 id="sources-title">Source versions and review</h2>
+      <p>Reviewing a new version supersedes the previously approved version. Revocation removes it from search and citation resolution while preserving its audit and content history. Source dates are shown without a guideline-currency claim.</p>
+      <button id="refresh" type="button">Refresh sources</button>
+      <div id="sources"></div>
+      <section id="source-detail" aria-label="Source content review"></section>
+    </section>
+    <section aria-labelledby="intake-title">
+      <h2 id="intake-title">Intake an authorized excerpt</h2>
+      <p>Paste only material you may legally use in this synthetic development environment. No URL fetch or restricted-resource scraping takes place. New sources remain pending until explicit content review.</p>
+      <form id="source-form">
+        <label for="title">Source title</label><input id="title" required maxlength="300">
+        <label for="url">Public HTTPS source URL, without credentials</label><input id="url" type="url" required maxlength="2048">
+        <label for="org">Source organization</label><input id="org" required maxlength="200">
+        <label for="jurisdiction">Jurisdiction</label><input id="jurisdiction" value="Unspecified" required maxlength="100">
+        <label for="source-type">Source type</label><input id="source-type" value="manually_supplied_excerpt" required maxlength="100">
+        <label for="tier">Clinician-assigned evidence tier</label>
+        <select id="tier"><option value="D">D — educational / unclassified</option><option value="C">C — primary literature</option><option value="B">B — public clinical pathway</option><option value="A">A — guideline / review</option></select>
+        <label for="strength">Clinician-assigned evidence strength</label>
+        <select id="strength"><option value="">Unassigned</option><option>very_low</option><option>low</option><option>moderate</option><option>high</option></select>
+        <label for="source-date">Publication/update date, if known</label><input id="source-date" type="date">
+        <label for="license">Permission/license declaration and basis</label><textarea id="license" required minlength="8" maxlength="2000" rows="3"></textarea>
+        <label for="content">Authorized source excerpt, maximum 200,000 characters</label><textarea id="content" required minlength="10" maxlength="200000" rows="10"></textarea>
+        <label class="checkbox"><input id="permission" type="checkbox" required> I attest that this supplied excerpt may be stored and used here. This declaration is not independent legal verification.</label>
+        <button type="submit">Save pending source version</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

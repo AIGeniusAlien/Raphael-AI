@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raphael — Synthetic structured chart</title>
+<link rel="stylesheet" href="/static/chart.css">
+<script src="/static/chart.js" defer></script>
+</head>
+<body>
+<header><a href="/static/portal.html">← Return to portal</a><p class="brand">RAPHAEL · STRUCTURED CHART</p>
+<h1 id="patient-name">Loading authorized synthetic chart…</h1><p id="session"></p></header>
+<main>
+<p class="notice">Synthetic development data only. Entered ranges produce comparison flags, not a diagnosis or treatment recommendation. Care plans and imaging reports require explicit clinician approval before patient visibility. This interface does not send notifications, clinical orders or external messages.</p>
+<p id="status" role="status" aria-live="polite"></p>
+<button id="refresh" type="button">Refresh chart</button>
+<section id="chart-content" hidden>
+<section aria-labelledby="encounter-heading"><h2 id="encounter-heading">Encounters and visit summaries</h2><div id="encounters"></div>
+<form id="encounter-form" hidden><h3>Record a synthetic encounter</h3><label>Visit title<input id="encounter-title" maxlength="200" required></label><label>Visit time<input id="encounter-time" type="datetime-local"></label><label>Entered visit summary<textarea id="encounter-summary" maxlength="10000"></textarea></label><button>Create encounter</button></form></section>
+<section aria-labelledby="entries-heading"><h2 id="entries-heading">Longitudinal records</h2><p>Medication doses and allergy details are entered facts, not verified prescribing or interaction advice. Historical observations are shown by recorded time.</p><div id="entries"></div>
+<form id="entry-form" hidden><h3 id="entry-form-heading">Add a structured record</h3><input id="entry-id" type="hidden"><input id="entry-revision" type="hidden">
+<div class="grid"><label>Record type<select id="entry-kind"><option value="history">Medical history</option><option value="medication">Medication</option><option value="allergy">Allergy</option><option value="lab">Laboratory result</option><option value="vital">Vital observation</option><option value="imaging_report">Imaging report draft</option><option value="care_plan">Care plan draft</option></select></label>
+<label>Label<input id="entry-label" maxlength="200" required></label><label>Recorded time<input id="entry-time" type="datetime-local"></label><label>Encounter<select id="entry-encounter"><option value="">No encounter link</option></select></label></div>
+<label id="text-field">Entered text<textarea id="entry-text" maxlength="10000"></textarea></label>
+<div id="numeric-fields" class="grid" hidden><label>Value<input id="entry-value" type="number" step="any"></label><label>Unit<input id="entry-unit" maxlength="100"></label><label>Entered reference minimum<input id="entry-low" type="number" step="any"></label><label>Entered reference maximum<input id="entry-high" type="number" step="any"></label></div>
+<label id="dose-field" hidden>Entered medication dose<input id="entry-dose" maxlength="200"></label>
+<div id="allergy-fields" hidden><label>Reported reaction<input id="entry-reaction" maxlength="1000"></label><label>Reported severity<select id="entry-severity"><option value="unknown">Unknown</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select></label></div>
+<label>Source / provenance<input id="entry-source" maxlength="1000" value="Manual synthetic entry" required></label>
+<button id="entry-save">Save entered record</button><button id="entry-cancel" type="button">Cancel editing / clear</button></form></section>
+<section aria-labelledby="appointments-heading"><h2 id="appointments-heading">Appointments and follow-up</h2><p>These are internal records. No reminder or appointment confirmation is delivered.</p><div id="appointments"></div>
+<form id="appointment-form" hidden><h3>Record a synthetic appointment</h3><label>Start time<input id="appointment-time" type="datetime-local" required></label><label>Purpose<input id="appointment-purpose" maxlength="2000" required></label><label>Location<input id="appointment-location" maxlength="200" value="Synthetic development appointment"></label><label>Entered follow-up instructions<textarea id="appointment-followup" maxlength="2000"></textarea></label><button>Create appointment record</button></form></section>
+<section aria-labelledby="documents-heading"><h2 id="documents-heading">Documents</h2><p>Uploads are unreviewed documents, not clinician-approved advice. Files are downloaded as attachments and are not malware-scanned. Use synthetic .txt or readable, unencrypted .pdf files up to 5 MiB / 100 pages.</p><div id="documents"></div>
+<form id="document-form"><h3>Upload a synthetic document</h3><label>Title<input id="document-title" maxlength="200" required></label><label>File<input id="document-file" type="file" accept=".txt,.pdf" required></label><label>Sharing<select id="document-visibility"><option value="private">Private — uploader/patient and explicitly granted clinicians</option><option value="care_team">Care team — clinicians in this synthetic organization</option></select></label><button>Upload document</button></form>
+<section id="consent-panel" hidden><h3>Private-document access</h3><p>This choice applies only to patient-private documents. It does not change the existing organization-wide clinician chart access policy, messaging participants or care-team documents.</p><div id="consents"></div><form id="consent-form"><label>Existing clinician username<input id="consent-clinician" maxlength="100" required></label><label>Permission<select id="consent-granted"><option value="true">Grant private-document access</option><option value="false">Revoke private-document access</option></select></label><button>Save document permission</button></form></section></section>
+</section></main>
+</body></html>

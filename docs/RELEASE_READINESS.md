@@ -1,3 +1,43 @@
+# Current development release assessment
+
+**Current scope: an expanded synthetic-data development platform increment. Full development release acceptance remains incomplete, and clinical/regulatory readiness is not claimed.** The latest code extends the tested portal with structured records, protected documents, reviewed internal replies, administration, synthetic image viewing, sandbox FHIR preview and operations work. The exact final combined result is still being recorded while implementation finishes. The earlier 36 Python / 19 Node / 1 Chromium checkpoint appears below only as historical evidence.
+
+## Current implementation and service boundary
+
+- Local accounts remain operator-provisioned with no shared/default passwords. Org-admin account controls are own-tenant only; org-admin does not acquire clinical chart/message/note privileges. Persistent login throttling is a bounded local control, not MFA, identity proofing or account recovery.
+- The account schema upgrade preserves IDs, password hashes, sessions and referenced records and validates foreign keys. Component migration/status/backup support is for a dedicated synthetic SQLite database. No PostgreSQL implementation or production disaster-recovery claim is made.
+- Typed chart entries support histories, entered medications/allergies, lab/vital trends, encounters, plans/reports and appointments. Range flags use entered reference intervals; they are not validated interpretation, drug interactions or dosing advice. Patient-private document permissions are narrow sharing rules, not a full consent/proxy system for all charts.
+- Internal review/send workflows distinguish stored/unread/read states from external delivery. AI-assisted message drafting is unavailable without a configured real provider callback. Manual response drafts need explicit approval and a separate send action. Real clinical messaging, external transports, urgent escalation and live billing remain disabled.
+- The DICOM viewer displays real pixels from explicitly synthetic, identity-removed valid datasets within strict limits. It is noncalibrated, nondiagnostic and supports only selected uncompressed monochrome inputs. No image-model diagnostic findings are generated.
+- FHIR is a read-only configured-sandbox preview with bounded resources and provenance. Synthetic tags are operator declarations. A local HTTP fixture and mock tests validate adapter behavior; no live external SMART/OAuth/EHR service is established.
+- Live complex assessments, reviewed-source retrieval and AI-assisted notes still require dedicated service credentials, embedding model/corpus and recorded real results. Runtime must report missing services rather than simulate successful clinical output.
+
+## Required integrated scenarios A–K
+
+| Matrix gate | Current bounded capability / explicit gap | Evidence required before claiming the entire scenario |
+| --- | --- | --- |
+| FLOW-001 A: patient chart and message | Prior portal workflow passed; expanded structured chart is being integrated | Current browser/API chart and message flow with patient scope |
+| FLOW-002 B: physician review/draft/approve/send | New manual review-before-send inbox supports the intended control sequence | Main-app/browser round trip, correct recipient, single-send concurrency and persistence |
+| FLOW-003 C: complex structured differential | **Blocked for real inference**; schema/critic/citation protocol tests exist | Real dedicated provider request with reviewed evidence and clinician-reviewed output |
+| FLOW-004 D: verifiable evidence/citations | **Blocked for independent source verification** | Legally reusable source/provenance, resolving links, passage support and retrieval evaluation |
+| FLOW-005 E: edit AI-assisted note | Manual/deterministic notes and edit/review contracts are partial | Real configured AI draft, clinician edits, provenance and approval without auto-send |
+| FLOW-006 F: valid test DICOM/viewer | Actual bounded synthetic pixel/metadata backend implemented | Current authorized upload/view browser/API result; no diagnostic-model implication |
+| FLOW-007 G: development FHIR retrieval | Read-only adapter works against local synthetic fixture | Authorized real external sandbox request and recorded response; SMART/OAuth remains separate |
+| FLOW-008 H: admin permissions | Own-tenant org-admin lifecycle endpoints implemented | Actual integrated admin account workflow, session revocation and role-denial checks |
+| FLOW-009 I: patient isolation | Baseline portal checks passed; new resources need the same denial coverage | Current suites must deny cross-patient/tenant chart, files, messages, imaging and admin escalation |
+| FLOW-010 J: restart persistence | Baseline restart passed; new migrations preserve data | Current migration/backup/restart checks across new component records |
+| FLOW-011 K: honest integration failures | Missing base assessment services produce503; adapters have explicit failures | Current HTTP/browser errors do not fabricate successful inference, images or service delivery |
+
+## Verification and release conclusion
+
+Current test commands/results are authoritative in TEST_RESULTS.md. The final integrated run must cover both the preserved recovery and added modules; isolated agent runs do not alone prove main-app installation. All incomplete systems and criteria remain in REQUIREMENTS_MATRIX.md. The full fifteen-system vision is not complete because the broad clinical, source, identity, external integration, operational and independent validation requirements remain partial/missing/blocked.
+
+For exact safe account/bootstrap/service/migration commands, read DEPLOYMENT.md. For execution-context continuation, read CONTINUATION.md. Draft PR #1 remains the review surface; no merge or deployment is authorized. Saving environment metadata, pushing source and running local tests are separate from applying values, publishing a snapshot or deploying a service.
+
+## Previous tested checkpoint (historical)
+
+The following report is retained to preserve earlier actual outcomes. Current implementation statements above supersede older gap descriptions such as “no login throttling” when a new bounded implementation exists. Historical test counts are not the final current-run count.
+
 # Release readiness and remaining gates
 
 **Current classification: tested synthetic-data development increment; full M1 test-release acceptance remains incomplete.** The complete clinical platform is not complete, clinically validated or approved for deployment. Feature-level status and acceptance criteria are authoritative in REQUIREMENTS_MATRIX.md; FEATURE_INVENTORY.md records current and historical gaps.
@@ -80,3 +120,14 @@ Keep the loopback binding used by run_local.sh. Legacy mode remains a developmen
 The branch remains `fix/sqlite-startup-recovery`; existing fixes were not discarded. The earlier GitHub API `Forbidden` error was documented and `api.github.com` was added through the environment settings draft. Root's current read-only API test succeeds and reports push permission, so the earlier failure is no longer listed as a current network blocker. Do not extract proxy credentials or bypass authorization. Create the draft PR only through the available repository-scoped GitHub API/CLI, verify the resulting PR URL/state, and report any remaining API denial accurately. Push success alone does not prove PR creation. No merge or deployment is authorized.
 
 Draft PR created and verified through the authorized GitHub CLI: [PR #1](https://github.com/AIGeniusAlien/Raphael-AI/pull/1), open and draft, `fix/sqlite-startup-recovery` → `main`. The GitHub API permission blocker is resolved. No merge or deployment was performed.
+
+
+## Current execution evidence and limits
+
+95 Python backend/integration tests passed in57.106s.19 Node controller tests passed. The expanded browser run initially failed on an obsolete error-message assertion and Playwright string evaluation prohibited by CSP; assertions were corrected without weakening CSP and rerun results are recorded below. CI workflow `.github/workflows/development.yml` was added but has not run on GitHub. `run_staging.sh` and Render blueprint are prepared, not deployed; automatic Render deployment is disabled. `/readyz` checks development database/schema readiness, not clinical release readiness.
+
+Actual dependency audit found reported advisories in ecdsa,filelock,pillow,pydicom,pypdf,python-dotenv,python-jose,python-multipart,sentence-transformers,setuptools,starlette and transformers. Dependency remediation and rerunning file/model security regressions are release blockers; no clean vulnerability scan or public-deployment readiness is claimed. Full local audit artifact: /workspace/.raphael/vulnerability-audit.json. Existing component tests pass but do not negate these advisories.
+
+New modules:dev_chart.py,dev_messaging.py,dev_imaging.py,dev_knowledge.py,dev_runtime.py and integrations/fhir/sandbox.py. Local evidence is genuinely indexed SQLiteFTS5 over manually supplied reviewed excerpts; it is not independently verified medical evidence or embeddings. Live OpenAI/Qdrant/FHIR, voice,postgres migrations, full roles,caregiver,external clinical messaging and clinical validation remain incomplete.
+
+Final corrected Chromium run:2 tests passed in29.088s. Expanded platform scenario covers internal draft/edit/approval/send, administration and actual DICOM preview/report review; the preserved original portal scenario also passed. No external clinical service was validated.

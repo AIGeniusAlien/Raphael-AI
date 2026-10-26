@@ -107,6 +107,10 @@
     state.sessionEpoch += 1;
     clearChart();
     state.user = user;
+    if (user.role === 'org_admin') {
+      window.location.assign('/static/admin.html');
+      return true;
+    }
     const epoch = state.sessionEpoch;
     byId('login-panel').hidden = true;
     byId('workspace').hidden = false;
@@ -116,6 +120,7 @@
     byId('conversation-form').hidden = !clinician();
     byId('note-form').hidden = !clinician();
     byId('assessment-panel').hidden = !clinician();
+    byId('knowledge-link').hidden = !clinician();
     byId('notes-explanation').textContent = clinician()
       ? 'Draft notes require your explicit review and approval before a patient account can view them. Approval here is a development workflow, not a qualified electronic signature.'
       : 'Only notes explicitly approved by a clinician account are shown. General AI output is not a clinician-approved care instruction.';
@@ -166,6 +171,8 @@
     byId('chart').hidden = false;
     byId('chart-heading').textContent = patient.name;
     byId('chart-summary').textContent = `Synthetic record ${patient.id}${patient.dob ? ' · DOB ' + patient.dob : ''}${patient.mrn ? ' · MRN ' + patient.mrn : ''}`;
+    byId('structured-chart-link').href = `/static/chart.html?patient_id=${encodeURIComponent(patient.id)}`;
+    byId('imaging-link').href = `/static/imaging.html?patient=${encodeURIComponent(patient.id)}`;
     renderPatients();
     await Promise.all([loadConversations(version, epoch), loadNotes(version, epoch)]);
   }

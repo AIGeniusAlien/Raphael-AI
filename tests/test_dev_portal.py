@@ -259,7 +259,7 @@ class DevPortalTests(unittest.TestCase):
         body = {"conversation_id": conv['id'], "question": "Synthetic question"}
         r = self.client.post(path, json=body)
         self.assertEqual(r.status_code, 200, r.text)
-        self.assessment.assert_called_once_with(case_context="clinician: Synthetic context", question="Synthetic question", mode="general")
+        self.assessment.assert_called_once_with(case_context="clinician: Synthetic context", question="Synthetic question", mode="general", tenant="alpha")
         self.assertEqual(len(self.client.get(f"/api/dev/conversations/{conv['id']}/messages").json()), 1)
         self.assertEqual(self.client.get(f"/api/dev/patients/{p['id']}/notes").json(), [])
         self.login("patient")

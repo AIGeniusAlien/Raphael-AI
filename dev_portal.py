@@ -4,26 +4,43 @@ import hashlib
 import hmac
 import os
 import secrets
+import json
+from types import SimpleNamespace
+from typing import Literal
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, StrictBool
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 from database import execute_sqlite_script
 
 COOKIE_NAME = "raphael_dev_session"
 SESSION_SECONDS = 8 * 60 * 60
+LOGIN_MAX_FAILURES = 5
+LOGIN_WINDOW_SECONDS = 5 * 60
+LOGIN_MAX_TRACKED_KEYS = 10000
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS dev_users (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  tenant TEXT NOT NULL,
  username TEXT NOT NULL,
- role TEXT NOT NULL CHECK (role IN ('patient','clinician')),
+ role TEXT NOT NULL CHECK (role IN ('patient','clinician','org_admin')),
  password_hash TEXT NOT NULL,
+ active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
  UNIQUE(tenant, username)
+);
+CREATE TABLE IF NOT EXISTS dev_schema_migrations (
+ version INTEGER PRIMARY KEY,
+ applied_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS dev_login_attempts (
+ key_hash TEXT PRIMARY KEY,
+ failures INTEGER NOT NULL,
+ reset_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS dev_sessions (
  token_hash TEXT PRIMARY KEY,
@@ -99,10 +116,69 @@ def _require_synthetic(engine):
                 raise RuntimeError("Portal refuses a database containing legacy records; use a new isolated synthetic SQLite file.")
 
 
+def _migrate_users(engine):
+    """Rebuild the original two-role CHECK without losing references or IDs.
+
+    SQLite cannot alter a CHECK constraint. Foreign-key enforcement is toggled
+    only on this connection before an explicit transaction and restored after it;
+    the child tables keep references to the final dev_users name throughout.
+    """
+    with engine.connect() as c:
+        schema = c.exec_driver_sql("SELECT sql FROM sqlite_master WHERE name='dev_users' AND type='table'").scalar()
+        if schema is None:
+            return
+        columns = {row[1] for row in c.exec_driver_sql("PRAGMA table_info(dev_users)")}
+        if "org_admin" in schema and "active" in columns:
+            return
+        if columns - {"id", "tenant", "username", "role", "password_hash", "active"}:
+            raise RuntimeError("Unknown dev_users schema; refusing a destructive migration.")
+        foreign_keys = c.exec_driver_sql("PRAGMA foreign_keys").scalar()
+        c.commit()
+        c.exec_driver_sql("PRAGMA foreign_keys=OFF")
+        c.commit()
+        try:
+            c.exec_driver_sql("BEGIN IMMEDIATE")
+            # A second process may have completed startup while this connection
+            # waited for the writer lock. Re-read rather than resetting status
+            # using an obsolete pre-lock schema snapshot.
+            schema = c.exec_driver_sql("SELECT sql FROM sqlite_master WHERE name='dev_users' AND type='table'").scalar()
+            columns = {row[1] for row in c.exec_driver_sql("PRAGMA table_info(dev_users)")}
+            if "org_admin" in schema and "active" in columns:
+                c.commit()
+                return
+            if columns - {"id", "tenant", "username", "role", "password_hash", "active"}:
+                raise RuntimeError("Unknown dev_users schema; refusing a destructive migration.")
+            sequence = c.exec_driver_sql("SELECT seq FROM sqlite_sequence WHERE name='dev_users'").scalar() or 0
+            c.exec_driver_sql("""CREATE TABLE dev_users_upgrade (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, tenant TEXT NOT NULL,
+                username TEXT NOT NULL,
+                role TEXT NOT NULL CHECK (role IN ('patient','clinician','org_admin')),
+                password_hash TEXT NOT NULL,
+                active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
+                UNIQUE(tenant,username))""")
+            active = "active" if "active" in columns else "1"
+            c.exec_driver_sql("INSERT INTO dev_users_upgrade(id,tenant,username,role,password_hash,active) "
+                              "SELECT id,tenant,username,role,password_hash," + active + " FROM dev_users")
+            c.exec_driver_sql("DROP TABLE dev_users")
+            c.exec_driver_sql("ALTER TABLE dev_users_upgrade RENAME TO dev_users")
+            c.exec_driver_sql("UPDATE sqlite_sequence SET seq=MAX(seq,?) WHERE name='dev_users'", (sequence,))
+            if c.exec_driver_sql("PRAGMA foreign_key_check").first():
+                raise RuntimeError("Portal migration found invalid foreign-key references; no changes committed.")
+            c.commit()
+        except Exception:
+            c.rollback()
+            raise
+        finally:
+            c.exec_driver_sql("PRAGMA foreign_keys=" + ("ON" if foreign_keys else "OFF"))
+            c.commit()
+
+
 def init_portal_schema(engine):
     _require_synthetic(engine)
+    _migrate_users(engine)
     with engine.begin() as c:
         execute_sqlite_script(c, SCHEMA)
+        c.execute(text("INSERT OR IGNORE INTO dev_schema_migrations(version,applied_at) VALUES (2,:at)"), {"at": _now()})
 
 
 def _password_hash(password, salt=None):
@@ -124,8 +200,8 @@ def create_dev_user(engine, tenant, username, password, role):
     _require_synthetic(engine)
     if not (tenant.strip() and username.strip()) or len(tenant) > 100 or len(username) > 100:
         raise ValueError("Tenant and username must be nonempty and at most 100 characters.")
-    if role not in ("patient", "clinician"):
-        raise ValueError("Role must be patient or clinician.")
+    if role not in ("patient", "clinician", "org_admin"):
+        raise ValueError("Role must be patient, clinician or org_admin.")
     if not 12 <= len(password) <= 128:
         raise ValueError("Use a development password between 12 and 128 characters.")
     with engine.begin() as c:
@@ -148,6 +224,16 @@ class Login(Input):
     tenant: str = Field(min_length=1, max_length=100)
     username: str = Field(min_length=1, max_length=100)
     password: SecretStr = Field(min_length=1, max_length=128)
+
+
+class UserIn(Input):
+    username: str = Field(min_length=1, max_length=100)
+    role: Literal["patient", "clinician", "org_admin"]
+    password: SecretStr = Field(min_length=12, max_length=128)
+
+
+class UserStatusIn(Input):
+    active: StrictBool
 
 
 class PatientIn(Input):
@@ -199,11 +285,21 @@ def install_dev_portal(app, engine, assessment_generator=None):
         with engine.begin() as c:
             row = c.execute(text("SELECT u.id,u.tenant,u.username,u.role FROM dev_sessions s "
                                  "JOIN dev_users u ON u.id=s.user_id "
-                                 "WHERE s.token_hash=:h AND s.expires_at>:at"),
+                                 "WHERE s.token_hash=:h AND s.expires_at>:at AND u.active=1"),
                             {"h": hashlib.sha256(token.encode()).hexdigest(), "at": _now()}).mappings().first()
             if not row:
                 raise HTTPException(401, "Session expired or invalid.")
             return dict(row)
+
+    def clinical_user(user=Depends(current_user)):
+        if user["role"] not in ("patient", "clinician"):
+            raise HTTPException(403, "Clinical role required.")
+        return user
+
+    def administrator(user=Depends(current_user)):
+        if user["role"] != "org_admin":
+            raise HTTPException(403, "Organization administrator role required.")
+        return user
 
     def clinician(user=Depends(current_user)):
         if user["role"] != "clinician":
@@ -211,6 +307,8 @@ def install_dev_portal(app, engine, assessment_generator=None):
         return user
 
     def patient_for(c, patient_id, user):
+        if user["role"] not in ("patient", "clinician"):
+            raise HTTPException(403, "Clinical role required.")
         row = c.execute(text("SELECT p.*,u.username AS patient_username FROM dev_patients p "
                              "LEFT JOIN dev_users u ON u.id=p.patient_user_id "
                              "WHERE p.id=:id AND p.tenant=:t"), {"id": patient_id, "t": user["tenant"]}).mappings().first()
@@ -239,19 +337,35 @@ def install_dev_portal(app, engine, assessment_generator=None):
 
     @router.post("/login")
     def login(body: Login, request: Request, response: Response):
+        key = hashlib.sha256(json.dumps([body.tenant, body.username]).encode()).hexdigest()
+        # Unknown and disabled accounts share both error and hash work paths.
         with engine.begin() as c:
+            c.exec_driver_sql("BEGIN IMMEDIATE")
+            c.execute(text("DELETE FROM dev_login_attempts WHERE reset_at<=:at"), {"at": _now()})
+            attempt = c.execute(text("SELECT failures,reset_at FROM dev_login_attempts WHERE key_hash=:h"), {"h": key}).mappings().first()
+            if attempt and attempt["failures"] >= LOGIN_MAX_FAILURES:
+                raise HTTPException(429, "Too many development login attempts. Try again later.", headers={"Retry-After": str(LOGIN_WINDOW_SECONDS)})
+            if not attempt and c.execute(text("SELECT count(*) FROM dev_login_attempts")).scalar() >= LOGIN_MAX_TRACKED_KEYS:
+                raise HTTPException(429, "Too many development login attempts. Try again later.", headers={"Retry-After": str(LOGIN_WINDOW_SECONDS)})
             row = c.execute(text("SELECT * FROM dev_users WHERE tenant=:t AND username=:u"),
                             {"t": body.tenant, "u": body.username}).mappings().first()
-            # Keep password hashing on the unknown-user path too.
             stored = row["password_hash"] if row else "00" * 16 + ":" + "00" * 64
-            if not _password_matches(body.password.get_secret_value(), stored):
-                raise HTTPException(401, "Invalid development credentials.")
-            user = {k: row[k] for k in ("id", "tenant", "username", "role")}
-            token = secrets.token_urlsafe(32)
-            c.execute(text("INSERT INTO dev_sessions(token_hash,user_id,expires_at) VALUES (:h,:u,:e)"),
-                      {"h": hashlib.sha256(token.encode()).hexdigest(), "u": row["id"],
-                       "e": (datetime.now(timezone.utc) + timedelta(seconds=SESSION_SECONDS)).isoformat()})
-            _audit(c, user, "login")
+            valid = _password_matches(body.password.get_secret_value(), stored) and bool(row and row["active"])
+            if not valid:
+                reset_at = (datetime.now(timezone.utc) + timedelta(seconds=LOGIN_WINDOW_SECONDS)).isoformat()
+                c.execute(text("INSERT INTO dev_login_attempts(key_hash,failures,reset_at) VALUES (:h,1,:r) "
+                               "ON CONFLICT(key_hash) DO UPDATE SET failures=failures+1"), {"h": key, "r": reset_at})
+            else:
+                c.execute(text("DELETE FROM dev_login_attempts WHERE key_hash=:h"), {"h": key})
+                user = {k: row[k] for k in ("id", "tenant", "username", "role")}
+                token = secrets.token_urlsafe(32)
+                c.execute(text("INSERT INTO dev_sessions(token_hash,user_id,expires_at) VALUES (:h,:u,:e)"),
+                          {"h": hashlib.sha256(token.encode()).hexdigest(), "u": row["id"],
+                           "e": (datetime.now(timezone.utc) + timedelta(seconds=SESSION_SECONDS)).isoformat()})
+                _audit(c, user, "login")
+        # Raise after commit so failed-attempt counters persist.
+        if not valid:
+            raise HTTPException(401, "Invalid development credentials.")
         response.set_cookie(COOKIE_NAME, token, max_age=SESSION_SECONDS, httponly=True,
                             secure=request.url.scheme == "https", samesite="strict", path="/api/dev")
         response.headers["Cache-Control"] = "no-store"
@@ -273,7 +387,7 @@ def install_dev_portal(app, engine, assessment_generator=None):
         return {"status": "logged_out"}
 
     @router.get("/patients")
-    def patients(user=Depends(current_user)):
+    def patients(user=Depends(clinical_user)):
         with engine.begin() as c:
             where = "p.tenant=:t" + (" AND p.patient_user_id=:uid" if user["role"] == "patient" else "")
             rows = c.execute(text("SELECT p.*,u.username AS patient_username FROM dev_patients p "
@@ -287,7 +401,7 @@ def install_dev_portal(app, engine, assessment_generator=None):
         with engine.begin() as c:
             patient_user_id = None
             if body.patient_username:
-                patient_user_id = c.execute(text("SELECT id FROM dev_users WHERE tenant=:t AND username=:u AND role='patient'"),
+                patient_user_id = c.execute(text("SELECT id FROM dev_users WHERE tenant=:t AND username=:u AND role='patient' AND active=1"),
                                             {"t": user["tenant"], "u": body.patient_username}).scalar()
                 if patient_user_id is None:
                     raise HTTPException(400, "Use an existing patient-role account in this tenant.")
@@ -394,7 +508,7 @@ def install_dev_portal(app, engine, assessment_generator=None):
             _audit(c, user, "request_assessment", "conversation", body.conversation_id)
         if assessment_generator is None:
             raise HTTPException(503, "Development assessment service is not configured.")
-        return assessment_generator(case_context=context, question=body.question, mode="general")
+        return assessment_generator(case_context=context, question=body.question, mode="general", tenant=user["tenant"])
 
     @router.post("/notes/{note_id}/approve")
     def approve_note(note_id: int, user=Depends(clinician)):
@@ -410,4 +524,46 @@ def install_dev_portal(app, engine, assessment_generator=None):
             _audit(c, user, "approve_note", "note", note_id)
             return note_for(c, note_id, user)
 
+    @router.get("/admin/users")
+    def list_users(user=Depends(administrator)):
+        with engine.begin() as c:
+            rows = c.execute(text("SELECT id,tenant,username,role,active FROM dev_users WHERE tenant=:t ORDER BY id"), {"t": user["tenant"]}).mappings().all()
+            _audit(c, user, "list_users", "user")
+            return [dict(row, active=bool(row["active"])) for row in rows]
+
+    @router.post("/admin/users")
+    def provision_user(body: UserIn, user=Depends(administrator)):
+        try:
+            created = create_dev_user(engine, user["tenant"], body.username, body.password.get_secret_value(), body.role)
+        except IntegrityError:
+            raise HTTPException(409, "An account with that username already exists in this tenant.")
+        with engine.begin() as c:
+            _audit(c, user, "create_user", "user", created["id"])
+        return dict(created, active=True)
+
+    @router.patch("/admin/users/{user_id}")
+    def user_status(user_id: int, body: UserStatusIn, user=Depends(administrator)):
+        with engine.begin() as c:
+            # Serialize changes so two admins cannot deactivate each other while
+            # independently observing a second active administrator.
+            c.exec_driver_sql("BEGIN IMMEDIATE")
+            target = c.execute(text("SELECT id,tenant,username,role,active FROM dev_users WHERE id=:id AND tenant=:t"), {"id": user_id, "t": user["tenant"]}).mappings().first()
+            if not target:
+                raise HTTPException(404, "User not found.")
+            if not body.active:
+                if user_id == user["id"]:
+                    raise HTTPException(409, "Administrators cannot deactivate their own account.")
+                if target["role"] == "org_admin" and target["active"]:
+                    count = c.execute(text("SELECT count(*) FROM dev_users WHERE tenant=:t AND role='org_admin' AND active=1"), {"t": user["tenant"]}).scalar()
+                    if count <= 1:
+                        raise HTTPException(409, "The final active administrator cannot be deactivated.")
+            c.execute(text("UPDATE dev_users SET active=:a WHERE id=:id"), {"a": int(body.active), "id": user_id})
+            if not body.active:
+                c.execute(text("DELETE FROM dev_sessions WHERE user_id=:id"), {"id": user_id})
+            _audit(c, user, "activate_user" if body.active else "deactivate_user", "user", user_id)
+            return dict(target, active=body.active)
+
     app.include_router(router)
+    return SimpleNamespace(engine=engine, user=current_user, clinician=clinician,
+                           patient_for=patient_for, conversation_for=conversation_for,
+                           note_for=note_for, audit=_audit, same_origin_json=same_origin_json)

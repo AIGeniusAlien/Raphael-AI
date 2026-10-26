@@ -2,7 +2,7 @@ import os, json, secrets, httpx, hashlib, io, re
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -374,8 +374,8 @@ EVIDENCE:
 Return JSON only.
 """
 
-def raphael_generate(case_context: str, question: str, mode: str = "radiology") -> dict:
-    chunks = retrieve_evidence(question, top_k=TOP_K)
+def raphael_generate(case_context: str, question: str, mode: str = "radiology", evidence_chunks: Optional[List[dict]] = None) -> dict:
+    chunks = retrieve_evidence(question, top_k=TOP_K) if evidence_chunks is None else evidence_chunks
     ok, safety_notes = safety_check(chunks)
 
     if not ok:
@@ -451,8 +451,8 @@ def startup():
         execute_sqlite_script(c, TRIGGERS)
     ensure_feedback_table(engine)
     if DEV_PORTAL:
-        from dev_portal import init_portal_schema
-        init_portal_schema(engine)
+        from dev_runtime import migrate
+        migrate(engine)
     try:
         if QDRANT_URL:
             ensure_qdrant_collection()
@@ -467,6 +467,21 @@ def root():
 @app.get("/healthz")
 def healthz():
     return {"status": "ok", "ts": datetime.utcnow().isoformat()}
+
+
+@app.get("/readyz")
+def readiness():
+    try:
+        with engine.connect() as c:
+            c.execute(text("SELECT 1"))
+        if DEV_PORTAL:
+            from dev_runtime import schema_status
+            if not schema_status(engine)["ready"]:
+                return JSONResponse({"status": "not_ready", "detail": "Development schema migration required."}, status_code=503)
+        return {"status": "ready", "scope": "synthetic-development" if DEV_PORTAL else "legacy-development",
+                "clinical_validation": "not_established"}
+    except Exception:
+        return JSONResponse({"status": "not_ready", "detail": "Database readiness check failed."}, status_code=503)
 
 # ───────────────── Patients/Conversations/Messages (unchanged functionality)
 @app.get("/api/patients")
@@ -735,9 +750,18 @@ if DEV_PORTAL:
         return response
 
     def development_assessment(**kwargs):
-        if not (LLM_BASE_URL and QDRANT_URL):
-            raise HTTPException(503, "Configure dedicated development LLM and Qdrant services before requesting assessments.")
+        tenant = kwargs.pop("tenant", None)
+        backend = os.getenv("RAPHAEL_EVIDENCE_BACKEND", "qdrant")
+        if backend not in ("sqlite", "qdrant"):
+            raise HTTPException(503, "Unsupported development evidence backend.")
+        if not (LLM_BASE_URL and LLM_API_KEY and LLM_API_KEY != "EMPTY") or (backend == "qdrant" and not QDRANT_URL):
+            raise HTTPException(503, "Configure dedicated development LLM and evidence services before requesting assessments.")
         try:
+            if backend == "sqlite":
+                from dev_knowledge import search_evidence
+                if not tenant:
+                    raise HTTPException(403, "Authorized evidence scope is required.")
+                kwargs["evidence_chunks"] = search_evidence(engine, tenant, kwargs["question"][:1000], top_k=TOP_K)
             return raphael_generate(**kwargs)
         except HTTPException:
             raise
@@ -745,4 +769,21 @@ if DEV_PORTAL:
             # Never reflect provider errors, URLs or credentials to the portal.
             raise HTTPException(503, "Development assessment services are unavailable.")
 
-    install_dev_portal(app, engine, assessment_generator=development_assessment)
+    portal_context = install_dev_portal(app, engine, assessment_generator=development_assessment)
+    from dev_chart import install_chart
+    from dev_imaging import install_imaging
+    from dev_messaging import install_messaging
+    from dev_knowledge import install_knowledge
+    install_chart(app, portal_context)
+    install_imaging(app, portal_context)
+    install_messaging(app, portal_context)
+    install_knowledge(app, portal_context)
+
+    @app.get("/api/dev/status")
+    def portal_status(user=Depends(portal_context.user)):
+        from dev_runtime import schema_status
+        return {"scope": "synthetic-development-only", "database": schema_status(engine),
+                "evidence_backend": os.getenv("RAPHAEL_EVIDENCE_BACKEND", "qdrant"),
+                "llm": "configured_not_validated" if LLM_BASE_URL and LLM_API_KEY and LLM_API_KEY != "EMPTY" else "not_configured",
+                "external_messaging": "disabled", "live_billing": "disabled",
+                "clinical_validation": "not_established"}

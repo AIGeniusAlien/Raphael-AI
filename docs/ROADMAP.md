@@ -45,3 +45,20 @@ All six milestones and DEV-01–05 above remain required. The original next-task
 - **M6:** intended-use and jurisdictional regulatory assessment, HIPAA/BAA and applicable IRB review, independent clinical validation, operational release controls and explicit deployment approval. Plan Kubernetes only after a reviewed deployment architecture (HIST-021), not as an untested manifest claim.
 
 Requirements may proceed in parallel once their dependencies and ownership boundaries are explicit. Security/evaluation design begins early; clinical deployment completion cannot be inferred from an M1 demonstration. Every unmet or blocked requirement stays visible in REQUIREMENTS_MATRIX.md.
+
+
+# Current dependency-aware implementation checkpoint
+
+The complete-platform directive is reconciled additively in the matrix. All earlier milestones, task IDs and unfinished requirements remain required; prior R/DEV entries describe their original checkpoints. The active increment implements the next dependency-safe portions rather than restarting the portal.
+
+| Increment | Implemented files / acceptance IDs | Exit evidence and next dependent work |
+| --- | --- | --- |
+| P1 — Platform identity/admin | dev_portal.py; auth/dev_bootstrap.py; tests/test_dev_admin.py; DBX/ADX/UIX | Account-table migration, tenant-admin lifecycle and persistent throttling. Validate integrated admin UI before FLOW-008 is complete; verified medical identity, additional staff/radiologist/platform roles and recovery remain open. |
+| P2 — Authorized longitudinal chart | dev_chart.py; static/chart.*; PTX/PHX/DBX | Typed records, encounter edits, range trends, approved plans/reports, appointments and protected documents. Finish exact role/privacy/browser checks; no clinical interpretation or full consent/proxy claim. |
+| P3 — Review-before-send inbox | dev_messaging.py; static/inbox.*; MSX/FLOW-002 | Internal receipts, attachments, manual response drafting/editing/approval/explicit send. Concurrency must yield at most one message; urgent/external transport remains disabled. |
+| P4 — Synthetic images and FHIR adapter | dev_imaging.py; integrations/fhir/sandbox.py; IMX/FHX/FLOW-006/007 | Valid pixel preview and approved reports can satisfy bounded viewing; adapter fixture tests do not satisfy a real external sandbox/SMART integration gate. |
+| P5 — Repeatable runtime/release package | dev_runtime.py; CI/runtime/build artifacts; OPX/ACCEPT | Verify migration/backup/status/startup and current-run unit/controller/browser suites. No automatic staging/production deployment or branch merge. |
+| P6 — Real evidence/inference demonstration | AIX/KNX/FLOW-003/004/005 | Dedicated LLM/Qdrant/model configuration, reviewed legally reusable sources, resolving/supporting citations and AI-assisted editable drafts. This remains blocked until actual service/evidence prerequisites and meaningful results exist. |
+| P7 — Remaining complete platform | All unmet UIX–OPX and existing CI–GOV rows | Continue role/consent/proxy/security, clinical safety/coding/order contracts, sources/freshness/coverage, audio providers, SMART/OAuth/PACS, PostgreSQL/operations, test billing and independent evaluation. Keep each missing/blocked criterion visible; M1 is not clinical readiness. |
+
+Use CONTINUATION.md for exact resume commands and the next executable integrated acceptance scenarios. Test evidence and source/credential scope, not a generic “implemented” label, determine release readiness.

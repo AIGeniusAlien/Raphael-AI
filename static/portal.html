@@ -26,6 +26,10 @@
     </form>
   </section>
   <main id="workspace" hidden>
+    <nav aria-label="Development workspaces">
+      <a href="/static/inbox.html">Internal inbox and reviewed replies</a>
+      <a id="knowledge-link" href="/static/knowledge.html" hidden>Reviewed evidence workspace</a>
+    </nav>
     <aside aria-labelledby="patients-heading">
       <h2 id="patients-heading">Authorized synthetic records</h2>
       <div id="patients" class="choices"></div>
@@ -40,6 +44,10 @@
     <section id="chart" hidden aria-labelledby="chart-heading">
       <h2 id="chart-heading">Select a record</h2>
       <p id="chart-summary"></p>
+      <nav aria-label="Selected patient workspaces">
+        <a id="structured-chart-link" href="/static/chart.html">Structured chart and documents</a>
+        <a id="imaging-link" href="/static/imaging.html">DICOM images and sandbox FHIR</a>
+      </nav>
       <section aria-labelledby="threads-heading">
         <h3 id="threads-heading">Internal portal conversations</h3>
         <p>Messages remain inside this test portal. This is not an urgent or emergency channel; notifications and external delivery are not available.</p>
@@ -79,7 +87,7 @@
     </section>
   </main>
   <footer>
-    <p>Incomplete: live service validation, full medical charts, laboratories, imaging, medication safety, attachments, appointments, caregiver access, notifications, account recovery, and regulated clinical workflows. No complete-platform or clinical-validation claim.</p>
+    <p>This is a synthetic development build. Full clinical charts, live-service validation, medication safety, caregiver access, external notifications, account recovery, validated image interpretation and regulated clinical workflows remain incomplete. Internal storage is not external delivery.</p>
   </footer>
 </body>
 </html>

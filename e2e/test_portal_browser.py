@@ -144,7 +144,7 @@ class PortalBrowserTests(unittest.TestCase):
 
                             physician.locator("#assessment-question").fill("Synthetic assessment question")
                             physician.locator("#assessment-form button").click()
-                            expect(physician.locator("#status")).to_contain_text("Configure dedicated development LLM and Qdrant")
+                            expect(physician.locator("#status")).to_contain_text("Configure dedicated development LLM and evidence")
                             self.assertEqual(physician.locator("#assessment-output").text_content(), "")
                             expect(physician.locator("#messages .message-content")).to_have_text([first_message, second_message])
                             physician.locator("#logout").click()

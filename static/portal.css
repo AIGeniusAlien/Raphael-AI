@@ -28,3 +28,16 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
 .meta, .hint, footer { font-size: .9rem; color: #405c68; }
 [hidden] { display: none !important; }
 @media (max-width: 760px) { body { padding: .7rem; } #workspace { grid-template-columns: 1fr; } }
+
+/* Shared clinical workspace hierarchy; controls remain native and accessible. */
+body { background: linear-gradient(145deg,#eef5f8,#f8fafc); }
+header { border-bottom: 1px solid #d7e2ea; margin-bottom: 1.4rem; }
+h1 { letter-spacing:-.035em; font-size:clamp(1.7rem,4vw,2.5rem); color:#12394b; }
+h2 { color:#164d61; }
+nav { display:flex;flex-wrap:wrap;gap:.7rem;padding:.85rem 0; }
+nav a { color:#075e68;background:#e8f3f5;padding:.55rem .8rem;border-radius:.5rem;font-weight:600;text-decoration:none; }
+nav a:focus-visible,nav a:hover { text-decoration:underline;outline-offset:3px; }
+#workspace > nav { grid-column:1/-1; }
+aside,#chart,#login-panel { box-shadow:0 8px 28px #12394b08;border-radius:1rem; }
+#login-panel { margin:2rem auto;padding:clamp(1.2rem,4vw,2.4rem); }
+input,textarea,button { border-radius:.5rem; }

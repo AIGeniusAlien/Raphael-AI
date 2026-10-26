@@ -4,11 +4,11 @@
   "state_counts": {
     "PARTIAL": 859,
     "NOT_IMPLEMENTED": 194,
-    "VERIFIED": 39,
+    "VERIFIED": 40,
     "BLOCKED_EXTERNAL": 11,
     "IMPLEMENTED_UNVERIFIED": 23
   },
-  "requirement_count": 1126,
+  "requirement_count": 1127,
   "clinical_validation": false,
   "requirements": [
     {
@@ -15682,7 +15682,7 @@
       "description": "Bounded portal request budgets,Fetch Metadata CSRF rejection and security headers on denied routes",
       "state": "VERIFIED",
       "code_location": "dev_security.py;dev_portal.py;main.py",
-      "test_coverage": "test_request_security.py;test_start_launcher.py;all189Python;6Chromium",
+      "test_coverage": "test_request_security.py;test_start_launcher.py;all192Python;6Chromium",
       "external_dependency": "Direct peer address;reviewed reverse proxy for deployment",
       "remaining_work": "Single process/NAT shared limits;distributed gateway and independent security assessment remain",
       "acceptance_criteria": "Bounded memory;separate expensive request budget;spoofed forwarding cannot bypass;malformed origins denied",
@@ -15771,6 +15771,20 @@
       "remaining_work": "Public verified-channel recovery and identity proofing remain external/unimplemented",
       "acceptance_criteria": "Interactive password confirmation;tenant-specific active account;all target sessions revoked;no reactivation or clinical record deletion",
       "next_implementation_action": "Public verified-channel recovery and identity proofing remain external/unimplemented",
+      "priority": "P0",
+      "milestone": "M1",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "PROD-010",
+      "description": "Clinician blocked-draft terminal status is explicit and automated verification recognizes safe blocking",
+      "state": "VERIFIED",
+      "code_location": "static/intelligence.js;e2e/test_intelligence_browser.py",
+      "test_coverage": "Actual blocked-UI Chromium regression passed;earlier live harness timeout retained",
+      "external_dependency": "Existing claim-support screen;actual providers only for live proof",
+      "remaining_work": "Automated screening remains fallible;independent clinical validation required",
+      "acceptance_criteria": "Unsupported draft clearly labeled blocked;controls recover;never interpret block as medical approval",
+      "next_implementation_action": "Automated screening remains fallible;independent clinical validation required",
       "priority": "P0",
       "milestone": "M1",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."

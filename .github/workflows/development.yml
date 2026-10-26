@@ -30,6 +30,9 @@ jobs:
         run: |
           export CHROMIUM_EXECUTABLE="$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')"
           python -m dev_verify --all --require-browser --output verification-results
+      - name: Publish regression failure diagnostics
+        if: failure()
+        run: python .github/scripts/publish_diagnostics.py verification-results
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -77,10 +80,18 @@ jobs:
           if not phones:raise SystemExit('No installed available iPhone simulator;native job cannot pass.')
           with open(os.environ['GITHUB_ENV'],'a') as output:output.write('RAPHAEL_SIMULATOR_DESTINATION=platform=iOS Simulator,id='+phones[0]['udid']+'\n')
           PY
-      - run: bash mobile/scripts/native_checks.sh
+      - name: Compile and test native app
+        run: |
+          set -o pipefail
+          bash mobile/scripts/native_checks.sh 2>&1 | tee native-build.log
+      - name: Publish native failure diagnostics
+        if: failure()
+        run: python3 .github/scripts/publish_diagnostics.py native-build.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: native-test-results
-          path: mobile/artifacts/NativeRun.*/NativeTests.xcresult
+          path: |
+            mobile/artifacts/NativeRun.*/NativeTests.xcresult
+            native-build.log
           retention-days: 14

@@ -1,0 +1,175 @@
+{
+  "date": "2026-10-26",
+  "baseline_commit": "5a5288ebc3ddb5af0ba3a68eb971f6bd3e861457",
+  "branch": "fix/sqlite-startup-recovery",
+  "pr": 1,
+  "requirements_prior": 1117,
+  "requirements_total": 1127,
+  "baseline_ids_descriptions_preserved": true,
+  "local_verification": {
+    "schema_version": 1,
+    "generated_at": "2026-10-26T22:59:43.590624+00:00",
+    "platform": "Linux",
+    "python": "3.12.14",
+    "status": "passed",
+    "checks": [
+      {
+        "name": "python",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 68.741,
+        "counts": {
+          "tests": 192
+        },
+        "log": "/workspace/.raphael/production-final-verification/python.log"
+      },
+      {
+        "name": "frontend",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.269,
+        "counts": {
+          "tests": 26,
+          "pass": 26,
+          "fail": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/.raphael/production-final-verification/frontend.log"
+      },
+      {
+        "name": "chromium",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 35.26,
+        "counts": {
+          "tests": 6
+        },
+        "log": "/workspace/.raphael/production-final-verification/chromium.log"
+      },
+      {
+        "name": "mobile-structure",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.064,
+        "counts": {},
+        "log": "/workspace/.raphael/production-final-verification/mobile-structure.log"
+      },
+      {
+        "name": "mobile-tests",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.165,
+        "counts": {
+          "tests": 5
+        },
+        "log": "/workspace/.raphael/production-final-verification/mobile-tests.log"
+      },
+      {
+        "name": "traceability",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.064,
+        "counts": {},
+        "log": "/workspace/.raphael/production-final-verification/traceability.log"
+      },
+      {
+        "name": "safety-evaluation",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.967,
+        "counts": {},
+        "log": "/workspace/.raphael/production-final-verification/safety-evaluation.log"
+      },
+      {
+        "name": "ios-native",
+        "status": "skipped",
+        "reason": "macOS,Xcode and RAPHAEL_SIMULATOR_DESTINATION required;no native build ran."
+      },
+      {
+        "name": "live-services",
+        "status": "skipped",
+        "reason": "Requires explicit --live;no provider credentials transmitted. Historical live evidence is not rerun evidence."
+      },
+      {
+        "name": "dependency-advisory-audit",
+        "status": "skipped",
+        "reason": "Separate CI pip-audit gate queries advisory databases;no fresh audit implied by local tests."
+      }
+    ],
+    "clinical_validation": false,
+    "production_data_used": false
+  },
+  "focused_blocked_browser": {
+    "passed": 1,
+    "failed": 0,
+    "fixture": "explicit browser-only SSE,not live proof"
+  },
+  "dependency_audit": {
+    "packages": 86,
+    "known_advisories": 0,
+    "fresh_this_execution": true
+  },
+  "source_scan": {
+    "severity_filter": "high",
+    "confidence_filter": "high",
+    "findings": 0,
+    "scan_errors": 0
+  },
+  "native": {
+    "structural_checks": "passed",
+    "xcode_local": "NOT_RUN",
+    "new_native_tests": "NOT_RUN",
+    "ci": "First actual macOS Xcode test attempt failed exit65;diagnostics publication added;not build-verified",
+    "device_signing": "NOT_RUN",
+    "app_store_ready": false
+  },
+  "cross_platform": {
+    "linux_launcher_http_restart": "passed",
+    "windows": "IMPLEMENTED_UNVERIFIED",
+    "macos_python_setup": "IMPLEMENTED_UNVERIFIED"
+  },
+  "live_current": {
+    "initial_attempt": "physician safely blocked for missing support;browser terminal detection defect timed out;UI fixed and separately regression-tested",
+    "final_attempt": {
+      "technical_workflow": "passed",
+      "physician_status": "blocked",
+      "physician_support_screen": "blocked",
+      "patient_status": "complete",
+      "patient_support_screen": "passed",
+      "actual_dimensions": 384,
+      "embedding_model": "text-embedding-3-small",
+      "collection": "raphael_evidence_v1",
+      "original_source_checks": true,
+      "missing_evidence_results": 0,
+      "artifact": "docs/PRODUCTION_LIVE_RESULTS.json",
+      "clinical_validation": false
+    },
+    "historical_completed_workflow": "docs/RECOVERY_LIVE_RESULTS.json;not current rerun proof"
+  },
+  "clinical_validation": false,
+  "release_classification": "NOT SAFE FOR RELEASE",
+  "deployment_performed": false,
+  "merge_performed": false,
+  "source_brand_assets": "preserved;owner canonical icon authority unresolved",
+  "readiness": "Restricted synthetic development;shared clinical/production/App Store release blocked",
+  "external_gates": [
+    "macOS/Xcode/native device verification",
+    "Apple signing,registered bundle,owner brand/support/privacy metadata",
+    "verified identity/MFA/guardian/public recovery",
+    "retention/legal hold and policy-backed account erasure",
+    "PHI vendor BAAs,at-rest encryption,formal risk analysis and clinical/security/privacy/operations assessment",
+    "authorized HTTPS staging;no deployment performed"
+  ],
+  "owner_commands": "docs/AUTOMATED_DEVELOPMENT.md",
+  "security_scan_artifact": "docs/PRODUCTION_SOURCE_SCAN.json",
+  "dependency_audit_artifact": "docs/PRODUCTION_DEPENDENCY_AUDIT.json",
+  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40416787347",
+  "ci_observed_status": "dependency-audit passed;ios-simulator failed exit65;regression in progress"
+}

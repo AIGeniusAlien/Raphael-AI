@@ -133,7 +133,7 @@ class ReportInput(BaseModel):
 
 
 def install_imaging(app, ctx):
-    router = APIRouter(prefix="/api/dev", tags=["synthetic imaging and FHIR sandbox"])
+    router = APIRouter(prefix="/api/dev", dependencies=[Depends(ctx.request_guard)], tags=["synthetic imaging and FHIR sandbox"])
 
     def study_for(c, study_id, user):
         study = c.execute(text("SELECT * FROM dev_imaging_studies WHERE id=:id"), {"id": study_id}).mappings().first()

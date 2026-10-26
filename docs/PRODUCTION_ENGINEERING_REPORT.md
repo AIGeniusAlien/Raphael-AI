@@ -1,3 +1,7 @@
+## Current verified engineering result — 2026-10-26
+
+Final local consolidated verification passes193Python,26frontend,6Chromium and5mobile source tests,plus14deterministic safety protocol cases,project audit and traceability. Actual GitHub Actions run40421429685 passed all three jobs,including Xcode16.4/iOS18.5 native unit/UI tests. The final common Origin/read/upload guard subsequently passed the full local suite;current-head CI is recorded in PRODUCTION_ENGINEERING_RESULTS.json. Native authenticated staging/device/signing,Windows/macOS Python runtime,full account erasure and independent clinical/security/privacy/operational validation remain incomplete. App Store/production clinical release remains NOT SAFE. Read PRODUCTION_ENGINEERING_REPORT.md and AUTOMATED_DEVELOPMENT.md first. Earlier checkpoints below are historical.
+
 # Production engineering implementation — 2026-10-26
 
 This is a working development increment on fix/sqlite-startup-recovery and draft PR1,not a production or clinical release. The full new directive is retained in RAPHAEL_MASTER_SPEC.md. Existing clinical/portal/evidence architecture and all1,117baseline requirement IDs/descriptions are preserved. See PRODUCTION_ENGINEERING_RESULTS.json for exact verification,live and CI outcomes.
@@ -11,9 +15,9 @@ This is a working development increment on fix/sqlite-startup-recovery and draft
 | Cross-platform startup | PARTIALLY IMPLEMENTED | Python launcher,private provisioning,pinned setup and safe loopback mode implemented;Linux actual startup/restart passed. Windows/macOS installation/runtime not executed. |
 | Clinical safety protocol automation | PARTIALLY IMPLEMENTED | Fourteen deterministic protocol cases with100%threshold;ten medical categories explicitly require adjudicated expert references. Not model medical accuracy. |
 | Actual evidence-grounded AI | PARTIALLY IMPLEMENTED | Historical physician+patient live complete result retained. Current-code live attempt outcomes recorded separately;automated support can correctly block a draft. Six-source corpus is not comprehensive coverage. |
-| Native readiness utility | IMPLEMENTED BUT NOT VERIFIED | Actual Swift source sends no patient data/cookies,denies redirects,bounds response/timeouts and rejects legacy readiness. Added native XCTest has not run locally. |
+| Native readiness utility | PARTIALLY IMPLEMENTED | Actual Swift source compiled;readiness payload tests passed in native CI. No cookies/patient fields,redirect denial and bounded transport. Live configured HTTPS/device behavior remains unverified. |
 | iOS project structural checks | IMPLEMENTED AND VERIFIED | Actual project parser/icon/resource/target audit and five tests pass;these are not Swift compilation. |
-| Native iOS build/device/signing | PARTIALLY IMPLEMENTED | Actual remote Xcode compilation succeeded after the async-overload fix,but simulator startup aborted. Corrective runtime configuration is under CI verification. Physical-device/signing remain external gates. |
+| Native iOS build/device/signing | PARTIALLY IMPLEMENTED | Actual remote Xcode16.4/iOS18.5 compilation,unit tests and unconfigured-launch UI test passed after fixing missing Swift WebKit overlay dependency. Device/authenticated native/signing remain unverified. |
 | CI gates | PARTIALLY IMPLEMENTED | Read-only PR/main workflows run consolidated regression,advisory/source scans and unsigned simulator tests with retained artifacts. Remote execution status is recorded,not inferred from YAML. |
 | Dependency/source scanning | IMPLEMENTED AND VERIFIED | Fresh86-package advisory check:zero known vulnerabilities. High-severity/high-confidence Bandit scan:zero findings/scan errors. Lower severity/manual penetration review remains. |
 | Brand consistency | PARTIALLY IMPLEMENTED | Existing web logo,palettes/layouts and native assets preserved;SHA256inventory identifies conflicting web/iOS marks. Owner's final icon authority unavailable. |
@@ -47,7 +51,7 @@ On macOS,use mobile/README.md for simulator commands,configure an authorized syn
 
 ## Next three actions
 
-1. Inspect actual PR CI/native results;fix build/test failures before claiming any iOS compilation success. Then exercise authenticated synthetic native device/accessibility/offline/privacy behavior.
+1. Exercise authenticated native device/accessibility/offline/privacy behavior against explicitly authorized synthetic HTTPS staging. Simulator compilation/unit/UI tests now pass;they do not replace those gates.
 2. Build clinician/pharmacist-adjudicated medical reference sets and evaluate support,abstention,age/pregnancy/medication/emergency risks across versioned models;do not relax failed support checks to improve completion rates.
 3. Resolve owner retention/deletion,identity/guardian/MFA,HTTPS staging/at-rest encryption,tamper-evident audit,incident response and vendor BAAs/privacy/security/clinical review before shared PHI or TestFlight release. No production deployment is authorized.
 

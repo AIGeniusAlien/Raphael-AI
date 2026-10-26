@@ -1,3 +1,5 @@
+Current evidence supersedes older unverified-build statements below:unsigned remote Xcode16.4/iOS18.5 simulator compilation and native unit/UI tests passed in run40421429685. No authenticated native/device/signing/submission success is claimed.
+
 # Owner review package — source only, not submitted
 
 The Linux source audit and five project/configuration tests pass. Swift compilation, simulator execution, physical-device accessibility, signing and App Store/TestFlight upload have NOT run. No owner Apple account, certificate, registered bundle, staging hostname or review credentials are invented.

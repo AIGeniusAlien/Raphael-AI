@@ -122,7 +122,7 @@ class ReceiptIn(Input):
 
 
 def install_messaging(app, ctx, draft_generator=None):
-    router = APIRouter(prefix="/api/dev", tags=["synthetic internal messaging"])
+    router = APIRouter(prefix="/api/dev", dependencies=[Depends(ctx.request_guard)], tags=["synthetic internal messaging"])
     app.add_middleware(AttachmentLimitMiddleware)
 
     def participant(user=Depends(ctx.user)):

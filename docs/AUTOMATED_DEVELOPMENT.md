@@ -1,6 +1,13 @@
 # One-command development and verification
 
-From the repository root with Python3.12:
+For a fresh machine,clone the existing development branch first:
+
+```bash
+git clone --branch fix/sqlite-startup-recovery https://github.com/AIGeniusAlien/Raphael-AI.git
+cd Raphael-AI
+```
+
+In an existing checkout,preserve local work and switch to the development branch without resetting it. From the repository root with Python3.12:
 
 ```bash
 python -m dev_start --setup --provision
@@ -57,3 +64,5 @@ RAPHAEL_DEV_SYNTHETIC_ONLY=1 python -m auth.dev_recover --database-url sqlite://
 ```
 
 On Windows PowerShell,set `$env:RAPHAEL_DEV_SYNTHETIC_ONLY='1'` first and run the Python command without the Unix prefix. The CLI privately prompts twice,replaces only an active matching account credential,atomically revokes all its sessions and records an operator event without impersonating the patient. It does not reactivate disabled accounts,change medical records or send an email. This is a synthetic operator recovery procedure,not production identity verification or a public recovery endpoint.
+
+Current native CI compilation/unit/UI success is recorded in PRODUCTION_ENGINEERING_RESULTS.json. The local Linux runner still correctly marks native execution skipped;it never presents that skip as the separate remote success. CI publishes xcresult counts through API-readable notices when available.

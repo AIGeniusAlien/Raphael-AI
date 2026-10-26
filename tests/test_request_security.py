@@ -31,9 +31,28 @@ class RequestSecurityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory,patch.dict(os.environ,{'RAPHAEL_DEV_SYNTHETIC_ONLY':'1'}):
             engine=create_engine('sqlite:///'+directory+'/synthetic.db')
             try:
-                init_portal_schema(engine);app=FastAPI();install_dev_portal(app,engine)
+                init_portal_schema(engine);app=FastAPI();ctx=install_dev_portal(app,engine)
+                from dev_runtime import migrate
+                from dev_chart import install_chart
+                from dev_imaging import install_imaging
+                from dev_messaging import install_messaging
+                migrate(engine);install_chart(app,ctx);install_imaging(app,ctx);install_messaging(app,ctx)
                 with TestClient(app) as client:
+                    self.assertEqual(client.get('/api/dev/session',headers={'origin':'https://sibling.testserver','sec-fetch-site':'same-site'}).status_code,403)
+                    self.assertEqual(client.get('/api/dev/session',headers={'origin':'http://testserver'}).status_code,401)
+                    for path in ('/api/dev/inbox','/api/dev/patients/1/chart','/api/dev/patients/1/imaging/studies'):
+                        self.assertEqual(client.get(path,headers={'origin':'https://sibling.testserver','sec-fetch-site':'same-site'}).status_code,403,path)
+
                     for headers in ({'sec-fetch-site':'cross-site'},{'origin':'https://['}):
                         response=client.post('/api/dev/login',json={'tenant':'test','username':'none','password':'not-a-real-password'},headers=headers)
                         self.assertEqual(response.status_code,403)
+                # Real low-budget instance verifies that auth plus router guards
+                # count once per request,but retain state across separate requests.
+                budget=RequestBudget(limit=2)
+                with patch('dev_security.RequestBudget',return_value=budget):
+                    limited=FastAPI();install_dev_portal(limited,engine)
+                with TestClient(limited) as client:
+                    self.assertEqual(client.get('/api/dev/session').status_code,401)
+                    self.assertEqual(client.get('/api/dev/session').status_code,401)
+                    self.assertEqual(client.get('/api/dev/session').status_code,429)
             finally:engine.dispose()

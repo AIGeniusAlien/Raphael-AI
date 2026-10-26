@@ -228,7 +228,7 @@ class ConsentIn(Input):
 
 def install_chart(app, ctx):
     engine = ctx.engine
-    router = APIRouter(prefix="/api/dev", tags=["synthetic structured chart"])
+    router = APIRouter(prefix="/api/dev", dependencies=[Depends(ctx.request_guard)], tags=["synthetic structured chart"])
 
     def chart_user(user=Depends(ctx.user)):
         if user["role"] not in ("patient", "clinician"):

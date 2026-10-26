@@ -8,7 +8,7 @@
   "baseline_ids_descriptions_preserved": true,
   "local_verification": {
     "schema_version": 1,
-    "generated_at": "2026-10-26T22:59:43.590624+00:00",
+    "generated_at": "2026-10-26T23:52:47.780485+00:00",
     "platform": "Linux",
     "python": "3.12.14",
     "status": "passed",
@@ -18,45 +18,45 @@
         "status": "passed",
         "exit_code": 0,
         "timeout": false,
-        "duration_seconds": 68.741,
+        "duration_seconds": 77.43,
         "counts": {
-          "tests": 192
+          "tests": 193
         },
-        "log": "/workspace/.raphael/production-final-verification/python.log"
+        "log": "/workspace/.raphael/production-release-verification/python.log"
       },
       {
         "name": "frontend",
         "status": "passed",
         "exit_code": 0,
         "timeout": false,
-        "duration_seconds": 0.269,
+        "duration_seconds": 0.216,
         "counts": {
           "tests": 26,
           "pass": 26,
           "fail": 0,
           "skipped": 0
         },
-        "log": "/workspace/.raphael/production-final-verification/frontend.log"
+        "log": "/workspace/.raphael/production-release-verification/frontend.log"
       },
       {
         "name": "chromium",
         "status": "passed",
         "exit_code": 0,
         "timeout": false,
-        "duration_seconds": 35.26,
+        "duration_seconds": 42.115,
         "counts": {
           "tests": 6
         },
-        "log": "/workspace/.raphael/production-final-verification/chromium.log"
+        "log": "/workspace/.raphael/production-release-verification/chromium.log"
       },
       {
         "name": "mobile-structure",
         "status": "passed",
         "exit_code": 0,
         "timeout": false,
-        "duration_seconds": 0.064,
+        "duration_seconds": 0.115,
         "counts": {},
-        "log": "/workspace/.raphael/production-final-verification/mobile-structure.log"
+        "log": "/workspace/.raphael/production-release-verification/mobile-structure.log"
       },
       {
         "name": "mobile-tests",
@@ -67,25 +67,25 @@
         "counts": {
           "tests": 5
         },
-        "log": "/workspace/.raphael/production-final-verification/mobile-tests.log"
+        "log": "/workspace/.raphael/production-release-verification/mobile-tests.log"
       },
       {
         "name": "traceability",
         "status": "passed",
         "exit_code": 0,
         "timeout": false,
-        "duration_seconds": 0.064,
+        "duration_seconds": 0.115,
         "counts": {},
-        "log": "/workspace/.raphael/production-final-verification/traceability.log"
+        "log": "/workspace/.raphael/production-release-verification/traceability.log"
       },
       {
         "name": "safety-evaluation",
         "status": "passed",
         "exit_code": 0,
         "timeout": false,
-        "duration_seconds": 0.967,
+        "duration_seconds": 0.968,
         "counts": {},
-        "log": "/workspace/.raphael/production-final-verification/safety-evaluation.log"
+        "log": "/workspace/.raphael/production-release-verification/safety-evaluation.log"
       },
       {
         "name": "ios-native",
@@ -126,20 +126,25 @@
     "structural_checks": "passed",
     "xcode_local": "NOT_RUN",
     "new_native_tests": "NOT_RUN",
-    "ci": "First actual macOS Xcode test attempt failed exit65;diagnostics publication added;not build-verified",
+    "ci": "All three jobs passed run40421429685;final read-origin guard checked locally and queued for fresh CI",
     "device_signing": "NOT_RUN",
     "app_store_ready": false,
     "compiler_defect": {
       "file": "mobile/ios/Raphael/PatientWebSession.swift",
       "cause": "Completion closure passed to async callAsyncJavaScript overload",
       "fix_commit": "766d3e7e747c29de8f39b945bd0b57a370c7dbbd",
-      "status": "Compilation succeeded after async fix;simulator startup then aborted;runtime path fix under new CI verification"
+      "status": "Verified fixed by actual Xcode compilation"
     },
     "runtime_followup": {
-      "commit": "78de89b673432bb91ef43494c664814e602b14d6",
-      "changes": "Bundle-relative runtime search paths and bounded crash-report annotations",
-      "verified": false
-    }
+      "cause": "Missing /usr/lib/swift/libswiftWebKit.dylib in iOS18.5 simulator",
+      "fix": "Public Objective-C promise bridge and removal of unused dynamic overlay dependencies",
+      "verified": true,
+      "verified_commit": "a45e247bba058e12b429e5bee6363c1459797a09",
+      "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40421429685"
+    },
+    "xcode_ci_compile": "VERIFIED on macOS Xcode16.4/iOS18.5",
+    "simulator_unit_ui": "VERIFIED at a45e247",
+    "authenticated_native_staging": "NOT_RUN"
   },
   "cross_platform": {
     "linux_launcher_http_restart": "passed",
@@ -171,7 +176,7 @@
   "source_brand_assets": "preserved;owner canonical icon authority unresolved",
   "readiness": "Restricted synthetic development;shared clinical/production/App Store release blocked",
   "external_gates": [
-    "macOS/Xcode/native device verification",
+    "Authenticated native HTTPS staging/device/accessibility verification;unsigned simulator compilation and tests already pass",
     "Apple signing,registered bundle,owner brand/support/privacy metadata",
     "verified identity/MFA/guardian/public recovery",
     "retention/legal hold and policy-backed account erasure",
@@ -181,14 +186,8 @@
   "owner_commands": "docs/AUTOMATED_DEVELOPMENT.md",
   "security_scan_artifact": "docs/PRODUCTION_SOURCE_SCAN.json",
   "dependency_audit_artifact": "docs/PRODUCTION_DEPENDENCY_AUDIT.json",
-  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40418688776",
-  "ci_observed_status": "New corrective run in progress;advisory/security job passed",
-  "additional_final_python_suite": {
-    "passed": 193,
-    "failed": 0,
-    "duration_seconds": 73.984,
-    "reason": "Added CI diagnostic redaction/annotation security regression after the192test consolidated run"
-  },
+  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40421429685",
+  "ci_observed_status": "All three jobs succeeded on a45e247;final security/read-origin changes require current-head CI",
   "evidence_inventory": {
     "collection": "raphael_evidence_v1",
     "total_vectors": 31,
@@ -206,6 +205,14 @@
     "failure": "Care page390px overflow on remote Chromium",
     "fix": "Intrinsic controls shrink and long tokens wrap;no overflow hidden",
     "local_verified": "320px and390px with20px text;actual Chromium passed",
-    "remote_verified": false
+    "remote_verified": true,
+    "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40418688776"
+  },
+  "read_origin_hardening": {
+    "all_portal_routers": true,
+    "includes_reads_and_uploads": true,
+    "multipart_preserved": true,
+    "duplicate_guard_accounting_prevented": true,
+    "tests": "Final local193Python/26frontend/6Chromium/5mobile source checks pass"
   }
 }

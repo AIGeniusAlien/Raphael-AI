@@ -1,3 +1,5 @@
+Current remote verification:GitHub Actions run40421429685 compiled this project and passed native unit/UI tests on Xcode16.4/iOS18.5. WebKitScriptBridge uses the public Objective-C promise API;unused overlay dylibs are stripped because the simulator lacks libswiftWebKit. Promise success/rejection and unconfigured launch are tested. Physical-device,authenticated HTTPS journey,signing and App Store acceptance remain unverified. This Linux host still has no Xcode.
+
 # Raphael native iOS development client
 
 This is an actual SwiftUI/WebKit Xcode source project over the existing Raphael backend. It adds native section navigation, server-origin enforcement, privacy/session settings, an ephemeral shared authenticated web session, a background privacy cover, controlled source inspection, explicit JavaScript consent/confirmation bridging, loading/retry states and an account/deletion-review entry point. It does not duplicate the backend, embed provider keys, create a local medical database or install a fake AI provider.

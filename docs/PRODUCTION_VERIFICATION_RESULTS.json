@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-26T22:59:43.590624+00:00",
+  "generated_at": "2026-10-26T23:52:47.780485+00:00",
   "platform": "Linux",
   "python": "3.12.14",
   "status": "passed",
@@ -10,45 +10,45 @@
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 68.741,
+      "duration_seconds": 77.43,
       "counts": {
-        "tests": 192
+        "tests": 193
       },
-      "log": "/workspace/.raphael/production-final-verification/python.log"
+      "log": "/workspace/.raphael/production-release-verification/python.log"
     },
     {
       "name": "frontend",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.269,
+      "duration_seconds": 0.216,
       "counts": {
         "tests": 26,
         "pass": 26,
         "fail": 0,
         "skipped": 0
       },
-      "log": "/workspace/.raphael/production-final-verification/frontend.log"
+      "log": "/workspace/.raphael/production-release-verification/frontend.log"
     },
     {
       "name": "chromium",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 35.26,
+      "duration_seconds": 42.115,
       "counts": {
         "tests": 6
       },
-      "log": "/workspace/.raphael/production-final-verification/chromium.log"
+      "log": "/workspace/.raphael/production-release-verification/chromium.log"
     },
     {
       "name": "mobile-structure",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.064,
+      "duration_seconds": 0.115,
       "counts": {},
-      "log": "/workspace/.raphael/production-final-verification/mobile-structure.log"
+      "log": "/workspace/.raphael/production-release-verification/mobile-structure.log"
     },
     {
       "name": "mobile-tests",
@@ -59,25 +59,25 @@
       "counts": {
         "tests": 5
       },
-      "log": "/workspace/.raphael/production-final-verification/mobile-tests.log"
+      "log": "/workspace/.raphael/production-release-verification/mobile-tests.log"
     },
     {
       "name": "traceability",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.064,
+      "duration_seconds": 0.115,
       "counts": {},
-      "log": "/workspace/.raphael/production-final-verification/traceability.log"
+      "log": "/workspace/.raphael/production-release-verification/traceability.log"
     },
     {
       "name": "safety-evaluation",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.967,
+      "duration_seconds": 0.968,
       "counts": {},
-      "log": "/workspace/.raphael/production-final-verification/safety-evaluation.log"
+      "log": "/workspace/.raphael/production-release-verification/safety-evaluation.log"
     },
     {
       "name": "ios-native",

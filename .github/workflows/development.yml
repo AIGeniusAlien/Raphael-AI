@@ -84,6 +84,9 @@ jobs:
         run: |
           set -o pipefail
           bash mobile/scripts/native_checks.sh 2>&1 | tee native-build.log
+      - name: Publish native test counts
+        if: always()
+        run: python3 .github/scripts/native_test_summary.py
       - name: Publish native failure diagnostics
         if: failure()
         run: python3 .github/scripts/publish_diagnostics.py native-build.log --native-crashes

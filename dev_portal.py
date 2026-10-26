@@ -302,24 +302,32 @@ def install_dev_portal(app, engine, assessment_generator=None):
     from dev_security import RequestBudget
     request_budget=RequestBudget()
 
-    async def same_origin_json(request: Request):
+    def request_guard(request: Request):
+        if getattr(request.state, "raphael_guard_checked", False):return
         request_budget.check(request)
         if request.headers.get('sec-fetch-site')=='cross-site':
             raise HTTPException(403,'Cross-site portal requests are forbidden.')
+        # SameSite cookies can be sent by a sibling origin. Protect reads too;
+        # the legacy CORS configuration must never grant portal data access.
+        origin = request.headers.get("origin")
+        expected = urlsplit(str(request.url))
+        if origin:
+            try:supplied = urlsplit(origin)
+            except ValueError:raise HTTPException(403,'Invalid request origin.') from None
+            if (supplied.scheme, supplied.netloc) != (expected.scheme, expected.netloc):
+                raise HTTPException(403, "Cross-origin portal requests are forbidden.")
+        request.state.raphael_guard_checked=True
+
+    async def same_origin_json(request: Request):
+        request_guard(request)
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-            origin = request.headers.get("origin")
-            expected = urlsplit(str(request.url))
-            if origin:
-                try:supplied = urlsplit(origin)
-                except ValueError:raise HTTPException(403,'Invalid request origin.') from None
-                if (supplied.scheme, supplied.netloc) != (expected.scheme, expected.netloc):
-                    raise HTTPException(403, "Cross-origin portal mutations are forbidden.")
             if request.headers.get("content-type", "").split(";", 1)[0].strip().lower() != "application/json":
                 raise HTTPException(415, "Portal mutations require application/json.")
 
     router.dependencies.append(Depends(same_origin_json))
 
     def current_user(request: Request):
+        request_guard(request)
         token = request.cookies.get(COOKIE_NAME, "")
         if not token:
             raise HTTPException(401, "Development login required.")
@@ -663,5 +671,5 @@ def install_dev_portal(app, engine, assessment_generator=None):
     app.include_router(router)
     return SimpleNamespace(engine=engine, user=current_user, clinician=clinician,
                            patient_for=patient_for, conversation_for=conversation_for,
-                           note_for=note_for, audit=_audit, same_origin_json=same_origin_json,
+                           note_for=note_for, audit=_audit, same_origin_json=same_origin_json, request_guard=request_guard,
                            can_access_patient=can_access_patient)

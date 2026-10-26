@@ -1,11 +1,11 @@
 {
-  "ios_source": "IMPLEMENTED_UNVERIFIED",
+  "ios_source": "PARTIAL;compiled and simulator-tested;authenticated/device flow unverified",
   "linux_structural_audit": "VERIFIED",
   "linux_project_tests": {
     "passed": 5
   },
-  "xcode_compile": "Actual remote CI reached simulator execution after async-overload correction",
-  "simulator_and_device_tests": "Remote simulator startup failed;corrective configuration awaiting CI;physical device not run",
+  "xcode_compile": "VERIFIED_REMOTE_CI",
+  "simulator_and_device_tests": "Simulator unit/UI passed;physical device and authenticated native journey NOT_RUN",
   "apple_signing": "BLOCKED_EXTERNAL",
   "privacy_legal_clinical_review": "REQUIRES_CLINICAL_VALIDATION",
   "account_erasure": "NOT_IMPLEMENTED",
@@ -20,5 +20,6 @@
     "Supply registered bundle, signing team and real support/privacy URLs",
     "Complete legal/privacy/clinical review and policy-backed account deletion"
   ],
-  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40418688776"
+  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40421429685",
+  "simulator_unit_ui_tests": "VERIFIED_REMOTE_CI"
 }

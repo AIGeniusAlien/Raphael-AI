@@ -14,3 +14,5 @@ development authentication and blocks legacy APIs. Legacy mode remains unauthent
 neither mode is approved for clinical use or public deployment.
 
 The [core intelligence workspace](docs/CORE_INTELLIGENCE.md) connects scoped streaming conversations, browser voice controls and versioned consent-controlled encounter notes to the clinician portal. Live service and speech-validation limitations are explicit.
+
+[Connected care](docs/CARE_JOURNEY.md) adds expiring patient-authorized intake snapshots and receiving-clinician review. [Infrastructure status](docs/INFRASTRUCTURE_STATUS.md) records the actual live-service blockers; [mobile decision](docs/MOBILE_ADR.md) distinguishes the working mobile web view from future native distribution.

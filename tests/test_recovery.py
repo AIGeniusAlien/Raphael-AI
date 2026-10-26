@@ -289,4 +289,4 @@ class ApplicationTests(unittest.TestCase):
              patch.object(main, "ensure_qdrant_collection", side_effect=RuntimeError("synthetic unavailable")), \
              patch("builtins.print") as log, TestClient(main.app) as client:
             self.assertEqual(client.get("/healthz").status_code, 200)
-            log.assert_called_with("QDRANT_STARTUP_WARNING", "synthetic unavailable")
+            log.assert_called_with("QDRANT_STARTUP_WARNING", "RuntimeError")

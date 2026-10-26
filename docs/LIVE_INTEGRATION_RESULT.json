@@ -1,0 +1,16 @@
+{
+  "runtime_presence": {
+    "LLM_API_KEY": false,
+    "LLM_BASE_URL": false,
+    "LLM_MODEL": false,
+    "QDRANT_URL": false,
+    "QDRANT_API_KEY": false
+  },
+  "live_requested": true,
+  "openai": {
+    "status": "blocked_missing_runtime_binding"
+  },
+  "qdrant": {
+    "status": "blocked_missing_runtime_binding"
+  }
+}

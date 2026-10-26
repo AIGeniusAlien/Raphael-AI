@@ -1,0 +1,17 @@
+{
+  "name": "Raphael Synthetic Development",
+  "short_name": "Raphael Dev",
+  "id": "/raphael-development",
+  "start_url": "/static/care.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f8fa",
+  "theme_color": "#075e68",
+  "icons": [
+    {
+      "src": "/static/logo.png.PNG",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

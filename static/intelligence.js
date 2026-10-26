@@ -28,7 +28,7 @@
     const epoch=state.epoch;
     const thread=await api('/intelligence/threads/'+id);
     if(epoch!==state.epoch)return;
-    state.thread=thread;$('thread-title').textContent=state.thread.title;$('patient').value=state.thread.patient_id||'';$('patient').disabled=true;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();
+    state.thread=thread;$('thread-scope').textContent=thread.intake_id?'Uses only the authorized intake snapshot. No live chart is included; expired or revoked consent denies future access.':thread.patient_id?'Authorized current chart context is included.':'General research conversation; no patient chart is included.';$('thread-title').textContent=state.thread.title;$('patient').value=state.thread.patient_id||'';$('patient').disabled=true;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();
     for(const m of state.thread.messages)entry(m.role,m.content,m.status);
     const interrupted = state.thread.messages.find(m=>m.status==='streaming');
     state.generation=interrupted?.generation_id||null;state.busy=!!interrupted;
@@ -36,7 +36,7 @@
     if(interrupted)status('A previous generation is unfinished. Stop it to recover this conversation.');
     $('export').disabled=false;$('retry').disabled=!state.thread.messages.some(m=>m.role==='user');
     state.lastPrompt=[...state.thread.messages].reverse().find(m=>m.role==='user')?.content||'';
-    await encounters();
+    await encounters();if(thread.intake_id)$('thread-title').textContent=thread.title+' · consented snapshot only';
   }
   async function encounters() {
     $('encounter').replaceChildren();const id=$('patient').value;$('chart-link').href=id?'/static/chart.html?patient_id='+encodeURIComponent(id):'/';
@@ -71,7 +71,7 @@
   async function boot(){
     const user=await api('/session');if(user.role!=='clinician')throw new Error('The intelligence workspace requires a clinician account.');$('identity').textContent=user.username+' · '+user.tenant;const config=await api('/intelligence/config');$('model').textContent='Model: '+config.model+' · '+(config.provider_configured?'Configured, live validation not established':'Provider credentials missing');
     const patients=await api('/patients');for(const p of patients){const o=node('option',p.name);o.value=p.id;$('patient').append(o);}const selected=new URLSearchParams(location.search).get('patient');if(patients.some(p=>String(p.id)===selected))$('patient').value=selected;
-    $('intelligence').hidden=false;await loadThreads();await encounters();$('voice-status').textContent=voice.supported()?'Microphone off. Recognition available; explicit permission required.':'Speech recognition unavailable. Manual synthetic transcript entry supported.';
+    $('intelligence').hidden=false;await loadThreads();await encounters();const linked=new URLSearchParams(location.search).get('thread');if(linked&&/^\d+$/.test(linked))await selectThread(Number(linked));$('voice-status').textContent=voice.supported()?'Microphone off. Recognition available; explicit permission required.':'Speech recognition unavailable. Manual synthetic transcript entry supported.';
   }
   $('assessment').onclick=()=>action(async()=>{if(!state.thread||state.busy)throw new Error('Select a conversation and finish generation first.');const epoch=state.epoch;const output=await api('/intelligence/threads/'+state.thread.id+'/assessment',{content:$('prompt').value});if(epoch!==state.epoch)return;const holder=$('structured-assessment');holder.replaceChildren(node('p','Structured clinician draft — requires review.'));for(const [key,value] of Object.entries(output)){holder.append(node('h3',key.replaceAll('_',' ')),node('pre',typeof value==='string'?value:JSON.stringify(value,null,2)));}status('Structured assessment saved. No note was approved and no message was sent.');});
   $('new-draft').onclick=()=>action(async()=>{if(state.busy)throw new Error('Stop generation before starting a new conversation.');voice.stop();state.epoch++;state.thread=null;state.session=null;state.version=0;state.dirty=false;$('patient').disabled=false;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();$('note').value='';$('transcript').textContent='';$('audit').replaceChildren();$('versions').replaceChildren();$('consent').checked=false;$('session-id').value='';$('note-status').textContent='';$('thread-title').textContent='New conversation';$('export').disabled=true;$('retry').disabled=true;await encounters();});

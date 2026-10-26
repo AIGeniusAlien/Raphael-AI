@@ -457,7 +457,8 @@ def startup():
         if QDRANT_URL:
             ensure_qdrant_collection()
     except Exception as e:
-        print("QDRANT_STARTUP_WARNING", str(e))
+        # SDK/proxy exception messages can reflect URLs, headers or credentials.
+        print("QDRANT_STARTUP_WARNING", type(e).__name__)
 
 # ───────────────── Base routes
 @app.get("/")
@@ -775,11 +776,13 @@ if DEV_PORTAL:
     from dev_messaging import install_messaging
     from dev_knowledge import install_knowledge
     from dev_intelligence import install_intelligence
+    from dev_care import install_care
     install_chart(app, portal_context)
     install_imaging(app, portal_context)
     install_messaging(app, portal_context)
     install_knowledge(app, portal_context)
     install_intelligence(app, portal_context, assessment_generator=development_assessment)
+    install_care(app, portal_context)
 
     @app.get("/api/dev/status")
     def portal_status(user=Depends(portal_context.user)):

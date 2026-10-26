@@ -94,3 +94,9 @@ The synthetic release cannot satisfy clinical release gates. Clinical notes and 
 
 ## Core intelligence increment
 `dev_intelligence.py` and `static/intelligence.*` add clinician streaming/research/patient threads,structured assessment requests,versioned consent-controlled transcripts and explicit note publication. `static/voice.js` uses real browser APIs when supported; tests use speech fixtures and do not validate a microphone/vendor. See CORE_INTELLIGENCE.md and CORE-001–007 for exact tested bounds. No prior feature was removed.
+
+
+## Connected care checkpoint
+`dev_care.py` and `static/care.*` provide patient-reported updates,immutable intake snapshots,explicit purpose/recipient/expiration/AI consent,receiver review,versioned summaries and explicit publication into existing patient notes. Revocation denies further intake and linked AI access;previously viewed/transmitted data cannot be recalled. Emergency information is authenticated display/export only,not real facility messaging or triage. Existing tenant chart policy is not replaced by snapshot sharing. A mobile web manifest is provided;no native/iOS App Store or physical-device claim.
+
+`dev_services.py` and INFRASTRUCTURE_STATUS.md record actual runtime absence of all five required provider variables. The user-supplied statement that configuration exists conflicts with observed pending draft/runtime absence;both observations are preserved without guessing. No authenticated provider request,remote corpus ingestion or Qdrant collection mutation could be performed. Expected model384 dimensions and defaultcollection raphael_evidence_v1 are configuration defaults only;actual counts/schema are unknown.

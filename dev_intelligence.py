@@ -22,7 +22,7 @@ from dev_portal import _require_synthetic
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS dev_ai_threads (
  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant TEXT NOT NULL, owner_id INTEGER NOT NULL,
- patient_id INTEGER, title TEXT NOT NULL, created_at TEXT NOT NULL
+ patient_id INTEGER, intake_id INTEGER, title TEXT NOT NULL, created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS dev_ai_messages (
  id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER NOT NULL,
@@ -54,12 +54,17 @@ def now():
 
 def init_intelligence_schema(engine):
     _require_synthetic(engine)
+    from dev_care import init_care_schema
+    init_care_schema(engine)
     with engine.begin() as c:
         c.exec_driver_sql('BEGIN IMMEDIATE')
         execute_sqlite_script(c, SCHEMA)
         columns = {r[1] for r in c.exec_driver_sql('PRAGMA table_info(dev_active_notes)')}
         if 'published_note_id' not in columns:
             c.exec_driver_sql('ALTER TABLE dev_active_notes ADD COLUMN published_note_id INTEGER')
+        thread_columns = {r[1] for r in c.exec_driver_sql('PRAGMA table_info(dev_ai_threads)')}
+        if 'intake_id' not in thread_columns:
+            c.exec_driver_sql('ALTER TABLE dev_ai_threads ADD COLUMN intake_id INTEGER')
 
 
 class Input(BaseModel):
@@ -69,6 +74,7 @@ class Input(BaseModel):
 class ThreadIn(Input):
     title: str = Field(min_length=1, max_length=200)
     patient_id: int | None = Field(default=None, gt=0)
+    intake_id: int | None = Field(default=None, gt=0)
 
 
 class Prompt(Input):
@@ -128,6 +134,9 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             raise HTTPException(404, 'Conversation not found.')
         if row['patient_id']:
             ctx.patient_for(c, row['patient_id'], user)
+        if row['intake_id']:
+            from dev_care import authorized_intake
+            authorized_intake(c, row['intake_id'], user, require_ai=True)
         return dict(row)
 
     def session_for(c, identifier, user):
@@ -149,16 +158,21 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
         if len(q) > 200:
             raise HTTPException(422, 'Search is too long.')
         with engine.begin() as c:
-            return [dict(r) for r in c.execute(text('SELECT * FROM dev_ai_threads WHERE tenant=:t AND owner_id=:u AND title LIKE :q ORDER BY id DESC'),
-                    {'t': user['tenant'], 'u': user['id'], 'q': '%' + q + '%'}).mappings()]
+            return [dict(r) for r in c.execute(text("SELECT * FROM dev_ai_threads WHERE tenant=:t AND owner_id=:u AND title LIKE :q AND (intake_id IS NULL OR EXISTS(SELECT 1 FROM dev_care_intakes i WHERE i.id=intake_id AND i.tenant=:t AND i.recipient_id=:u AND i.state='AUTHORIZED' AND i.allow_ai=1 AND i.expires_at>:at)) ORDER BY id DESC"),
+                    {'t': user['tenant'], 'u': user['id'], 'q': '%' + q + '%', 'at': now()}).mappings()]
 
     @router.post('/threads')
     def create_thread(body: ThreadIn, user=Depends(ctx.clinician)):
         with engine.begin() as c:
+            if body.intake_id:
+                if body.patient_id:
+                    raise HTTPException(422, 'An intake thread may use only its consented snapshot, not a separate chart.')
+                from dev_care import authorized_intake
+                authorized_intake(c, body.intake_id, user, require_ai=True)
             if body.patient_id:
                 ctx.patient_for(c, body.patient_id, user)
-            identifier = c.execute(text('INSERT INTO dev_ai_threads(tenant,owner_id,patient_id,title,created_at) VALUES (:t,:u,:p,:title,:at)'),
-                    {'t': user['tenant'], 'u': user['id'], 'p': body.patient_id, 'title': body.title, 'at': now()}).lastrowid
+            identifier = c.execute(text('INSERT INTO dev_ai_threads(tenant,owner_id,patient_id,intake_id,title,created_at) VALUES (:t,:u,:p,:i,:title,:at)'),
+                    {'t': user['tenant'], 'u': user['id'], 'p': body.patient_id, 'i': body.intake_id, 'title': body.title, 'at': now()}).lastrowid
             ctx.audit(c, user, 'create_ai_thread', 'ai_thread', identifier)
             return thread_for(c, identifier, user)
 
@@ -188,6 +202,10 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             context = []
             if current_thread['patient_id']:
                 context = [dict(r) for r in c.execute(text('SELECT kind,label,data,recorded_at,status FROM dev_chart_entries WHERE patient_id=:p ORDER BY id DESC LIMIT 20'), {'p': current_thread['patient_id']}).mappings()]
+            elif current_thread['intake_id']:
+                from dev_care import authorized_intake
+                intake = authorized_intake(c, current_thread['intake_id'], user, require_ai=True)
+                context = {'consented_snapshot_only': intake['snapshot'], 'reported_symptoms': intake['symptoms'], 'purpose': intake['purpose']}
         try:
             evidence = search_evidence(engine, user['tenant'], body.content[:1000])
         except Exception:
@@ -214,6 +232,12 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                     with engine.connect() as c:
                         active = c.execute(text('SELECT status FROM dev_ai_messages WHERE generation_id=:g'), {'g': generation}).scalar()
                         account = c.execute(text('SELECT active FROM dev_users WHERE id=:u'), {'u': user['id']}).scalar()
+                        if current_thread['intake_id']:
+                            from dev_care import authorized_intake
+                            try:
+                                authorized_intake(c, current_thread['intake_id'], user, require_ai=True)
+                            except HTTPException:
+                                account = False
                     if active != 'streaming' or not account:
                         status = 'cancelled'
                         yield event('cancelled', {'generation_id': generation})
@@ -263,6 +287,10 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             chart = []
             if record['patient_id']:
                 chart = [dict(r) for r in c.execute(text('SELECT kind,label,data,status FROM dev_chart_entries WHERE patient_id=:p ORDER BY id DESC LIMIT 20'), {'p': record['patient_id']}).mappings()]
+            elif record['intake_id']:
+                from dev_care import authorized_intake
+                intake = authorized_intake(c, record['intake_id'], user, require_ai=True)
+                chart = {'consented_snapshot_only': intake['snapshot'], 'reported_symptoms': intake['symptoms']}
             ctx.audit(c, user, 'request_structured_assessment', 'ai_thread', identifier)
         if assessment_generator is None:
             raise HTTPException(503, 'Structured assessment service is not configured.')

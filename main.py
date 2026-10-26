@@ -18,6 +18,7 @@ from sqlalchemy import create_engine, text
 from database import execute_sqlite_script
 
 from qdrant_client import QdrantClient
+from qdrant_config import connection_options
 from qdrant_client.http import models as qm
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
@@ -146,12 +147,21 @@ def qdrant_client() -> QdrantClient:
     if not QDRANT_URL:
         raise HTTPException(500, "QDRANT_URL not set.")
     if QDRANT_API_KEY:
-        return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
-    return QdrantClient(url=QDRANT_URL)
+        return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, **connection_options(QDRANT_URL))
+    return QdrantClient(url=QDRANT_URL, **connection_options(QDRANT_URL))
 
 def ensure_qdrant_collection():
     client = qdrant_client()
     existing = [c.name for c in client.get_collections().collections]
+    if QDRANT_COLLECTION in existing:
+        vectors = client.get_collection(QDRANT_COLLECTION).config.params.vectors
+        if not hasattr(vectors, 'size') or vectors.size != EMBED_DIM or str(vectors.distance).lower() != 'cosine':
+            raise ValueError('Existing collection is incompatible with unnamed cosine embeddings.')
+    # Verify actual model output before any creation/upsert path. A configured
+    # dimension alone is not proof the selected encoder produces that shape.
+    probe = embed_texts(['Raphael nonclinical embedding compatibility probe.'])
+    if probe.shape != (1, EMBED_DIM) or not np.isfinite(probe).all():
+        raise ValueError('Actual embedding dimensions do not match configured collection dimensions.')
     if QDRANT_COLLECTION in existing:
         return
     client.create_collection(

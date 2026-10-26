@@ -321,3 +321,36 @@ class ApplicationTests(unittest.TestCase):
              patch("builtins.print") as log, TestClient(main.app) as client:
             self.assertEqual(client.get("/healthz").status_code, 200)
             log.assert_called_with("QDRANT_STARTUP_WARNING", "RuntimeError")
+
+class CollectionCompatibilityTests(unittest.TestCase):
+    def test_no_creation_when_actual_model_dimensions_are_wrong_or_nonfinite(self):
+        from types import SimpleNamespace as NS
+        from unittest.mock import Mock
+        for probe in (np.zeros((1, 8)),np.full((1, main.EMBED_DIM),np.nan)):
+            with self.subTest(shape=probe.shape):
+                client=Mock();client.get_collections.return_value=NS(collections=[])
+                with patch.object(main,'qdrant_client',return_value=client),patch.object(main,'embed_texts',return_value=probe):
+                    with self.assertRaises(ValueError):main.ensure_qdrant_collection()
+                client.create_collection.assert_not_called();client.upsert.assert_not_called()
+
+    def test_existing_wrong_dimension_distance_or_named_vectors_are_preserved(self):
+        from types import SimpleNamespace as NS
+        from unittest.mock import Mock
+        from qdrant_client.http import models as qm
+        for vectors in (qm.VectorParams(size=8,distance=qm.Distance.COSINE),qm.VectorParams(size=main.EMBED_DIM,distance=qm.Distance.DOT),{'named':qm.VectorParams(size=main.EMBED_DIM,distance=qm.Distance.COSINE)}):
+            client=Mock();client.get_collections.return_value=NS(collections=[NS(name=main.QDRANT_COLLECTION)])
+            client.get_collection.return_value=NS(config=NS(params=NS(vectors=vectors)))
+            with patch.object(main,'qdrant_client',return_value=client),patch.object(main,'embed_texts') as encode:
+                with self.assertRaises(ValueError):main.ensure_qdrant_collection()
+            encode.assert_not_called();client.create_collection.assert_not_called();client.recreate_collection.assert_not_called()
+
+    def test_missing_collection_is_created_only_after_actual_dimension_check(self):
+        from types import SimpleNamespace as NS
+        from unittest.mock import Mock
+        client=Mock();client.get_collections.return_value=NS(collections=[])
+        def probe(texts):
+            client.create_collection.assert_not_called()
+            return np.zeros((1,main.EMBED_DIM),dtype=np.float32)
+        with patch.object(main,'qdrant_client',return_value=client),patch.object(main,'embed_texts',side_effect=probe):main.ensure_qdrant_collection()
+        client.create_collection.assert_called_once()
+        self.assertEqual(client.create_collection.call_args.kwargs['vectors_config'].size,main.EMBED_DIM)

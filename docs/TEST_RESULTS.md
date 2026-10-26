@@ -1,3 +1,14 @@
+# Authenticated service and HTTPS-routing verification — current
+
+- Real OpenAI:bounded authenticated inference returned nonempty content from gpt-4o-mini-2024-07-18;separate actual SSE request returned streamed content. No fixture responses used for either result.
+- Real Qdrant:initial standardURL request failed403because pinned SDK selected6333;controlledHTTPS443collection listing passed using the same scoped credential. Target raphael_evidence_v1 is absent. No collection creation/mutation or ingestion occurred.
+- Hugging Face metadata andCDCsource fetch:ProxyError. Real offline model lookup:LocalEntryNotFoundError. Actual encoder dimension and live medical search/citation/conversation remain unverified;ingestion this execution0. Expected384dimensions is configuration,not an actual encode result.
+- Final Python:`python -m unittest discover -s tests -v`:134passed in43.647s,exit0. Includes actual SDK port regression and3model/schema-mutation-guard regressions. Focused recovery20passed in1.613s. A prior intermediate run had126passes plus1test-module import error caused by a diagnostic-import indentation mistake;corrected before the final134-test pass. No assertions or deadlines were weakened.
+- Node:`node --test tests/*.test.cjs`:26passed,0failed,0skipped.
+- Actual Chromium:`python -m unittest discover -s e2e -v`:4passed in21.178s,exit0. Existing synthetic consent/handoff/approval/mobile workflows preserved. Browser provider fixtures remain distinct from real authenticated service checks.
+- Actual provider bindings excluded from regression child environments;temporary synthetic SQLite only. Network/start guidance saved with huggingface.co and www.cdc.gov requirements,requires_publish=true;no application deployment or environment publication by agent.
+- All1109preceding requirement IDs/descriptions retained;1110current IDs. Runtime key-value diff scan and git diff check performed before commit. No dependency changes or fresh audit claim.
+
 # Connected development sprint — current result
 
 - Full Python:`python -m unittest discover -s tests -v`:130passed in47.005s,exit0. Includes11care tests,new-engine/application persistence,AI provenance,source/intake/owner denial,expiry,approval and retrieval-time revocation without initial provider transmission. Existing startup/restart,/healthz,synthetic database/API operations and recovery tests pass.

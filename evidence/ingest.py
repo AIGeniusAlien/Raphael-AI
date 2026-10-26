@@ -1,4 +1,5 @@
 from qdrant_client import QdrantClient
+from qdrant_config import connection_options
 from rag.chunking import simple_chunk
 from rag.embedder import embed_texts
 import hashlib
@@ -12,7 +13,7 @@ def ingest_text(*, qdrant_url: str, collection: str, embed_model: str, embed_dim
                 title: str, tier: str, source_date: str | None, url: str | None, section: str | None,
                 text: str) -> int:
 
-    client = QdrantClient(url=qdrant_url)
+    client = QdrantClient(url=qdrant_url, **connection_options(qdrant_url))
 
     # create collection if missing
     existing = [c.name for c in client.get_collections().collections]

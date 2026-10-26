@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from qdrant_client import QdrantClient
+from qdrant_config import connection_options
 from qdrant_client.http import models as qm
 from typing import TYPE_CHECKING
 
@@ -54,7 +55,7 @@ async def ingest_pubmed_query(*,
     Ingest PubMed summaries as Tier C.
     Stores title + short metadata. (Abstract pulling is optional; this is a safe first step.)
     """
-    client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key or None)
+    client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key or None, **connection_options(qdrant_url))
     ensure_collection(client, collection, embed_dim)
 
     ids = await esearch_pubmed(query, retmax=retmax)

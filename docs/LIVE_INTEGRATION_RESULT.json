@@ -8,42 +8,42 @@
   },
   "live_requested": true,
   "openai": {
-    "status": "failed",
-    "error_type": "AuthenticationError",
-    "http_status": 401
+    "status": "passed",
+    "inference_nonempty": true,
+    "returned_model": "gpt-4o-mini-2024-07-18",
+    "stream_nonempty": true
   },
   "qdrant": {
+    "route": "HTTPS443",
+    "no_mutations": true,
+    "status": "passed",
+    "target_collection": "raphael_evidence_v1",
+    "target_exists": false
+  },
+  "checked_on": "2026-10-26",
+  "initial_qdrant_route_result": {
     "status": "failed",
     "error_type": "UnexpectedResponse",
     "http_status": 403
   },
-  "checked_on": "2026-10-26",
-  "configuration_source": "published environment;all five runtime variables present;both secrets have saved bindings",
-  "secret_destination_scopes_match": true,
-  "authentication_diagnosis": {
-    "openai": {
-      "http_status": 401,
-      "error_type": "AuthenticationError",
-      "provider_error_code": "unclassified",
-      "provider_error_type": "unclassified",
-      "indicates_missing_key": false,
-      "indicates_invalid_key": true,
-      "indicates_proxy_policy": false,
-      "indicates_forbidden": false,
-      "body_is_json": true
-    },
-    "qdrant": {
-      "http_status": 403,
-      "error_type": "UnexpectedResponse",
-      "indicates_invalid_key": false,
-      "indicates_missing_key": false,
-      "indicates_proxy_policy": false,
-      "indicates_forbidden": true,
-      "indicates_authorization_failure": false
-    }
+  "qdrant_route_root_cause": "pinned SDK defaults an HTTPS URL without a nondefault explicit port to6333;HTTPS443authenticated read succeeds",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "configured_dimensions": 384,
+  "actual_embedding_dimensions_verified": false,
+  "embedding_cached": false,
+  "embedding_metadata_fetch": {
+    "status": "blocked",
+    "error_type": "ProxyError"
   },
-  "embedding_model_verified": false,
-  "collection_state": "unknown;read denied403",
+  "cdc_source_fetch": {
+    "status": "blocked",
+    "error_type": "ProxyError"
+  },
   "ingestion_count_this_execution": 0,
-  "no_collection_mutations": true
+  "evidence_grounded_conversation": "not_attempted_without_model_and_verified_evidence",
+  "collection_mutations": 0,
+  "offline_model_cache_lookup": {
+    "available": false,
+    "error_type": "LocalEntryNotFoundError"
+  }
 }

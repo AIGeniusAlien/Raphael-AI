@@ -22,9 +22,13 @@ def main():
                     messages.append(check['name']+': '+(log.read_text(errors='replace')[-4500:] if log.is_file() else check.get('reason','failed')))
         else:messages.append('Verification stopped before a machine report was written.')
     elif path.is_file():
-        lines=path.read_text(errors='replace').splitlines()
-        errors=[line for line in lines if 'error:' in line.lower() or 'failed' in line.lower() or 'Testing failed' in line]
-        messages.append('\n'.join(errors[-30:])[-7000:] if errors else '\n'.join(lines[-45:])[-7000:])
+        lines=redact(path.read_text(errors='replace')).splitlines()
+        selected=set()
+        for index,line in enumerate(lines):
+            lower=line.lower()
+            if 'error:' in lower or 'failed' in lower or line.lstrip().startswith('ld:') or 'undefined symbols' in lower or 'not found' in lower:
+                selected.update(range(max(0,index-2),min(len(lines),index+4)))
+        messages.append('\n'.join(lines[index] for index in sorted(selected))[-10000:] if selected else '\n'.join(lines[-45:])[-7000:])
     else:messages.append('No diagnostic log was produced.')
     if '--native-crashes' in sys.argv:
         candidates=list((Path.home()/'Library/Logs/DiagnosticReports').glob('Raphael*.ips'))

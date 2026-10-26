@@ -26,4 +26,5 @@ LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks @loader_path/
 
 // Xcode16.4's simulator may lack the optional Swift WebKit overlay. The app uses
 // the public Objective-C bridge,not symbols from this optional overlay.
-OTHER_LDFLAGS = $(inherited) -weak-lswiftWebKit
+OTHER_LDFLAGS = $(inherited) -Wl,-weak-lswiftWebKit
+LIBRARY_SEARCH_PATHS = $(inherited) $(SDKROOT)/usr/lib/swift

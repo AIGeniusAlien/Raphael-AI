@@ -1679,3 +1679,777 @@ Report:
 Do not respond with another roadmap alone.
 
 DELIVER WORKING SOFTWARE, VERIFY IT, AND PRESERVE THE COMPLETE RAPHAEL REQUIREMENTS.
+
+## Definitive full-product owner directive
+
+# RAPHAEL AI — DEFINITIVE FULL-PRODUCT ENGINEERING DIRECTIVE
+
+## ROLE AND AUTHORITY
+
+Act as the principal software architect, senior full-stack engineering team, medical AI engineer, clinical informatics architect, radiology AI engineer, security engineer, infrastructure engineer, product designer, and quality assurance lead for Raphael AI.
+
+Repository: AlGeniusAlien/Raphael-AI
+
+Existing development work: Draft Pull Request #1 and its associated development branch.
+
+Your responsibility is to implement, integrate, test, stabilize, and prepare the most complete Raphael AI platform possible.
+
+THIS IS NOT A REQUEST FOR ANOTHER ROADMAP.
+
+THIS IS AN EXECUTION DIRECTIVE TO BUILD WORKING SOFTWARE.
+
+The owner wants the complete Raphael platform, not a limited chatbot, a mock clinical application, or a collection of disconnected prototypes.
+
+## THE RAPHAEL VISION
+
+Raphael is an advanced, multimodal, evidence-grounded clinical intelligence platform intended to augment physicians, radiologists, healthcare organizations, patients, and medical researchers.
+
+Raphael must bring together medical knowledge, diagnostic reasoning, patient records, imaging, voice, documentation, secure communications, and clinical workflow assistance.
+
+The system must help clinicians identify important possibilities, detect inconsistencies, reduce documentation burdens, and access verifiable medical evidence.
+
+Raphael must never substitute unsupported AI output for authorized clinical judgment.
+
+The immediate engineering objective is a complete, integrated synthetic-data development product.
+
+Clinical deployment requires additional independent validation, regulatory assessment, security review, and appropriate authorization.
+
+## PART 1 — PRESERVE EVERYTHING ALREADY BUILT
+
+Before changing code:
+
+1. Inspect the entire repository.
+2. Inspect the current branch and Draft PR #1.
+3. Read AGENTS.md and all project documentation.
+4. Read RAPHAEL_MASTER_SPEC.md.
+5. Read REQUIREMENTS_MATRIX.md.
+6. Read FEATURE_INVENTORY.md.
+7. Read ROADMAP.md and RELEASE_READINESS.md.
+8. Inspect existing frontend, backend, desktop, extension, RAG, imaging, authentication, and clinical modules.
+9. Identify every implemented feature and its tests.
+10. Preserve all previously documented requirement IDs.
+
+The project previously reconciled approximately 278 requirements.
+
+Do not delete, downgrade, overwrite, or silently omit any requirement.
+
+Where historical documents conflict, preserve the conflict for resolution instead of guessing.
+
+Do not repeat completed engineering work.
+
+Continue from the latest tested implementation.
+
+## PART 2 — COMPLETE PRODUCT ARCHITECTURE
+
+Build Raphael as a modular clinical AI platform containing:
+
+- API backend
+- Web frontend
+- Patient portal
+- Physician portal
+- Radiology workspace
+- Clinical administration
+- Medical evidence engine
+- Clinical reasoning engine
+- Voice and activation engine
+- Ambient documentation engine
+- Medical imaging engine
+- EHR interoperability engine
+- Secure messaging engine
+- Clinical safety engine
+- Evaluation engine
+- Enterprise administration
+- Billing infrastructure
+- Desktop integration
+- PWA/mobile experience
+- Monitoring and deployment infrastructure
+
+Avoid unnecessary rewrites and unnecessary microservices.
+
+Use clear internal boundaries so each subsystem can be tested and upgraded independently.
+
+## PART 3 — CHATGPT-STYLE RAPHAEL INTERFACE
+
+Build a sophisticated conversational medical AI interface.
+
+Required functionality:
+
+- Streaming AI responses
+- Persistent conversation history
+- Patient-specific conversation threads
+- General medical research conversations
+- Conversation titles and search
+- Context-aware follow-up questions
+- Clinical attachments
+- PDF uploads
+- Medical document uploads
+- Image attachments
+- DICOM study references
+- Structured medical responses
+- Clickable medical citations
+- Evidence panels
+- Stop-generation controls
+- Response regeneration
+- Error recovery
+- Conversation export
+- Responsive design
+- Accessible controls
+- Professional clinical interface
+
+Implement a provider-independent LLM abstraction compatible with OpenAI-style APIs.
+
+Support configurable model selection, model version tracking, request tracing, timeout handling, rate limits, and provider failures.
+
+Use actual streaming APIs where available.
+
+Never simulate streaming and present it as a live model response.
+
+## PART 4 — RAPHAEL STANDARD AND HANDS-FREE MODES
+
+Preserve the original dual-mode experience.
+
+STANDARD MODE:
+- Text conversations
+- Optional push-to-talk
+- Clinical file attachments
+- Patient-context conversations
+- Clinical documentation assistance
+
+HANDS-FREE MODE:
+- User-authorized microphone activation
+- Configurable wake phrase such as "Hey Raphael"
+- Voice activity detection
+- Realtime speech recognition
+- Natural spoken responses
+- Interruptible speech
+- Conversational turn-taking
+- Listening and processing indicators
+- Mute and pause controls
+- Explicit stop controls
+- Session timeout handling
+- Device compatibility checks
+- Safe microphone permission handling
+
+Implement supported realtime voice APIs and appropriate audio transport.
+
+Preserve privacy and user consent.
+
+Do not enable undisclosed background recording or transmission.
+
+## PART 5 — ACTIVE AND AMBIENT CLINICAL DOCUMENTATION
+
+Build a complete clinical documentation assistant.
+
+Required encounter workflow:
+
+1. Clinician opens a patient encounter.
+2. Raphael verifies the appropriate authorization and consent state.
+3. Clinician starts an encounter recording.
+4. Raphael transcribes the authorized conversation.
+5. Raphael performs speaker identification where supported.
+6. Raphael extracts clinical information.
+7. Raphael maintains an evolving draft note.
+8. Raphael updates the note as new information arrives.
+9. Raphael identifies ambiguities and missing information.
+10. Raphael correlates the note with authorized patient records.
+11. Raphael retrieves relevant medical evidence when appropriate.
+12. Raphael checks the draft for unsupported statements.
+13. Clinician reviews and edits the draft.
+14. Clinician approves and signs the final document.
+15. Raphael records approval and provenance.
+16. Approved documentation can be exported or transmitted to authorized sandbox systems.
+
+Support:
+- SOAP notes
+- History and physical
+- Progress notes
+- Consultation notes
+- Discharge summaries
+- Radiology reports
+- Problem lists
+- Medication reconciliation drafts
+- Encounter summaries
+- Follow-up instructions
+- Structured clinical templates
+
+Preserve physician edits and document version history.
+
+Never automatically sign or finalize a medical record.
+
+## PART 6 — PATIENT PORTAL
+
+Implement a complete patient-facing experience.
+
+Required features:
+
+- Patient registration architecture
+- Secure login
+- Identity verification architecture
+- Patient dashboard
+- Medical profile
+- Medical history
+- Laboratory results
+- Laboratory trends
+- Medication lists
+- Allergies
+- Imaging results
+- Clinical notes
+- Visit summaries
+- Medical documents
+- Care plans
+- Appointments
+- Follow-up reminders
+- Secure physician messaging
+- Message attachments
+- Notifications
+- Patient-friendly explanations
+- Consent management
+- Authorized caregiver access
+- Account preferences
+- Mobile-responsive experience
+
+Use synthetic accounts and synthetic data for development.
+
+Patient-facing clinical advice must remain within the authorized clinical review workflow.
+
+## PART 7 — PHYSICIAN AND CLINICAL PORTAL
+
+Implement:
+
+- Physician dashboard
+- Patient worklists
+- Patient search
+- Patient chart review
+- Longitudinal patient timelines
+- Clinical encounter management
+- Clinical AI conversations
+- Differential diagnosis support
+- Medical evidence review
+- Laboratory interpretation
+- Medication review
+- Imaging review
+- Clinical documentation
+- Note editing
+- Clinician sign-off
+- Clinical coding assistance
+- Draft orders
+- Clinical pathway assistance
+- Patient messaging
+- Care-team messaging
+- Follow-up management
+- Clinical alerts
+- Audit history
+
+The interface must support efficient clinical workflows rather than forcing clinicians to repeatedly enter information already available in authorized records.
+
+## PART 8 — SECURE PATIENT AND CLINICIAN MESSAGING
+
+Implement:
+
+- Patient-to-physician messages
+- Physician-to-patient messages
+- Clinician-to-clinician messages
+- Conversation threads
+- Inbox and sent folders
+- Attachments
+- Message status
+- Read status
+- Recipient authorization
+- Message routing
+- Notification architecture
+- Follow-up tracking
+- Urgent-message policies
+- AI-assisted message drafting
+- Explicit clinician approval
+- Communication audit logs
+
+Separate internal portal messaging from external delivery.
+
+No external clinical message may be sent without appropriate authorization and delivery confirmation.
+
+## PART 9 — ADVANCED MEDICAL KNOWLEDGE ENGINE
+
+Build a comprehensive evidence-grounded retrieval system.
+
+Support legally accessible and appropriately licensed sources, including:
+
+- PubMed
+- PubMed Central
+- ClinicalTrials.gov
+- NIH
+- FDA
+- CDC
+- WHO
+- NICE
+- USPSTF
+- Specialty-society guidelines
+- Peer-reviewed research
+- Systematic reviews
+- Meta-analyses
+- Authorized institutional protocols
+- Licensed medical references
+- Drug labeling and safety communications
+- Medical terminology resources
+
+Implement:
+
+- Source connectors
+- Automated ingestion
+- Source licensing checks
+- Metadata extraction
+- Evidence classification
+- Document versioning
+- Publication dates
+- Update dates
+- Deduplication
+- Chunking
+- Embeddings
+- Qdrant indexing
+- Hybrid search
+- Reranking
+- Citation verification
+- Source provenance
+- Guideline freshness
+- Contradiction detection
+- Evidence coverage reports
+- Retrieval benchmarks
+- Controlled evidence updates
+
+Do not claim all medical knowledge has been indexed.
+
+Never fabricate medical references.
+
+## PART 10 — CLINICAL REASONING ENGINE
+
+Implement:
+
+- Clinical case analysis
+- Working diagnoses
+- Ranked differential diagnoses
+- Supporting evidence
+- Contradictory evidence
+- Dangerous alternatives
+- Missing clinical information
+- Recommended diagnostic evaluation
+- Guideline-based treatment considerations
+- Medication safety
+- Laboratory interpretation
+- Vital-sign interpretation
+- Longitudinal trend analysis
+- Cross-specialty clinical reasoning
+- Clinical uncertainty
+- Appropriate abstention
+- Physician review and confirmation
+
+Medical outputs must distinguish verified evidence from model-generated inference.
+
+Do not present uncalibrated confidence scores as validated probabilities.
+
+## PART 11 — SAFECORE CLINICAL SAFETY ARCHITECTURE
+
+Implement Raphael's layered safety system.
+
+Components:
+
+1. Input and content validation
+2. Clinical risk detection
+3. Evidence retrieval and verification
+4. Factuality assessment
+5. Contradiction checks
+6. Medication and allergy safety checks
+7. Uncertainty calibration
+8. Appropriate abstention
+9. Human clinician approval
+10. Audit and traceability
+11. Model failure monitoring
+12. Regression evaluation
+
+Support high-risk clinical scenario testing.
+
+Require authorization before consequential actions.
+
+Never allow the language model alone to authorize clinical orders, prescriptions, or external patient communications.
+
+## PART 12 — RADIOLOGY AND MEDICAL IMAGING
+
+Radiology is a major Raphael specialization.
+
+Preserve existing DICOM upload and viewing.
+
+Implement:
+
+- DICOM validation
+- DICOM metadata processing
+- DICOM image viewing
+- Imaging study organization
+- X-ray workflows
+- CT workflows
+- MRI workflows
+- Ultrasound workflows
+- Prior-study comparison
+- Clinical history correlation
+- Laboratory and imaging correlation
+- Structured radiology reporting
+- Pre-read assistance
+- Post-read discrepancy review
+- Missing-information detection
+- Critical finding communication
+- PACS adapters
+- Imaging audit records
+- Imaging evaluation datasets
+- Validated medical image-model integrations
+
+Do not claim diagnostic imaging accuracy without actual model validation.
+
+## PART 13 — SMART-ON-FHIR AND EHR INTEROPERABILITY
+
+Implement:
+
+- SMART-on-FHIR OAuth
+- Patient-context launch
+- Standalone launch
+- Authorization and token handling
+- FHIR Patient
+- Encounter
+- Observation
+- Condition
+- AllergyIntolerance
+- MedicationRequest
+- MedicationStatement
+- DiagnosticReport
+- ImagingStudy
+- DocumentReference
+- Provenance
+- Clinical document exchange
+- Authorized draft-write workflows
+- Sandbox integration testing
+- Auditability
+
+Support standards-based EHR connectivity without hardcoding a specific hospital vendor.
+
+Do not enable production EHR write operations without authorization.
+
+## PART 14 — CLINICAL CODING, ORDERS, AND TERMINOLOGY
+
+Implement:
+
+- ICD-10-CM coding assistance
+- SNOMED CT terminology integration where licensed
+- CPT assistance where licensed
+- Clinical order sets
+- Draft laboratory orders
+- Draft imaging orders
+- Draft medication orders
+- Clinical pathways
+- Medication reconciliation
+- Contraindication checks
+- Allergy checks
+- Physician approval
+- Action auditing
+
+Do not automatically submit clinical orders.
+
+## PART 15 — DESKTOP, MOBILE, AND EXTENSION EXPERIENCE
+
+Inspect and preserve the existing Electron and browser extension implementations.
+
+Support:
+
+- Installable PWA
+- Mobile-responsive web interface
+- Electron desktop application
+- Desktop notifications
+- Microphone access controls
+- Hands-free Raphael access
+- Authorized patient-context workflows
+- Browser extension architecture where useful
+- Secure session handling across interfaces
+
+Do not expose patient data through insecure browser extension permissions.
+
+## PART 16 — ENTERPRISE AND COMMERCIAL PLATFORM
+
+Implement:
+
+- Organization accounts
+- User administration
+- Role assignment
+- Subscription plans
+- Usage tracking
+- Billing management
+- Stripe test-mode integration
+- Organization settings
+- Feature access controls
+- Administrative reporting
+- Audit history
+- Support workflows
+- Enterprise deployment configuration
+
+Keep live billing disabled until authorized.
+
+## PART 17 — SECURITY AND PRIVACY
+
+Remediate all known dependency security advisories.
+
+Implement and test:
+
+- Secure authentication
+- Password hashing
+- Session security
+- Role-based authorization
+- Tenant isolation
+- Patient-level permissions
+- Consent management
+- Secure messaging
+- Encrypted communications
+- Appropriate encryption at rest
+- Secrets management
+- Audit logging
+- File upload validation
+- DICOM security checks
+- Rate limiting
+- Database migrations
+- Backup and recovery
+- Incident response procedures
+- Secure deployment configuration
+
+Document HIPAA and BAA requirements.
+
+Do not claim compliance merely because safeguards are implemented.
+
+## PART 18 — CLINICAL EVALUATION AND RESEARCH
+
+Raphael is also intended to support serious medical AI research.
+
+Implement reproducible evaluation workflows for:
+
+- Diagnostic accuracy
+- Differential diagnosis quality
+- Clinical safety
+- Citation accuracy
+- Guideline adherence
+- Medication safety
+- Radiology evaluation
+- Speech recognition accuracy
+- Clinical documentation quality
+- Physician usability
+- Bias and subgroup performance
+- Model uncertainty
+- Latency and throughput
+- Ablation studies
+- Model comparisons
+- Clinician feedback
+
+Support authorized research datasets and synthetic evaluation cases.
+
+Prepare publication-ready technical documentation, figures, evaluation reports, and reproducible configurations.
+
+Never invent research results or claim clinical validation without evidence.
+
+Preserve modularity for future specialized applications, including astronaut-health research.
+
+## PART 19 — PRODUCT DESIGN AND USER EXPERIENCE
+
+Replace the basic development interface with a cohesive professional application.
+
+Implement:
+
+- Branded Raphael interface
+- Modern navigation
+- Clinical dashboard layouts
+- ChatGPT-style conversational workspace
+- Voice interface
+- Active documentation workspace
+- Patient portal
+- Physician portal
+- Radiology workspace
+- Messaging interface
+- Evidence viewer
+- Administrative interface
+- Responsive mobile design
+- Accessibility
+- Loading states
+- Error states
+- Empty states
+- Confirmation dialogs
+- Clear clinical warnings
+- Reliable form validation
+
+Do not leave decorative or nonfunctional controls.
+
+## PART 20 — TESTING AND QUALITY ASSURANCE
+
+Run:
+
+- Python unit tests
+- Frontend tests
+- API integration tests
+- Browser end-to-end tests
+- Authentication tests
+- Authorization tests
+- Tenant-isolation tests
+- Patient-data access tests
+- Messaging tests
+- Clinical note tests
+- Evidence citation tests
+- RAG evaluation
+- DICOM tests
+- FHIR sandbox tests
+- Voice integration tests where supported
+- Dependency security scans
+- Database persistence tests
+- Application restart tests
+- Deployment smoke tests
+
+Create tests for every corrected defect.
+
+Preserve previous passing tests.
+
+Do not claim success for unexecuted tests.
+
+## PART 21 — COMPLETE SYNTHETIC CLINICAL WORKFLOW
+
+Demonstrate an integrated scenario:
+
+1. Start Raphael.
+2. Sign in as a synthetic patient.
+3. Review the medical chart.
+4. Send a secure internal message.
+5. Sign out.
+6. Sign in as a physician.
+7. Review the patient's chart and message.
+8. Open a clinical encounter.
+9. Activate Raphael's voice interface with permission.
+10. Transcribe a synthetic encounter.
+11. Generate and incrementally update a clinical note.
+12. Review medical evidence.
+13. Generate a structured differential diagnosis.
+14. Identify uncertainty and missing information.
+15. Review laboratory results and medications.
+16. View a synthetic DICOM study.
+17. Edit and approve the clinical note.
+18. Draft and approve a response to the patient.
+19. Verify the patient receives the internal reply.
+20. Verify the audit trail.
+21. Verify unauthorized users cannot access the encounter.
+22. Restart the application and verify persistence.
+
+Use real development integrations where securely configured.
+
+Clearly label mocked and unverified steps.
+
+## PART 22 — DEPLOYMENT AND DELIVERY
+
+Deliver a reproducible, deployable development application.
+
+Include:
+
+- Complete source code
+- Dependency lock or reproducible dependency configuration
+- Database migrations
+- Development configuration
+- Synthetic account provisioning
+- Startup scripts
+- Render-compatible staging configuration
+- Environment-variable validation
+- Health checks
+- Readiness checks
+- CI/CD checks
+- Test reports
+- Rollback instructions
+- Security findings
+- Release notes
+
+The owner should not need to manually rewrite source files.
+
+Provide exact copy-and-paste deployment instructions only where necessary.
+
+Do not deploy to production, merge protected branches, enable real patient data, or activate live billing without approval.
+
+## PART 23 — EXECUTION STRATEGY
+
+This is a large project. Work autonomously through dependency-aware implementation steps within the available execution context.
+
+Do not repeatedly stop to request approval for ordinary code changes or test execution.
+
+Prioritize complete end-to-end features rather than isolated scaffolding.
+
+Execution priority:
+
+1. Preserve and stabilize the existing codebase.
+2. Remediate security and dependency issues.
+3. Complete the clinical conversational interface.
+4. Integrate live development AI and evidence retrieval.
+5. Complete patient and physician workflows.
+6. Complete realtime voice and activation.
+7. Complete ambient documentation.
+8. Integrate clinical safety.
+9. Expand imaging and FHIR.
+10. Complete administration and commercial infrastructure.
+11. Run full end-to-end tests.
+12. Prepare the deployable development release.
+
+Where possible, implement independent workstreams in parallel without conflicting changes.
+
+If a service, credential, dataset, license, or authorization is missing, complete the safe implementable portions and continue with other work.
+
+Never invent successful integration results.
+
+## PART 24 — PERMANENT REQUIREMENTS TRACKING
+
+Update the existing requirements matrix without losing any historical entries.
+
+Every requirement must have:
+
+- Unique ID
+- Description
+- Priority
+- Implementation status
+- Source files
+- Test coverage
+- Acceptance criteria
+- Dependencies
+- Remaining work
+- Release milestone
+
+Use these statuses:
+
+- Implemented and verified
+- Implemented but unverified
+- Partially implemented
+- Mocked for development
+- Blocked by external dependency
+- Not implemented
+- Awaiting clinical validation
+
+Do not call a feature complete unless it meets its acceptance criteria.
+
+## PART 25 — FINAL DELIVERABLE
+
+Implement as much of the complete Raphael product as technically possible.
+
+Before stopping:
+
+1. Run relevant tests.
+2. Fix reproducible defects.
+3. Preserve all working features.
+4. Save code changes to the development branch.
+5. Update Draft PR #1 where appropriate.
+6. Update the requirements matrix.
+7. Provide an accessible browser preview where supported.
+8. Document the exact development startup procedure.
+9. Report live integration status.
+10. Identify remaining blockers.
+11. Record the exact next executable engineering task.
+
+Do not merge or deploy to production without explicit approval.
+
+The final response must clearly distinguish working, tested functionality from incomplete or simulated features.
+
+Do not provide another roadmap instead of implementation.
+
+DO NOT STOP AFTER WRITING DOCUMENTATION.
+
+BUILD, INTEGRATE, TEST, DEBUG, AND DELIVER THE MOST COMPLETE FUNCTIONING RAPHAEL DEVELOPMENT APPLICATION POSSIBLE.
+
+BEGIN NOW.

@@ -19,7 +19,7 @@ Use Python 3.12 (the runtime version family in runtime.txt) and activate a virtu
 ```bash
 python3.12 -m venv .venv
 . .venv/bin/activate
-python -m pip install torch==2.5.1+cpu --index-url https://download.pytorch.org/whl/cpu
+python -m pip install torch==2.6.0+cpu --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -r requirements.txt
 python -m pip check
 python -m unittest discover -s tests -v

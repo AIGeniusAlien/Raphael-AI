@@ -131,3 +131,7 @@ Actual dependency audit found reported advisories in ecdsa,filelock,pillow,pydic
 New modules:dev_chart.py,dev_messaging.py,dev_imaging.py,dev_knowledge.py,dev_runtime.py and integrations/fhir/sandbox.py. Local evidence is genuinely indexed SQLiteFTS5 over manually supplied reviewed excerpts; it is not independently verified medical evidence or embeddings. Live OpenAI/Qdrant/FHIR, voice,postgres migrations, full roles,caregiver,external clinical messaging and clinical validation remain incomplete.
 
 Final corrected Chromium run:2 tests passed in29.088s. Expanded platform scenario covers internal draft/edit/approval/send, administration and actual DICOM preview/report review; the preserved original portal scenario also passed. No external clinical service was validated.
+
+
+## Dependency remediation superseding earlier audit blockers
+See SECURITY_REMEDIATION.md for pinned upgrades,JWT regression coverage and current audit results.97 full Python tests and2 real Chromium scenarios passed on the upgraded runtime. Historical earlier dependency findings above describe the pre-upgrade build; they are not the current package state. Other deployment and clinical validation gates remain open.

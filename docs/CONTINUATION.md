@@ -28,3 +28,7 @@ Read AGENTS.md, RAPHAEL_MASTER_SPEC.md, REQUIREMENTS_MATRIX.md, RELEASE_READINES
 5. After the synthetic demonstration gates, continue the complete-platform backlog: patient consent/proxy/identity/recovery, remaining professional/admin roles, clinical order/coding/safety contracts, source licensing/versioning/freshness/coverage/retrieval evaluation, real audio providers, SMART/OAuth resource mapping, PostgreSQL migrations, independent clinical/security evaluation and controlled release operations. Each new capability needs its own reviewed acceptance tests.
 
 The complete platform is not finished while any matrix acceptance criterion remains missing, partial, blocked or awaiting independent validation. A locally runnable build is not a clinically validated or regulator-authorized device.
+
+
+## Latest security checkpoint
+Dependency advisory remediation is implemented,not a pending rerun of the prior vulnerable versions. Use requirements.lock plus torch2.6CPU and SECURITY_REMEDIATION.md. Next executable feature: add an authorized clinician conversation router with persistent generation records,actual OpenAI SSE streaming,cancellation and provider-error handling; test via mock HTTP transport and actual browser,never simulated live streaming. Then connect consent-gated microphone/voice and versioned editable encounter notes. Dedicated live credentials remain missing. Preserve all existing clinical/chart/DICOM/messaging regressions and requirement IDs.

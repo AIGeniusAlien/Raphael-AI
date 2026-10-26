@@ -1,3 +1,5 @@
+Published runtime checkpoint (2026-10-26): four required variables now present; QDRANT_API_KEY absent. A real bounded OpenAI request returned401; streaming/model access unverified. No Qdrant request/mutation occurred. See [INFRASTRUCTURE_STATUS.md](INFRASTRUCTURE_STATUS.md) for current evidence and exact secure binding actions; earlier missing-binding reports below are historical. No full product,live retrieval or deployment-readiness claim.
+
 # Exact continuation after this increment
 
 Continue in `/workspace/Raphael-AI` on `fix/sqlite-startup-recovery` and the existing draft PR #1. Preserve the startup recovery and all implemented portal/platform changes. Do not create a new Git worktree, repeat completed implementation from scratch, reset the checkout, overwrite user data or merge/deploy automatically.

@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qm
-from sentence_transformers import SentenceTransformer
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 import numpy as np
 import hashlib
 
@@ -16,6 +21,7 @@ _MODEL = None
 def get_model(model_name: str) -> SentenceTransformer:
     global _MODEL
     if _MODEL is None:
+        from sentence_transformers import SentenceTransformer
         _MODEL = SentenceTransformer(model_name)
     return _MODEL
 

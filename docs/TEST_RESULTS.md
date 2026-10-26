@@ -1,3 +1,14 @@
+# Published runtime and startup checkpoint — 2026-10-26
+
+- Full Python rerun:`python -m unittest discover -s tests -v`:126passed in148.809s,exit0. Includes real run_local.sh startup/restart,/healthz,synthetic patient/conversation persistence and service diagnostic regressions.
+- Focused latest-source recovery:`python -m unittest discover -s tests -p test_recovery.py -v`:17passed in6.590s. Fresh subprocess imports main,rag.embedder and evidence.ingest without loading SentenceTransformers;all three loaders preserve first-use caching and normalized vectors using explicitly synthetic constructor fixtures.
+- Frontend:`node --test tests/*.test.cjs`:26passed,0failed,0skipped.
+- Real Chromium:`python -m unittest discover -s e2e -v`:4passed in79.549s. Synthetic patient/clinician sharing,approval,revocation,streaming-provider fixture,imaging,messaging and mobile390px workflows;not real external inference or physical-device validation.
+- Earlier full run:123passed,1failed (124total,195.579s),because the real startup child missed45-second readiness. Eager optional embedding imports were deferred. The first import regression then caught an indirect PubMed eager import;after correcting all three loaders,focused and full reruns passed. No tests were disabled or deadlines weakened.
+- Live:four required runtime bindings present,QDRANT_API_KEY absent. One bounded real OpenAI inference request returned401AuthenticationError in1.39s;streaming was not attempted. Qdrant requests/mutations/ingestion:0. Actual remote schema/counts/model compatibility unknown. No citation example or live clinical workflow success is claimed.
+- The missing Qdrant secret requirement plus existing-cluster destination were saved as configuration metadata only (requires_publish=true). User must securely supply the development key and correct the OpenAI authentication binding,then review/save/publish settings and reconnect runtime before retrying.
+- All1104 preceding requirement IDs/descriptions retained;RUNTIME-001/002 added. `git diff --check`passed;runtime API key values absent from tracked diff. No dependency changes or new audit result;no deployment/merge/real patient data.
+
 # Test evidence ledger
 
 Only executed results belong in this file. Developer protocol tests, real local browser tests, external-service validation and independent clinical studies are different evidence classes. All development tests use synthetic data and temporary databases; no production credentials or patient data are needed.

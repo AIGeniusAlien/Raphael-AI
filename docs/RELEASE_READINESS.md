@@ -1,3 +1,5 @@
+Published runtime checkpoint (2026-10-26): four required variables now present; QDRANT_API_KEY absent. A real bounded OpenAI request returned401; streaming/model access unverified. No Qdrant request/mutation occurred. See [INFRASTRUCTURE_STATUS.md](INFRASTRUCTURE_STATUS.md) for current evidence and exact secure binding actions; earlier missing-binding reports below are historical. No full product,live retrieval or deployment-readiness claim.
+
 # Current development release assessment
 
 **Current scope: an expanded synthetic-data development platform increment. Full development release acceptance remains incomplete, and clinical/regulatory readiness is not claimed.** The latest code extends the tested portal with structured records, protected documents, reviewed internal replies, administration, synthetic image viewing, sandbox FHIR preview and operations work. The exact final combined result is still being recorded while implementation finishes. The earlier 36 Python / 19 Node / 1 Chromium checkpoint appears below only as historical evidence.

@@ -1,3 +1,5 @@
+Published runtime checkpoint (2026-10-26): four required variables now present; QDRANT_API_KEY absent. A real bounded OpenAI request returned401; streaming/model access unverified. No Qdrant request/mutation occurred. See [INFRASTRUCTURE_STATUS.md](INFRASTRUCTURE_STATUS.md) for current evidence and exact secure binding actions; earlier missing-binding reports below are historical. No full product,live retrieval or deployment-readiness claim.
+
 # Current platform implementation increment
 
 The latest directive extends the existing synthetic portal. Earlier capability/history records are retained below as checkpoint history; this section and REQUIREMENTS_MATRIX.md identify the current scope. Implementation is not full clinical, source, security or regulatory validation. Exact current-run results belong in TEST_RESULTS.md; newly installed extensions still require final combined validation.

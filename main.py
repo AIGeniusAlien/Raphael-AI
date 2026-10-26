@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os, json, secrets, httpx, hashlib, io, re
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import TYPE_CHECKING, Optional, List, Dict, Any
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Depends
 from fastapi.responses import RedirectResponse
@@ -17,7 +19,8 @@ from database import execute_sqlite_script
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qm
-from sentence_transformers import SentenceTransformer
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 import numpy as np
 from pypdf import PdfReader
 
@@ -129,6 +132,8 @@ _ST_MODEL: Optional[SentenceTransformer] = None
 def get_st_model() -> SentenceTransformer:
     global _ST_MODEL
     if _ST_MODEL is None:
+        # Load the numerical/model stack only when embeddings are requested.
+        from sentence_transformers import SentenceTransformer
         _ST_MODEL = SentenceTransformer(EMBED_MODEL)
     return _ST_MODEL
 

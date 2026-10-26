@@ -1,16 +1,26 @@
 {
   "runtime_presence": {
-    "LLM_API_KEY": false,
-    "LLM_BASE_URL": false,
-    "LLM_MODEL": false,
-    "QDRANT_URL": false,
+    "LLM_API_KEY": true,
+    "LLM_BASE_URL": true,
+    "LLM_MODEL": true,
+    "QDRANT_URL": true,
     "QDRANT_API_KEY": false
   },
-  "live_requested": true,
-  "openai": {
-    "status": "blocked_missing_runtime_binding"
-  },
   "qdrant": {
-    "status": "blocked_missing_runtime_binding"
-  }
+    "status": "blocked_missing_runtime_binding",
+    "no_requests": true,
+    "no_mutations": true
+  },
+  "openai": {
+    "status": "failed",
+    "error_type": "AuthenticationError",
+    "http_status": 401,
+    "elapsed_seconds": 1.39
+  },
+  "checked_on": "2026-10-26",
+  "configuration_source": "published environment configuration; proxy-scoped OpenAI secret; three direct runtime variable bindings",
+  "openai_destination_scope_matches": true,
+  "embedding_model_verified": false,
+  "collection_state": "unknown; no Qdrant requests",
+  "ingestion_count_this_execution": 0
 }

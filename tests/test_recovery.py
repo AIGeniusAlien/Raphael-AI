@@ -39,6 +39,37 @@ with patch.dict(os.environ, {
     auth = importlib.import_module("auth.jwt_auth")
 
 
+class EmbeddingStartupTests(unittest.TestCase):
+    def test_application_import_does_not_load_optional_embedding_stack(self):
+        import subprocess
+        import sys
+        environment = dict(os.environ, DATABASE_URL='sqlite://', QDRANT_URL='',
+                           QDRANT_API_KEY='', LLM_BASE_URL='', LLM_API_KEY='',
+                           RAPHAEL_DEV_PORTAL='0', STATIC_PATH='static')
+        result = subprocess.run([sys.executable, '-c',
+            "import sys; import main; import rag.embedder; import evidence.ingest; assert 'sentence_transformers' not in sys.modules; assert main._ST_MODEL is None"],
+            env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_first_embedding_loads_once_and_preserves_normalized_vectors(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        import rag.embedder as rag_embedder
+        for module, cache in ((main, '_ST_MODEL'), (pubmed_ingest, '_MODEL'), (rag_embedder, '_MODEL')):
+            with self.subTest(module=module.__name__):
+                model = Mock()
+                model.encode.return_value = [[1.0, 0.0]]
+                constructor = Mock(return_value=model)
+                args = () if module is main else (main.EMBED_MODEL,)
+                with patch.object(module, cache, None), patch.dict('sys.modules',
+                        {'sentence_transformers': SimpleNamespace(SentenceTransformer=constructor)}):
+                    self.assertEqual(module.embed_texts(['synthetic'], *args).tolist(), [[1.0, 0.0]])
+                    module.embed_texts(['second synthetic'], *args)
+                constructor.assert_called_once_with(main.EMBED_MODEL)
+                self.assertEqual(model.encode.call_count, 2)
+                model.encode.assert_called_with(['second synthetic'], normalize_embeddings=True)
+
+
 class SQLiteScriptTests(unittest.TestCase):
     def test_original_split_breaks_triggers_but_complete_script_succeeds(self):
         engine = create_engine("sqlite://")

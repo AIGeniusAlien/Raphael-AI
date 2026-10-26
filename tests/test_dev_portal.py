@@ -219,6 +219,10 @@ class DevPortalTests(unittest.TestCase):
         self.login()
         p = self.patient()
         note = self.client.post(f"/api/dev/patients/{p['id']}/notes", json={"content": "Synthetic draft"}).json()
+        # Collaboration needs the patient's explicit full-chart authorization.
+        self.login("patient")
+        self.client.post(f"/api/dev/patients/{p['id']}/chart-access",json={"clinician_username":"second-clinician","expires_in_minutes":60,"purpose":"Synthetic concurrent review","authorize_full_chart":True}).raise_for_status()
+        self.login()
         second = TestClient(self.app)
         self.addCleanup(second.close)
         self.login("second-clinician", client=second)

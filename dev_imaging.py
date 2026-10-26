@@ -245,6 +245,9 @@ def install_imaging(app, ctx):
         except SandboxUnavailable as error:
             raise HTTPException(503, str(error))
         with ctx.engine.begin() as c:
+            # A remote preview can outlive the access decision checked before
+            # await. Do not disclose fetched records after grant revocation.
+            ctx.patient_for(c, patient_id, user)
             ctx.audit(c, user, "preview_synthetic_fhir", "patient", patient_id)
         return result
 

@@ -157,6 +157,8 @@ def install_messaging(app, ctx, draft_generator=None):
                 "AND d.due_at IS NOT NULL AND d.due_at<=:at) AS due_followups "
                 "FROM dev_conversations v JOIN dev_patients p ON p.id=v.patient_id WHERE " + where + " ORDER BY v.id DESC LIMIT 200"),
                 {"tenant": user["tenant"], "uid": user["id"], "at": now()}).mappings().all()
+            # Thread ownership does not outlive chart authorization or revocation.
+            rows=[row for row in rows if ctx.can_access_patient(c,row['patient_id'],user)]
             items = [dict(row, channel="internal_portal", external_delivery_available=False) for row in rows]
             ctx.audit(c, user, "read_inbox", "conversation")
             return {"threads": items, "unread_count": sum(row["unread_count"] for row in rows),

@@ -169,3 +169,8 @@ No real LLM credentials or Qdrant URL were present. Real microphone/speech-vendo
 OpenAI:blocked before authentication because runtime LLM_API_KEY/LLM_BASE_URL/LLM_MODEL were absent. Qdrant:blocked before authentication because runtime QDRANT_URL/QDRANT_API_KEY were absent. No collection was created,recreated or populated;actual remote collection schema,point/document counts,retrieval and citations remain unverified. Default collection raphael_evidence_v1 and384-dimensional MiniLM configuration are code expectations only,not observed remote facts. No keys or raw provider exceptions were exposed.
 
 Working internal care workflow is not live hospital connectivity,global chart-consent replacement,clinical validation,native iOS distribution or a hosted preview. No merge/deployment,real patient records,external clinical messages or live billing. See CARE_JOURNEY.md,INFRASTRUCTURE_STATUS.md and MOBILE_ADR.md for exact operation and blockers.
+
+
+## Recovered development checkpoint — 2026-10-26
+
+Recovered chart-scoped access,patient AI,account controls,population filtering,claim-support screening and actual native iOS source. See RECOVER-001–005 in REQUIREMENTS_MATRIX.md. Initial integrated Python177/177,frontend26/26,Chromium6/6,extended patient/account browser1/1,mobile structural audit and5/5tests passed. Two additional clinician regressions passed in targeted15/15suite. Live ingestion expanded6CDCdocuments/31vectors,repeat0writes;first live physician claim screen failed closed. Complete live acceptance and final combined regression are still pending. iOS compilation/signing unverified;Android absent;no staging deployment or App Store readiness claim. Account deletion is review-only.

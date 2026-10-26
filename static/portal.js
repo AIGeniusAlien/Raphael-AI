@@ -122,6 +122,8 @@
     byId('assessment-panel').hidden = !clinician();
     byId('knowledge-link').hidden = !clinician();
     byId('intelligence-link').hidden = !clinician();
+    byId('patient-ai-link').hidden = clinician();
+    byId('chart-access-link').hidden = clinician();
     byId('notes-explanation').textContent = clinician()
       ? 'Draft notes require your explicit review and approval before a patient account can view them. Approval here is a development workflow, not a qualified electronic signature.'
       : 'Only notes explicitly approved by a clinician account are shown. General AI output is not a clinician-approved care instruction.';

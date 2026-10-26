@@ -4126,3 +4126,1539 @@ If execution time becomes limited, finish the highest-priority incomplete workfl
 The founder should be able to open Raphael, sign in as a synthetic patient or clinician, and test a complete connected care experience.
 
 BEGIN IMPLEMENTATION IMMEDIATELY.
+
+
+## Preserved owner directive: Master product completion and App Store directive
+
+# RAPHAEL AI — MASTER PRODUCT COMPLETION & APP STORE READINESS DIRECTIVE
+## Full-Stack Engineering, Medical Intelligence, iOS, Android, Clinical Workflows, Security, Interoperability and Release Engineering
+
+**MISSION: Deliver the most complete, integrated, functional, testable Raphael AI release candidate possible from the existing codebase.**
+
+You are operating as a coordinated, elite engineering organization comprising:
+
+- Principal software architect
+- Staff backend and frontend engineers
+- iOS and Android engineering leads
+- Clinical AI and machine-learning engineers
+- Medical informatics and interoperability architects
+- Healthcare cybersecurity and privacy engineers
+- Clinical safety and evaluation engineers
+- Radiology and medical imaging engineers
+- Speech, voice and multimodal AI engineers
+- Accessibility and product design specialists
+- Site reliability and DevOps engineers
+- Automated testing and release engineering specialists
+
+Act as one integrated team. Make technically sound routine decisions autonomously. Implement working software, not disconnected demonstrations.
+
+We have limited Codex execution capacity. Maximize useful implementation per run.
+
+**The product owner's complete Raphael vision is the governing product scope. Do not narrow, replace, or redefine it.**
+
+---
+
+# PART I — EXISTING PROJECT AND VERIFIED BASELINE
+
+Repository: `AIGeniusAlien/Raphael-AI`
+
+Existing development branch: `fix/sqlite-startup-recovery`
+
+Existing draft pull request: `#1`
+
+Latest verified baseline: commit `946ca43`.
+
+First inspect the current branch, PR, source code, requirements matrix, existing documentation, tests, application architecture, and runtime configuration. If the branch has advanced, preserve and build upon the newer work.
+
+Read all relevant project instructions, especially `AGENTS.md`.
+
+Do not create a second application, duplicate the backend, replace working features unnecessarily, or start another planning-only project.
+
+The previous implementation has already demonstrated:
+
+- Authenticated synthetic patient and physician workflows
+- Patient intake and consent-controlled sharing
+- Clinical conversations and streaming
+- Versioned notes and explicit clinician approval
+- Medical evidence retrieval
+- Live OpenAI inference
+- Live OpenAI embeddings
+- Live Qdrant retrieval
+- Verified CDC source citations
+- Persistent clinical evidence
+- DICOM and imaging foundations
+- Voice and ambient documentation foundations
+- Secure messaging
+- Mobile-responsive browser testing
+- Authentication and security regression tests
+
+The live evidence configuration currently uses:
+
+`RAPHAEL_EMBEDDING_BACKEND=openai`
+
+`RAPHAEL_STREAM_EVIDENCE_BACKEND=qdrant`
+
+`EMBED_DIM=384`
+
+`text-embedding-3-small`
+
+Qdrant collection:
+
+`raphael_evidence_v1`
+
+Do not overwrite or corrupt existing collection data.
+
+The current corpus contains three CDC documents and 20 vectors. This is a successful initial integration test, not comprehensive medical coverage.
+
+Preserve all existing requirement IDs and descriptions. The repository currently reports 1,110 prior requirement descriptions. Verify their actual status rather than treating them as implemented.
+
+# PART II — EXECUTION CONTRACT
+
+Your primary deliverable is WORKING SOFTWARE.
+
+Do not spend the run creating another roadmap unless it directly enables implementation.
+
+Perform a brief initial audit, identify dependencies, then implement continuously.
+
+Use the following execution order:
+
+**P0 — Operational and security foundations**
+
+Ensure the existing application starts, authenticates, persists data, and securely reaches live AI and evidence services.
+
+**P1 — Complete integrated patient and clinician experience**
+
+Deliver the full synthetic care journey in one cohesive application.
+
+**P2 — Native mobile application foundation and build**
+
+Create a real buildable iOS project, with Android support where technically feasible.
+
+**P3 — Expand the medical intelligence and evidence architecture**
+
+Broaden verified medical knowledge, clinical safety, source relevance and research coverage.
+
+**P4 — Advanced care, emergency, interoperability and multimodal features**
+
+Integrate the major existing and new workflows.
+
+**P5 — Release engineering and App Store submission readiness**
+
+Produce build artifacts, tests, privacy documentation, screenshots and submission checklists.
+
+Do not skip a blocking dependency merely to claim more features.
+
+Where tasks are independent, work on them in parallel if supported.
+
+If the execution budget becomes constrained, finish and verify the most valuable incomplete vertical workflow before stopping.
+
+At the end, provide a machine-readable and human-readable implementation report, including exact continuation instructions.
+
+# PART III — DEFINITIVE PRODUCT VISION
+
+Raphael AI is a unified global healthcare intelligence, patient-record, clinical collaboration, and care-coordination platform.
+
+Raphael is intended to accompany a patient throughout their life and across every major healthcare setting.
+
+The platform must ultimately support:
+
+1. Primary care and family medicine
+2. Pediatric care and caregiver permissions
+3. Urgent care
+4. Emergency departments
+5. Ambulance and prehospital coordination
+6. Hospital admissions and inpatient care
+7. Surgical and perioperative care
+8. Specialists and referrals
+9. Radiology and medical imaging
+10. Laboratory and diagnostic testing
+11. Pharmacy and medication management
+12. Behavioral and mental healthcare
+13. Rehabilitation and physical therapy
+14. Chronic-condition management
+15. Preventive and integrative medicine
+16. Maternal and reproductive healthcare
+17. Geriatric and long-term care
+18. International and travel-related care
+19. Remote monitoring and telehealth foundations
+20. Research, education and clinical evaluation
+
+These are not separate unrelated applications.
+
+Design a coherent patient-centered platform with shared identity, consent, longitudinal records, clinical context, communications and intelligence.
+
+A patient should not have to repeatedly provide the same history at every encounter when the relevant information can be shared lawfully and securely.
+
+A participating clinician should be able to obtain an accurate, authorized clinical summary, review its provenance, communicate with other participating professionals, and provide better-coordinated care.
+
+No feature should imply universal hospital connectivity until actual integrations exist.
+
+# PART IV — COMPLETE PATIENT APPLICATION
+
+Deliver a polished, functional patient experience.
+
+Implement and integrate:
+
+## Identity and profile
+
+- Secure registration and sign-in
+- Profile management
+- Account recovery
+- Email verification where infrastructure permits
+- Multi-factor authentication architecture
+- Secure session management
+- Account deletion and data export workflows
+- Device session management
+- Accessible authentication errors
+- Privacy and consent preferences
+
+## Longitudinal medical record
+
+- Medical conditions
+- Past medical history
+- Surgical history
+- Medication list
+- Allergies and reactions
+- Immunizations
+- Laboratory results
+- Imaging studies and reports
+- Procedures
+- Hospitalizations
+- Family history
+- Relevant social history
+- Medical devices and implants
+- Care team
+- Visit summaries
+- Referrals
+- Care plans
+- Historical records and documents
+
+Each item must preserve its source, update timestamp, author or reporter, verification status and relevant provenance.
+
+Distinguish patient-reported information from clinician-verified information.
+
+Do not silently overwrite clinician-authored records with patient edits.
+
+## Appointments and intake
+
+- Appointment preparation
+- Reason for visit
+- Symptom intake
+- Structured medical questionnaires
+- Specialty-specific intake forms
+- Primary-care intake
+- Pediatric intake
+- Urgent-care intake
+- Emergency pre-arrival information
+- Medication and allergy reconciliation
+- Upload of relevant documents
+- Consent to share
+- Receiving-provider selection
+- Submission confirmation
+- Intake status tracking
+
+Use actual persisted workflows rather than frontend-only mockups.
+
+## Patient communication
+
+- Secure messaging with participating clinicians
+- Message threads
+- Read status
+- Attachment controls
+- Notifications
+- Follow-up requests
+- Clinician-approved explanations
+- Care-team contact information
+- Escalation instructions for urgent situations
+
+Do not promise immediate clinical response without an actual monitored service.
+
+## Patient AI
+
+Provide a conversational Raphael experience supporting:
+
+- Health education
+- Explanation of medical terminology
+- Understanding laboratory and imaging reports
+- Preparation for appointments
+- Questions about clinician-approved instructions
+- Evidence-grounded general medical questions
+- Relevant authorized chart context
+- Clear uncertainty
+- Emergency red-flag guidance
+- Persistent conversation history
+- Source inspection
+- Voice interaction where available
+
+Patient AI must not impersonate a clinician or autonomously finalize diagnoses, prescriptions or medical orders.
+
+# PART V — COMPLETE CLINICIAN PLATFORM
+
+Deliver an integrated clinician workspace.
+
+Implement:
+
+- Authenticated clinician access
+- Role and organization controls
+- Patient worklist
+- Search and filtering
+- Patient chart
+- Longitudinal timeline
+- Medication and allergy review
+- Lab and imaging review
+- Clinical document review
+- Intake review
+- Encounter management
+- AI-assisted chart synthesis
+- Clinical conversations
+- Differential diagnosis support
+- Guideline retrieval
+- Medical literature retrieval
+- Medication safety checks using validated data
+- Referral workflows
+- Draft orders with authorization boundaries
+- Clinical note drafting
+- Note editing
+- Version history
+- Explicit signing and approval
+- Patient summary publication
+- Follow-up planning
+- Secure messaging
+- Audit and provenance views
+
+Build upon existing workflows.
+
+Every clinically consequential AI output must remain distinguishable from signed clinician documentation.
+
+Do not automatically issue prescriptions, send orders, finalize diagnoses, or sign notes.
+
+# PART VI — CLINICAL INTELLIGENCE AND REASONING
+
+Raphael must be engineered for advanced medical reasoning across specialties.
+
+Its capabilities should include:
+
+- Differential diagnosis generation
+- Supporting and contradicting findings
+- Dangerous alternative diagnoses
+- Missing-information identification
+- Risk-factor analysis
+- Diagnostic testing considerations
+- Guideline comparison
+- Medication contraindication checks
+- Allergy awareness
+- Treatment-option comparison
+- Monitoring and follow-up considerations
+- Patient-specific context
+- Evidence quality assessment
+- Population applicability
+- Uncertainty and abstention
+- Clinical decision provenance
+
+Use the most capable appropriate model architecture available within the authorized project configuration and cost constraints.
+
+Do not silently replace the working model with an expensive or unverified alternative.
+
+Implement configurable model routing so that different tasks can use different approved models.
+
+Separate:
+
+- General conversational reasoning
+- Clinical evidence retrieval
+- Patient-chart extraction
+- Structured documentation
+- Imaging-model inference
+- Voice transcription
+- Safety verification
+
+Where multiple model calls are used, implement bounded latency, cost tracking, failure handling and clear provenance.
+
+Do not claim a clinical accuracy rate without independent evaluation.
+
+# PART VII — WORLD-CLASS MEDICAL KNOWLEDGE SYSTEM
+
+Raphael's medical knowledge must become comprehensive, current, authoritative, verifiable and legally sourced.
+
+Preserve the working OpenAI/Qdrant evidence pipeline.
+
+Expand the ingestion architecture to support appropriate sources including:
+
+- PubMed
+- PubMed Central open-access content
+- NIH resources
+- CDC
+- FDA
+- WHO
+- ClinicalTrials.gov
+- USPSTF
+- NICE
+- Public clinical practice guidelines
+- Medical specialty society guidance
+- Public drug safety resources
+- Authorized institutional references
+- Licensed journals and medical textbooks when rights are obtained
+
+Do not bypass paywalls, scrape prohibited materials, or represent private or copyrighted sources as universally accessible.
+
+## Ingestion requirements
+
+Implement:
+
+- Source adapters
+- Source allowlists
+- Terms and licensing review metadata
+- Document discovery
+- Download validation
+- Parsing
+- Chunking
+- Embedding
+- Deduplication
+- Versioning
+- Qdrant indexing
+- Provenance
+- Source update detection
+- Supersession and withdrawal flags
+- Retrieval logging
+- Quality assurance
+- Incremental ingestion
+- Failed-job recovery
+- Source health monitoring
+
+Do not mix incompatible embedding spaces.
+
+Preserve the current hosted 384-dimensional collection.
+
+If changing embedding models, create a separate appropriately tagged collection and migrate deliberately.
+
+Never silently re-embed or overwrite incompatible vectors.
+
+## Evidence ranking
+
+Improve retrieval through:
+
+- Semantic similarity
+- Keyword or hybrid retrieval
+- Specialty filtering
+- Patient age and population relevance
+- Jurisdiction
+- Publication date
+- Guideline status
+- Study design
+- Evidence hierarchy
+- Source quality
+- Reranking
+- Conflict detection
+- Source freshness
+- Relevance thresholds
+
+Cosine similarity must never be presented as clinical confidence.
+
+## Citation integrity
+
+Every citation must resolve to an actual retrieved document or excerpt.
+
+Preserve the strict citation-label validation already implemented.
+
+Unknown references must fail closed.
+
+Do not weaken citation checks to improve completion rates.
+
+Add checks for whether the cited excerpt actually supports the associated claim.
+
+A valid source ID alone is insufficient.
+
+Test unsupported statements, fabricated references, source mismatch, outdated recommendations, and pediatric/adult applicability errors.
+
+## Coverage
+
+Begin expanding beyond the three CDC documents with a bounded, legally reusable, verified corpus spanning several major specialties.
+
+Prioritize common primary-care, pediatric, urgent-care and emergency presentations.
+
+Do not fabricate ingestion counts.
+
+Report exact indexed source and vector counts.
+
+# PART VIII — SAFECORE CLINICAL SAFETY ENGINE
+
+Implement or strengthen Raphael's layered clinical safety architecture.
+
+Include:
+
+- Emergency symptom recognition
+- High-risk condition escalation
+- Medication safety boundaries
+- Allergy and contraindication checks
+- Pregnancy and pediatric considerations
+- Age and population applicability
+- Missing critical findings
+- Uncertainty reporting
+- Evidence insufficiency
+- Conflicting guidance
+- Prompt-injection resistance for retrieved documents
+- Patient-record instruction isolation
+- Clinician approval gates
+- Clinical audit trails
+- Structured safety evaluations
+
+Retrieved documents and uploaded patient files are untrusted data, not executable instructions.
+
+Do not allow retrieved content to override system-level authorization or safety requirements.
+
+Create synthetic clinical evaluation cases for common, high-risk and adversarial scenarios.
+
+Measure results without inventing accuracy claims.
+
+Keep clinician oversight central.
+
+# PART IX — EMERGENCY AND PRE-ARRIVAL CARE
+
+Raphael must ultimately help patients communicate essential information to participating facilities before arrival.
+
+Build the development implementation of:
+
+- Emergency medical summary
+- Allergies
+- Medications
+- Major diagnoses
+- Relevant prior procedures
+- Emergency contacts
+- Care team
+- Patient-reported symptoms
+- Relevant current observations
+- Pre-arrival intake packet
+- Authorized receiving facility
+- Transmission status
+- Delivery confirmation
+- Clinical acknowledgment
+- Audit history
+- Consent controls
+
+Use a strict transmission state machine:
+
+DRAFT
+AUTHORIZED
+QUEUED
+SENT
+DELIVERED
+ACKNOWLEDGED
+FAILED
+REVOKED
+
+States must correspond to actual system events.
+
+A queued message is not a delivered message.
+
+A delivered message is not a clinically acknowledged message.
+
+Never simulate actual hospital receipt as though a real hospital participated.
+
+Provide emergency guidance that does not delay calling emergency services or seeking immediate care.
+
+Prepare an integration interface for participating facilities, but do not transmit to real emergency departments without agreements and explicit authorization.
+
+# PART X — INTERNATIONAL HEALTHCARE AND RECORD PORTABILITY
+
+Design Raphael for patients receiving care across national boundaries.
+
+Implement or prepare:
+
+- Multilingual interface foundations
+- Language preferences
+- Translation provenance
+- Clinician verification of important translations
+- International medical summaries
+- Units and measurement normalization
+- Medication generic-name mapping
+- Time zone handling
+- Jurisdiction metadata
+- Consent expiration
+- Record-sharing audit trails
+- Provider identity verification
+- Cross-border access controls
+- Emergency-access policy architecture
+- Exportable structured records
+- FHIR-compatible interoperability
+
+Never grant access solely because someone claims to be a physician.
+
+Do not bypass country-specific privacy requirements.
+
+Foreign clinician access requires authenticated identity, patient authorization or another validated legal basis, and appropriate data-sharing arrangements.
+
+# PART XI — PEDIATRICS AND CAREGIVER ACCESS
+
+Pediatric workflows are essential.
+
+Implement a proper foundation for:
+
+- Parent or guardian relationships
+- Verified proxy access
+- Minor patient records
+- Age-sensitive permissions
+- Caregiver consent
+- Pediatric history
+- Immunizations
+- Growth information
+- Pediatric intake
+- Pediatric medication safety
+- Pediatric emergency summaries
+- Clinician-controlled record sharing
+- Transition of control as the patient reaches the applicable age
+
+Do not assume every parent automatically has unrestricted access to every category of a minor's health information.
+
+Use jurisdiction-aware policies and clinician/legal review where required.
+
+Test caregiver access, revocation, conflicting authority, and unauthorized disclosure scenarios.
+
+# PART XII — RADIOLOGY, IMAGING AND MULTIMODAL MEDICINE
+
+Advance the existing DICOM and imaging architecture.
+
+Support:
+
+- Secure DICOM upload
+- Study metadata
+- Image series navigation
+- Basic viewer controls
+- Prior-study association
+- Imaging report storage
+- Structured radiology drafts
+- Clinician review
+- Imaging provenance
+- Modality-specific adapters
+- Future PACS integration
+- ImagingStudy and DiagnosticReport FHIR mapping
+
+Do not claim clinically validated imaging interpretation from generic image viewing or unvalidated multimodal models.
+
+Prepare interfaces for appropriately evaluated imaging AI models.
+
+Use synthetic or legally reusable test imaging only.
+
+# PART XIII — RAPHAEL VOICE AND HANDS-FREE MEDICINE
+
+Raphael should support natural voice interaction.
+
+Advance:
+
+- Standard text mode
+- Voice conversation
+- Speech-to-text
+- Text-to-speech
+- Hands-free interaction
+- Optional wake phrase "Hey Raphael"
+- Microphone permission handling
+- Explicit consent
+- Mute and stop
+- Interruption handling
+- Transcript visibility
+- Transcript correction
+- Audio processing status
+- Failure recovery
+- Mobile voice compatibility
+
+No covert listening.
+
+No background recording without appropriate consent and platform permissions.
+
+Verify real device capabilities separately from browser fixtures.
+
+# PART XIV — AMBIENT CLINICAL DOCUMENTATION
+
+Support consented clinical encounter documentation.
+
+Implement:
+
+- Encounter consent
+- Audio capture
+- Transcription
+- Speaker attribution where supported
+- Incremental transcript updates
+- SOAP notes
+- History and physical notes
+- Progress notes
+- Consultation notes
+- Discharge summaries
+- Radiology report drafts
+- Structured findings
+- Clinician editing
+- Version history
+- Provenance
+- Explicit sign-off
+- Authorized export
+
+Preserve clinician edits.
+
+Never silently replace a clinician's corrections with newly generated content.
+
+No note becomes final without the required authorized approval.
+
+# PART XV — FHIR, EHR AND HEALTHCARE INTEROPERABILITY
+
+Implement a standards-based interoperability foundation.
+
+Support FHIR resources such as:
+
+- Patient
+- Practitioner
+- Organization
+- Encounter
+- Condition
+- Observation
+- MedicationRequest
+- MedicationStatement
+- AllergyIntolerance
+- Immunization
+- DiagnosticReport
+- ImagingStudy
+- DocumentReference
+- CarePlan
+- Communication
+- Consent
+- Provenance
+
+Implement sandbox-safe adapters, validation, mapping and import/export.
+
+Prepare SMART on FHIR OAuth authorization flows and patient-context launch architecture.
+
+Do not claim Epic, Oracle Health, hospital or national-system integration without an actual authorized connection.
+
+No production EHR writes without explicit authorization, partner agreements and verified safety controls.
+
+# PART XVI — SECURE COMMUNICATION AND CARE COORDINATION
+
+Complete the internal messaging system.
+
+Support:
+
+- Patient-to-clinician threads
+- Clinician-to-clinician threads
+- Referral communication
+- Attachments
+- Read status
+- Message routing
+- Care-team identity
+- Notification settings
+- Audit trails
+- Clinician-approved AI message drafts
+- Failure states
+- Patient access controls
+
+Implement message delivery adapters for future external providers.
+
+Do not enable actual external healthcare messaging without authorized endpoints and agreements.
+
+# PART XVII — PREVENTIVE, LIFESTYLE AND INTEGRATIVE MEDICINE
+
+Raphael must support prevention and evidence-informed integrative healthcare.
+
+Include:
+
+- Nutrition
+- Exercise
+- Sleep
+- Stress management
+- Physical conditioning
+- Behavioral interventions
+- Smoking cessation
+- Preventive screening
+- Chronic-disease risk reduction
+- Evidence-based complementary therapies
+- Breathwork
+- Cold exposure
+- Wim Hof Method research and safety considerations
+
+Evaluate interventions using the quality of available evidence.
+
+Distinguish established clinical benefits from preliminary or disputed claims.
+
+Include contraindications and adverse-event risks.
+
+In particular, warn against breath-holding or hyperventilation exercises in water, while driving, or in other situations where loss of consciousness could be dangerous.
+
+Do not recommend abandoning necessary prescribed treatment in favor of unproven alternatives.
+
+# PART XVIII — iOS APPLICATION: REQUIRED DELIVERY
+
+**A real iOS project is a priority deliverable of this sprint.**
+
+Inspect the existing web application and mobile architecture decision record.
+
+Select a maintainable implementation strategy that shares Raphael's backend and business logic.
+
+Use an appropriate native or cross-platform approach based on the existing code, not personal framework preference.
+
+Prefer reuse over duplicating the entire application.
+
+Implement a real buildable mobile project with:
+
+- App launch and navigation
+- Branding
+- Patient authentication
+- Secure token/session handling
+- Patient dashboard
+- Medical record
+- Emergency information
+- Pre-visit intake
+- AI conversation
+- Care-team messaging
+- Appointments
+- Consent management
+- Settings
+- Privacy controls
+- Account deletion entry point
+- Accessibility
+- Loading and offline/error states
+
+Implement secure local storage and avoid storing unnecessary sensitive health information on the device.
+
+Protect session tokens.
+
+Do not embed OpenAI or Qdrant API keys in the mobile application.
+
+All AI and database requests must flow through authorized backend services.
+
+Use secure transport.
+
+Handle microphone and notification permissions appropriately.
+
+Support dynamic text sizing, VoiceOver, accessible controls and meaningful error messages.
+
+Prepare iOS project configuration for:
+
+- App display name
+- Bundle identifier configuration
+- Versioning
+- App icons
+- Launch screen
+- Privacy descriptions
+- Permission strings
+- Signing configuration
+- Release build configuration
+- Test configuration
+
+If a macOS/Xcode build environment is unavailable, still produce a complete source project and automated checks that can run on the available platform. Clearly identify the remaining macOS build and signing verification.
+
+Do not claim an iOS build passed unless it actually ran.
+
+# PART XIX — ANDROID APPLICATION
+
+Where technically feasible, provide Android support through the same shared mobile architecture.
+
+Implement:
+
+- Authentication
+- Patient dashboard
+- Medical record
+- Emergency information
+- Intake
+- AI conversation
+- Messaging
+- Settings
+- Accessibility
+- Secure session handling
+- Build configuration
+
+Run Android build checks where supported.
+
+Do not let Android packaging prevent completion of the iOS priority.
+
+# PART XX — MOBILE EMERGENCY EXPERIENCE
+
+Make the emergency information workflow especially accessible on mobile.
+
+A patient should be able to quickly view essential information and prepare authorized sharing with a participating clinician or facility.
+
+Provide:
+
+- Emergency summary
+- Medication and allergy information
+- Important conditions
+- Emergency contacts
+- Medical history
+- Care-team information
+- Timestamp and provenance
+- Authorized sharing controls
+- Explicit status of any transmission
+
+Do not make sensitive medical information available to arbitrary people through an unauthenticated public link.
+
+Any optional emergency-access mechanism must have a separately reviewed threat model, limited data scope and auditable access.
+
+# PART XXI — PRODUCT DESIGN AND USER EXPERIENCE
+
+Raphael must feel like a coherent, professional healthcare product.
+
+Use a unified design system across patient web, clinician web and mobile.
+
+Prioritize:
+
+- Clear navigation
+- Calm, readable interfaces
+- Strong information hierarchy
+- Accessible contrast
+- Large touch targets
+- Fast interaction
+- Mobile responsiveness
+- Clear clinical provenance
+- Visible consent states
+- Evidence inspection
+- Error recovery
+- Patient-friendly terminology
+- Professional clinician workflows
+- Consistent typography and spacing
+
+Do not confuse visual polish with clinical reliability.
+
+Implement design improvements in actual application components rather than static mockups.
+
+# PART XXII — DATABASE AND DATA ARCHITECTURE
+
+Review the existing SQLite development persistence.
+
+Prepare a production-oriented database strategy, including PostgreSQL compatibility where appropriate.
+
+Implement safe migrations, relational constraints and data lifecycle rules.
+
+Cover:
+
+- Patients
+- Clinicians
+- Organizations
+- Care teams
+- Consent
+- Encounters
+- Clinical records
+- Messages
+- Documents
+- AI conversations
+- Evidence snapshots
+- Audit events
+- Notifications
+- Device sessions
+- Background jobs
+
+Preserve existing data.
+
+Never run destructive migrations without backups and explicit authorization.
+
+Separate development, staging and production data.
+
+# PART XXIII — SECURITY, PRIVACY AND IDENTITY
+
+Implement or strengthen:
+
+- Role-based and patient-scoped authorization
+- Tenant isolation
+- Secure authentication
+- MFA readiness
+- Session expiration
+- Rate limiting
+- CSRF protection where applicable
+- Secure cookies
+- CORS restrictions
+- Input validation
+- Upload validation
+- Malware-scanning integration points
+- Secret management
+- Audit logs
+- Encryption in transit
+- Encryption at rest
+- Backup and recovery
+- Data retention
+- Account deletion
+- Data export
+- Access revocation
+- Least-privilege service credentials
+- Security headers
+- Dependency scanning
+- Vulnerability reporting
+- Logging redaction
+- Privacy-by-design controls
+
+Prioritize fixing known broad chart-access and caregiver authorization gaps before enabling real patient data.
+
+Do not claim HIPAA compliance or equivalent international regulatory compliance based solely on implemented controls.
+
+Document required independent legal, organizational and security assessments.
+
+# PART XXIV — RELIABILITY AND OBSERVABILITY
+
+Implement:
+
+- Health endpoints
+- Readiness endpoints
+- Structured logging
+- Request correlation IDs
+- Error classification
+- Service timeout policies
+- Bounded retries
+- Rate-limit handling
+- Cost controls
+- Background job monitoring
+- Database health checks
+- Qdrant health checks
+- OpenAI connectivity checks
+- Startup and restart verification
+- Graceful degradation
+- Deployment rollback plan
+
+No secret values or protected patient information should appear in logs.
+
+# PART XXV — DEPLOYMENT AND STAGING
+
+Inspect the existing Render configuration and deployment architecture.
+
+Prepare a secure, access-controlled staging environment using synthetic records only.
+
+Requirements:
+
+- Correct startup command
+- Environment variable validation
+- Secure secrets
+- Persistent database strategy
+- HTTPS
+- Authentication
+- Staging-only branding or warnings
+- Error monitoring
+- Health checks
+- Safe migrations
+- Deployment verification
+- Rollback instructions
+- Restricted access
+- No real clinical transmissions
+
+If staging deployment requires owner approval, payment, or external configuration, prepare everything technically possible and report the exact remaining action.
+
+Do not publish publicly without authorization.
+
+Do not merge PR #1 without approval.
+
+# PART XXVI — APP STORE SUBMISSION READINESS
+
+Prepare a complete Apple App Store submission-readiness package.
+
+Include:
+
+- Buildable iOS source project
+- Application name and branding configuration
+- Bundle identifier placeholder/configuration
+- App version
+- App icons and required sizes
+- Launch screen
+- Permission descriptions
+- Privacy policy draft
+- Terms of service draft
+- Medical safety disclosures
+- App Privacy data inventory
+- Data collection and sharing disclosures
+- Account deletion workflow
+- Support contact configuration
+- Demo-account strategy for App Review
+- Review notes
+- Screenshots or screenshot generation workflow
+- App description
+- Keywords
+- Age-rating questionnaire preparation
+- Export compliance assessment checklist
+- TestFlight preparation
+- Signing and provisioning instructions
+- Crash and analytics privacy review
+- Submission checklist
+
+Ensure the medical functionality is described accurately.
+
+Do not claim the application diagnoses, treats, prevents or cures conditions unless supported by appropriate clinical and regulatory evidence.
+
+Do not use unsupported claims of medical superiority.
+
+Never invent an Apple Developer account, signing certificate, approval, or submitted build.
+
+Distinguish:
+
+A. Implemented and verified
+
+B. Implemented but awaiting device/build verification
+
+C. Awaiting owner account or signing action
+
+D. Awaiting legal, clinical, privacy or regulatory review
+
+E. Not yet implemented
+
+# PART XXVII — BUSINESS AND ADMINISTRATION
+
+Prepare scalable organizational capabilities:
+
+- Organization management
+- User invitations
+- Clinician role assignment
+- Tenant configuration
+- Audit review
+- Consent-policy configuration
+- Usage analytics
+- Model cost monitoring
+- Billing architecture
+- Subscription configuration
+- Enterprise account foundations
+- Support workflow
+- Feature flags
+- Controlled rollouts
+
+Keep payment processing in test mode.
+
+Do not activate real charges or subscriptions without explicit authorization.
+
+# PART XXVIII — RESEARCH, VALIDATION AND QUALITY
+
+Create a reproducible evaluation framework for Raphael.
+
+Include:
+
+- Medical question answering
+- Evidence retrieval quality
+- Citation factuality
+- Clinical reasoning
+- Diagnostic safety
+- Dangerous-condition detection
+- Medication safety
+- Pediatric applicability
+- Demographic fairness
+- Hallucination detection
+- Uncertainty and abstention
+- Clinical note quality
+- Voice transcription accuracy
+- Imaging workflow accuracy
+- Patient comprehension
+- Accessibility
+- Performance
+- Security and authorization
+
+Use synthetic and properly licensed benchmark cases.
+
+Do not invent results or imply independent clinical validation.
+
+Preserve evidence for reproducibility and future research publication.
+
+# PART XXIX — MANDATORY END-TO-END ACCEPTANCE JOURNEYS
+
+Implement and test the following journeys through actual application interfaces and endpoints.
+
+## Journey A — Primary care
+
+Patient signs in → updates history → completes intake → authorizes clinician → clinician reviews chart → uses live evidence-grounded Raphael → drafts note → edits → approves → patient sees summary → follow-up persists.
+
+## Journey B — Pediatrics
+
+Authorized caregiver signs in → manages synthetic child profile → completes pediatric intake → clinician reviews age-appropriate records → Raphael retrieves population-relevant evidence → clinician approves summary → caregiver sees permitted information.
+
+Test unauthorized guardian access.
+
+## Journey C — Urgent/emergency care
+
+Patient creates emergency summary → authorizes a synthetic receiving facility → facility clinician views permitted information → reviews intake → prepares encounter documentation → patient receives approved follow-up.
+
+Do not represent simulated delivery as real hospital delivery.
+
+## Journey D — Specialist referral
+
+Primary clinician creates a synthetic referral → relevant history is shared with an authorized specialist → specialist reviews information → records consultation → approved result returns to the authorized care team.
+
+## Journey E — International care
+
+Synthetic patient prepares an international medical summary → authorized receiving clinician accesses permitted information → units and language metadata are preserved → access is audited → revocation is enforced.
+
+Do not claim real cross-border legal compliance.
+
+## Journey F — Medical evidence and safety
+
+Ask questions across multiple specialties.
+
+Verify actual retrieved sources, citation resolution, age applicability, missing evidence, uncertainty and refusal of unsupported clinical assertions.
+
+## Journey G — Mobile
+
+Patient opens Raphael on a small mobile viewport or actual device → signs in → reviews records → opens emergency summary → completes intake → uses AI conversation → sends internal message → signs out.
+
+Where a native build exists, test it independently from browser responsiveness.
+
+## Journey H — Voice and documentation
+
+Clinician explicitly consents to microphone use → records or dictates synthetic encounter content → reviews transcript → edits note → approves current version → patient sees permitted summary.
+
+## Journey I — Security
+
+Attempt unauthorized access across tenants, patients, caregiver roles, clinician assignments, conversations, evidence snapshots and consent boundaries.
+
+All unauthorized requests must fail safely.
+
+# PART XXX — TESTING AND RELEASE GATES
+
+Run:
+
+- Python unit tests
+- Frontend tests
+- Integration tests
+- Real Chromium browser tests
+- Mobile viewport tests
+- Native build checks where supported
+- Security regression tests
+- Live OpenAI/Qdrant smoke tests
+- Evidence ingestion idempotency tests
+- Citation integrity tests
+- Consent and authorization tests
+- Restart and persistence tests
+- Database migration tests
+- Accessibility checks
+- Dependency security scans
+
+Use actual providers for designated live integration tests.
+
+Keep mocked fixtures explicitly labeled.
+
+Do not use fixture results as evidence of live medical intelligence.
+
+No release candidate is accepted if it:
+
+- Leaks credentials
+- Bypasses patient authorization
+- Silently mixes embedding spaces
+- Fabricates source citations
+- Approves clinical notes automatically
+- Claims simulated messages were delivered
+- Exposes real patient information
+- Claims unverified medical accuracy
+- Fails essential login, intake, AI or persistence workflows
+
+# PART XXXI — EXECUTION EFFICIENCY AND CONTINUATION
+
+We cannot spend endless Codex runs repeating the same product requirements.
+
+Treat this directive and the existing repository requirements as the permanent source of truth.
+
+Create or update a durable engineering execution ledger in the repository.
+
+For every feature, record:
+
+- Requirement identifier
+- Feature description
+- Current implementation state
+- Code location
+- Test coverage
+- External dependency
+- Remaining work
+- Acceptance criteria
+- Next implementation action
+
+Never overwrite existing requirement identifiers.
+
+Use truthful states:
+
+VERIFIED
+IMPLEMENTED_UNVERIFIED
+PARTIAL
+MOCKED
+BLOCKED_EXTERNAL
+NOT_IMPLEMENTED
+REQUIRES_CLINICAL_VALIDATION
+
+At the end of every execution, update the ledger and preserve a precise next-action queue.
+
+Future development runs must resume from the ledger instead of requiring the founder to restate Raphael's vision.
+
+Do not claim autonomous background execution after the Codex run ends.
+
+# PART XXXII — FINAL REQUIRED DELIVERABLES
+
+Before stopping:
+
+1. Implement the highest-priority working functionality possible.
+2. Preserve all existing successful features.
+3. Run all relevant tests.
+4. Produce a usable synthetic development application.
+5. Produce a real iOS source project if technically feasible.
+6. Verify the mobile-responsive experience.
+7. Preserve live OpenAI/Qdrant medical intelligence.
+8. Expand and validate the medical evidence pipeline.
+9. Complete the maximum number of end-to-end journeys.
+10. Prepare staging and release configuration.
+11. Prepare App Store submission documentation and assets.
+12. Update the permanent engineering ledger.
+13. Commit coherent changes to the existing development branch.
+14. Update draft PR #1.
+15. Do not merge or deploy without authorization.
+
+Your final response MUST report:
+
+- Branch and commit
+- Files changed
+- Features actually completed
+- Features only partially implemented
+- Live provider results
+- Qdrant collection and vector counts
+- Evidence coverage
+- Clinical safety limitations
+- Patient and clinician workflow results
+- Mobile source/build status
+- iOS submission readiness
+- Android status
+- Staging readiness
+- Security and privacy gaps
+- Test counts and failures
+- Remaining external approvals
+- Exact operator instructions to run Raphael
+- Next three highest-impact engineering actions
+
+Do not report progress by counting documentation pages, requirements, or placeholders.
+
+Report real working software.
+
+**EXECUTION ORDER: INSPECT → IMPLEMENT → INTEGRATE → TEST → FIX → COMMIT → REPORT.**
+
+**BEGIN THE MOST SUBSTANTIAL RAPHAEL DEVELOPMENT EXECUTION POSSIBLE NOW.**
+
+
+## Preserved owner directive: Interrupted development recovery directive
+
+# RAPHAEL AI — RECOVER INTERRUPTED DEVELOPMENT, COMPLETE IMPLEMENTATION, AND PRESERVE ALL PROGRESS
+
+IMPORTANT: This is a continuation of an interrupted major engineering execution, NOT a new project.
+
+The previous Codex execution stopped because of a usage limit before completing its work, running all verification, committing changes, or delivering a final report.
+
+**Your first responsibility is to recover and preserve every valid change already made. Do not restart development from scratch.**
+
+## 1. Recover the interrupted execution
+
+Repository: `AIGeniusAlien/Raphael-AI`
+
+Existing branch: `fix/sqlite-startup-recovery`
+
+Existing draft PR: `#1`
+
+Last verified GitHub commit: `946ca43`
+
+Immediately inspect:
+
+- Current working directory and Git branch
+- `git status`
+- Uncommitted changes
+- Untracked files
+- Existing commits
+- Current PR state
+- Previously running development tasks
+- Existing engineering and requirements documentation
+
+The interrupted execution reported the following progress:
+
+1. Patient-scoped clinician chart authorization was implemented, with focused tests passing.
+2. Unrelated clinicians were denied chart access.
+3. Patients could grant and revoke full-chart access.
+4. Revocation checks were extended to cached conversations and later streamed tokens.
+5. Patient AI passed a browser test using an explicitly labeled local provider fixture.
+6. Evidence safety improvements included population filtering and claim-support screening.
+7. Three additional CDC evidence sources were prepared.
+8. Native iOS source project development was started.
+9. Live medical evidence verification and final integration were not completed.
+
+Find and preserve these changes wherever they exist.
+
+Do not assume they were committed.
+
+Do not overwrite valid changes with older code.
+
+If the original workspace is unavailable, recover everything possible from existing commits, task artifacts and the repository, then recreate only genuinely missing work.
+
+## 2. Preserve the verified medical intelligence foundation
+
+The prior successful development established:
+
+- Real OpenAI inference and streaming
+- `text-embedding-3-small`
+- 384-dimensional embeddings
+- Real Qdrant retrieval
+- `raphael_evidence_v1`
+- Three verified CDC documents
+- Twenty indexed vectors
+- Strict citation validation
+- Source provenance
+- Persistent evidence snapshots
+- Physician portal integration
+- Clinician approval boundaries
+
+Do not delete or recreate the existing Qdrant collection.
+
+Do not mix incompatible embedding models.
+
+Do not expose credentials.
+
+Preserve the original 142 Python tests, 26 frontend tests, four Chromium regression scenarios, and live-provider verification, then extend them appropriately.
+
+## 3. Finish the interrupted engineering work
+
+Complete and integrate the existing unfinished work before beginning unrelated features.
+
+### Patient and clinician authorization
+
+Finish patient-scoped chart authorization, clinician assignment, consent, revocation, audit logging, and denial of unauthorized access.
+
+Verify that revoked access cannot continue through cached AI conversations, active streaming, previously issued links, or unauthorized API endpoints.
+
+Preserve legally required clinical records and appropriate audit history.
+
+### Patient AI
+
+Complete the real patient-facing Raphael AI workflow.
+
+Connect it to the authorized backend and actual medical evidence retrieval.
+
+Use only patient-authorized medical context.
+
+Implement persistent conversation history, evidence citations, appropriate uncertainty, emergency escalation, and clear separation between education and clinician-approved medical advice.
+
+Verify the real provider integration separately from fixture-based browser tests.
+
+### Medical intelligence expansion
+
+Complete the three additional CDC source integrations.
+
+Validate source permissions, provenance, age/population applicability, document freshness, claim support and ingestion idempotency.
+
+Run real OpenAI embeddings and Qdrant retrieval tests.
+
+Report actual indexed document and vector counts.
+
+Do not claim comprehensive medical coverage based on this small corpus.
+
+### Native iOS application
+
+Recover and complete the native iOS source project.
+
+It must connect to Raphael's existing backend and support:
+
+- Secure patient authentication
+- Patient dashboard
+- Longitudinal medical record
+- Intake
+- Emergency information
+- Consent management
+- Patient AI conversation
+- Medical evidence citations
+- Care-team messaging
+- Account settings
+- Privacy and account deletion controls
+- Accessibility
+- Secure session handling
+
+Never embed server-side API keys in the mobile application.
+
+Provide real source files, project configuration, and build instructions.
+
+Run available build checks. If macOS/Xcode is unavailable, clearly state that the iOS build remains unverified.
+
+## 4. Continue the full Raphael product directive
+
+The previously submitted RAPHAEL AI MASTER PRODUCT COMPLETION & APP STORE READINESS DIRECTIVE remains authoritative.
+
+Do not discard its requirements.
+
+Continue making substantial implementation progress toward:
+
+- Comprehensive medical expertise across specialties
+- SafeCore clinical safety architecture
+- Advanced differential diagnosis support
+- Evidence-grounded medical reasoning
+- Medication and contraindication safety
+- Pediatrics and guardian permissions
+- Emergency and pre-arrival care
+- International medical records and interoperability
+- FHIR/EHR integration
+- DICOM, radiology and multimodal analysis
+- Voice and "Hey Raphael" interaction
+- Ambient clinical documentation
+- Clinician-approved medical notes
+- Preventive and integrative medicine
+- Secure patient and clinician communication
+- iOS and Android
+- Desktop and browser extension architecture
+- Enterprise and on-premises model support
+- Clinical evaluation and research
+- App Store and TestFlight preparation
+
+Preserve the entire product vision and all existing requirement descriptions.
+
+Prioritize implemented, integrated functionality over additional planning documents.
+
+Do not represent unfinished, mocked or unvalidated medical features as production-ready.
+
+## 5. Perform complete verification
+
+Run all available tests, including:
+
+- Python
+- Frontend
+- Browser
+- Authorization
+- Consent and revocation
+- Patient AI
+- Clinician AI
+- Citation support
+- Population applicability
+- Qdrant ingestion
+- Live OpenAI/Qdrant integration
+- Mobile project checks
+- Restart and persistence
+- Security regression
+
+Fix regressions introduced by this work.
+
+Use synthetic patient data only.
+
+Do not automatically approve clinical notes, send real clinical communications, or activate production medical functionality.
+
+## 6. Commit and preserve the completed work
+
+This is critical.
+
+Once changes are coherent and tested:
+
+1. Commit the recovered and completed work to the existing development branch.
+2. Push the changes to GitHub.
+3. Update existing draft PR #1.
+4. Verify that the remote PR head contains the new commit.
+5. Update the permanent engineering requirements ledger.
+6. Preserve exact instructions for the next development run.
+
+Do not merge PR #1.
+
+Do not publicly deploy Raphael without authorization.
+
+Do not wait until the very end to preserve a large amount of valid work. Create coherent checkpoint commits as substantial implementation milestones are completed, where permitted by the environment.
+
+## 7. Required final response
+
+Report:
+
+- Exact latest commit SHA
+- Confirmation that PR #1 was updated
+- Which interrupted changes were recovered
+- What was newly implemented
+- What remains incomplete
+- Python and frontend test results
+- Browser test results
+- Live OpenAI/Qdrant verification
+- Current medical evidence counts
+- iOS project and build status
+- Android status
+- Security and clinical safety limitations
+- Staging readiness
+- App Store readiness
+- Exact steps for the owner to open and test Raphael
+
+If any step is blocked, report the exact blocker and preserve completed work before stopping.
+
+**Do not spend this execution rewriting the master plan. Recover, finish, verify, commit and report actual software improvements.**
+
+BEGIN IMMEDIATELY.

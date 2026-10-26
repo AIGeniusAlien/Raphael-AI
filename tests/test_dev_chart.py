@@ -188,6 +188,10 @@ class StructuredChartTests(unittest.TestCase):
         r = self.upload(visibility="care_team")
         self.assertEqual(r.status_code, 200, r.text)
         path = f"/api/dev/documents/{r.json()['id']}/content"
+        self.login("otherdoctor")
+        self.assertEqual(self.client.get(path).status_code,404)
+        self.login("patient")
+        self.client.post(self.prefix+"/chart-access",json={"clinician_username":"otherdoctor","expires_in_minutes":60,"purpose":"Synthetic document consultation","authorize_full_chart":True}).raise_for_status()
         for name in ("doctor", "otherdoctor"):
             self.login(name)
             self.assertEqual(self.client.get(path).status_code, 200)

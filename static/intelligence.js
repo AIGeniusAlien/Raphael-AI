@@ -35,7 +35,7 @@
     state.thread=thread;$('thread-scope').textContent=thread.intake_id?'Uses only the authorized intake snapshot. No live chart is included; expired or revoked consent denies future access.':thread.patient_id?'Authorized current chart context is included.':'General research conversation; no patient chart is included.';$('thread-title').textContent=state.thread.title;$('patient').value=state.thread.patient_id||'';$('patient').disabled=true;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();
     for(const m of state.thread.messages){entry(m.role,m.content,m.status);if(m.evidence?.length){const inspect=node('button','Inspect evidence for response '+m.id);inspect.onclick=()=>renderEvidence(m.evidence);$('messages').append(inspect);}}
     const latestEvidence=[...state.thread.messages].reverse().find(m=>m.evidence?.length);
-    if(latestEvidence)renderEvidence(latestEvidence.evidence);
+    if(latestEvidence)renderEvidence(latestEvidence.evidence);const latestScreen=[...state.thread.messages].reverse().find(m=>m.claim_screen);if(latestScreen)status('Stored automated claim-support screen: '+latestScreen.claim_screen.status+'. Clinician review still required.');
     $('intake-return').hidden=!thread.intake_id;
     $('intake-return').href=thread.intake_id?'/static/care.html?intake='+thread.intake_id+'&thread='+thread.id:'/static/care.html';
     const interrupted = state.thread.messages.find(m=>m.status==='streaming');
@@ -64,6 +64,8 @@
           if(type==='delta'){full+=data.text;renderMarkdown(output,full);}
           if(type==='evidence')renderEvidence(data);
           if(type==='canonical'){full=data.text;renderMarkdown(output,full);}
+          if(type==='support_check')status('Automated claim-support screening: '+data.status+'. This is not clinical validation.');
+          if(type==='blocked'){status(data.detail);output.textContent=full;}
           if(type==='error'||type==='abstained'){status(data.detail);output.textContent=full||data.detail;}
           if(type==='complete'){status('Draft complete. Citation membership checked; clinical factuality remains unvalidated.');if($('speak').checked)voice.speak(full);}
           if(type==='cancelled')status('Generation cancelled.');

@@ -54,8 +54,20 @@ CREATE TABLE IF NOT EXISTS dev_patients (
  dob TEXT,
  mrn TEXT,
  patient_user_id INTEGER REFERENCES dev_users(id),
+ created_by_id INTEGER REFERENCES dev_users(id),
  created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS dev_chart_access_decisions (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ patient_id INTEGER NOT NULL REFERENCES dev_patients(id),
+ clinician_id INTEGER NOT NULL REFERENCES dev_users(id),
+ actor_id INTEGER NOT NULL REFERENCES dev_users(id),
+ decision TEXT NOT NULL CHECK(decision IN ('grant','revoke')),
+ expires_at TEXT,
+ purpose TEXT NOT NULL,
+ created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS dev_chart_access_latest ON dev_chart_access_decisions(patient_id,clinician_id,id);
 CREATE TABLE IF NOT EXISTS dev_conversations (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  patient_id INTEGER NOT NULL REFERENCES dev_patients(id),
@@ -177,7 +189,22 @@ def init_portal_schema(engine):
     _require_synthetic(engine)
     _migrate_users(engine)
     with engine.begin() as c:
+        c.exec_driver_sql('BEGIN IMMEDIATE')
         execute_sqlite_script(c, SCHEMA)
+        columns={row[1] for row in c.exec_driver_sql('PRAGMA table_info(dev_patients)')}
+        if 'created_by_id' not in columns:
+            c.exec_driver_sql('ALTER TABLE dev_patients ADD COLUMN created_by_id INTEGER REFERENCES dev_users(id)')
+        if not c.execute(text('SELECT 1 FROM dev_schema_migrations WHERE version=3')).scalar():
+            # Only creation audit provenance identifies an originating clinician.
+            # Historical reads,notes/conversations or tenant membership do not.
+            # Unknown/conflicting provenance stays unassigned;records are retained.
+            candidates=c.execute(text("SELECT p.id,MIN(a.actor_id) AS creator FROM dev_patients p JOIN dev_audit a "
+                "ON a.resource_id=p.id AND a.resource_type='patient' AND a.event='create_patient' AND a.tenant=p.tenant "
+                "WHERE p.created_by_id IS NULL GROUP BY p.id HAVING COUNT(DISTINCT a.actor_id)=1 AND COUNT(*)=COUNT(a.actor_id)")).all()
+            for patient_id,creator in candidates:
+                c.execute(text("UPDATE dev_patients SET created_by_id=:u WHERE id=:p AND EXISTS "
+                    "(SELECT 1 FROM dev_users u WHERE u.id=:u AND u.tenant=dev_patients.tenant AND u.role='clinician')"),{'u':creator,'p':patient_id})
+            c.execute(text('INSERT INTO dev_schema_migrations(version,applied_at) VALUES (3,:at)'),{'at':_now()})
         c.execute(text("INSERT OR IGNORE INTO dev_schema_migrations(version,applied_at) VALUES (2,:at)"), {"at": _now()})
 
 
@@ -243,6 +270,13 @@ class PatientIn(Input):
     patient_username: str | None = Field(default=None, max_length=100)
 
 
+class ChartGrantIn(Input):
+    clinician_username: str = Field(min_length=1,max_length=100)
+    expires_in_minutes: int = Field(ge=1,le=10080)
+    purpose: str = Field(min_length=5,max_length=500)
+    authorize_full_chart: StrictBool
+
+
 class ConversationIn(Input):
     title: str = Field(default="Internal test conversation", min_length=1, max_length=200)
 
@@ -306,13 +340,22 @@ def install_dev_portal(app, engine, assessment_generator=None):
             raise HTTPException(403, "Clinician role required.")
         return user
 
+    def can_access_patient(c, patient_id, user):
+        row=c.execute(text('SELECT patient_user_id,created_by_id FROM dev_patients WHERE id=:p AND tenant=:t'),{'p':patient_id,'t':user['tenant']}).mappings().first()
+        if not row:return False
+        if user['role']=='patient':return row['patient_user_id']==user['id']
+        if user['role']!='clinician':return False
+        decision=c.execute(text('SELECT decision,expires_at FROM dev_chart_access_decisions WHERE patient_id=:p AND clinician_id=:u ORDER BY id DESC LIMIT 1'),{'p':patient_id,'u':user['id']}).mappings().first()
+        if decision:return decision['decision']=='grant' and bool(decision['expires_at']) and decision['expires_at']>_now()
+        return row['created_by_id']==user['id']
+
     def patient_for(c, patient_id, user):
         if user["role"] not in ("patient", "clinician"):
             raise HTTPException(403, "Clinical role required.")
         row = c.execute(text("SELECT p.*,u.username AS patient_username FROM dev_patients p "
                              "LEFT JOIN dev_users u ON u.id=p.patient_user_id "
                              "WHERE p.id=:id AND p.tenant=:t"), {"id": patient_id, "t": user["tenant"]}).mappings().first()
-        if not row or (user["role"] == "patient" and row["patient_user_id"] != user["id"]):
+        if not row or not can_access_patient(c, patient_id, user):
             raise HTTPException(404, "Patient not found.")
         return dict(row)
 
@@ -394,7 +437,7 @@ def install_dev_portal(app, engine, assessment_generator=None):
                                   "LEFT JOIN dev_users u ON u.id=p.patient_user_id WHERE " + where + " ORDER BY p.id"),
                              {"t": user["tenant"], "uid": user["id"]}).mappings().all()
             _audit(c, user, "list_patients", "patient")
-            return [dict(row) for row in rows]
+            return [dict(row) for row in rows if can_access_patient(c,row['id'],user)]
 
     @router.post("/patients")
     def create_patient(body: PatientIn, user=Depends(clinician)):
@@ -405,12 +448,59 @@ def install_dev_portal(app, engine, assessment_generator=None):
                                             {"t": user["tenant"], "u": body.patient_username}).scalar()
                 if patient_user_id is None:
                     raise HTTPException(400, "Use an existing patient-role account in this tenant.")
-            result = c.execute(text("INSERT INTO dev_patients(tenant,name,dob,mrn,patient_user_id,created_at) "
-                                    "VALUES (:t,:n,:d,:m,:u,:at)"), {"t": user["tenant"], "n": body.name,
-                                    "d": body.dob, "m": body.mrn, "u": patient_user_id, "at": _now()})
+            result = c.execute(text("INSERT INTO dev_patients(tenant,name,dob,mrn,patient_user_id,created_by_id,created_at) "
+                                    "VALUES (:t,:n,:d,:m,:u,:creator,:at)"), {"t": user["tenant"], "n": body.name,
+                                    "d": body.dob, "m": body.mrn, "u": patient_user_id, "creator":user['id'], "at": _now()})
             patient = patient_for(c, result.lastrowid, user)
             _audit(c, user, "create_patient", "patient", patient["id"])
             return patient
+
+    def patient_owner(c,patient_id,user):
+        if user['role']!='patient':raise HTTPException(403,'Linked patient account required.')
+        return patient_for(c,patient_id,user)
+
+    @router.get('/chart-access/clinicians')
+    def chart_clinicians(user=Depends(current_user)):
+        if user['role']!='patient':raise HTTPException(403,'Patient account required.')
+        with engine.connect() as c:
+            return [dict(r) for r in c.execute(text("SELECT id,username FROM dev_users WHERE tenant=:t AND role='clinician' AND active=1 ORDER BY username LIMIT 250"),{'t':user['tenant']}).mappings()]
+
+    @router.get('/patients/{patient_id}/chart-access')
+    def chart_access(patient_id:int,user=Depends(current_user)):
+        with engine.begin() as c:
+            patient=patient_owner(c,patient_id,user)
+            rows=c.execute(text("SELECT u.id,u.username,u.active FROM dev_users u WHERE u.tenant=:t AND u.role='clinician' AND "
+                "(u.id=:creator OR EXISTS(SELECT 1 FROM dev_chart_access_decisions d WHERE d.patient_id=:p AND d.clinician_id=u.id)) ORDER BY u.username"),{'t':user['tenant'],'creator':patient['created_by_id'],'p':patient_id}).mappings().all()
+            result=[]
+            for row in rows:
+                latest=c.execute(text('SELECT * FROM dev_chart_access_decisions WHERE patient_id=:p AND clinician_id=:u ORDER BY id DESC LIMIT 1'),{'p':patient_id,'u':row['id']}).mappings().first()
+                recipient={'id':row['id'],'tenant':user['tenant'],'role':'clinician'}
+                result.append({'clinician_id':row['id'],'clinician_username':row['username'],'active':bool(row['active']) and can_access_patient(c,patient_id,recipient),'basis':'patient_decision' if latest else 'originating_clinician','latest_decision':dict(latest) if latest else None})
+            _audit(c,user,'review_full_chart_access','patient',patient_id)
+            return {'patient_id':patient_id,'scope':'full_current_chart_and_future_updates;clinician_record_and_note_permissions;private_document_controls_also_apply','clinicians':result,
+                    'history':[dict(r) for r in c.execute(text('SELECT id,clinician_id,decision,expires_at,purpose,created_at FROM dev_chart_access_decisions WHERE patient_id=:p ORDER BY id'),{'p':patient_id}).mappings()]}
+
+    @router.post('/patients/{patient_id}/chart-access')
+    def grant_chart_access(patient_id:int,body:ChartGrantIn,user=Depends(current_user)):
+        if not body.authorize_full_chart:raise HTTPException(422,'Explicit full-chart authorization is required;intake sharing does not grant chart access.')
+        with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE');patient_owner(c,patient_id,user)
+            recipient=c.execute(text("SELECT id FROM dev_users WHERE tenant=:t AND username=:u AND role='clinician' AND active=1"),{'t':user['tenant'],'u':body.clinician_username}).scalar()
+            if not recipient:raise HTTPException(404,'Active participating clinician not found.')
+            expiry=(datetime.now(timezone.utc)+timedelta(minutes=body.expires_in_minutes)).isoformat()
+            c.execute(text("INSERT INTO dev_chart_access_decisions(patient_id,clinician_id,actor_id,decision,expires_at,purpose,created_at) VALUES (:p,:u,:a,'grant',:e,:reason,:at)"),{'p':patient_id,'u':recipient,'a':user['id'],'e':expiry,'reason':body.purpose,'at':_now()})
+            _audit(c,user,'grant_full_chart_access','patient',patient_id)
+            return {'patient_id':patient_id,'clinician_id':recipient,'decision':'grant','expires_at':expiry,'scope':'full_current_chart_and_future_updates;clinician_record_and_note_permissions;private_document_controls_also_apply'}
+
+    @router.post('/patients/{patient_id}/chart-access/{clinician_id}/revoke')
+    def revoke_chart_access(patient_id:int,clinician_id:int,user=Depends(current_user)):
+        with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE');patient_owner(c,patient_id,user)
+            recipient=c.execute(text("SELECT id FROM dev_users WHERE id=:u AND tenant=:t AND role='clinician'"),{'u':clinician_id,'t':user['tenant']}).scalar()
+            if not recipient:raise HTTPException(404,'Participating clinician not found.')
+            c.execute(text("INSERT INTO dev_chart_access_decisions(patient_id,clinician_id,actor_id,decision,purpose,created_at) VALUES (:p,:u,:a,'revoke','Patient revoked future full-chart access',:at)"),{'p':patient_id,'u':recipient,'a':user['id'],'at':_now()})
+            _audit(c,user,'revoke_full_chart_access','patient',patient_id)
+            return {'decision':'revoke','future_access':'denied','scope':'full_chart;separate_intake_snapshot_consents_are_managed_in_connected_care'}
 
     @router.get("/patients/{patient_id}")
     def patient(patient_id: int, user=Depends(current_user)):
@@ -566,4 +656,5 @@ def install_dev_portal(app, engine, assessment_generator=None):
     app.include_router(router)
     return SimpleNamespace(engine=engine, user=current_user, clinician=clinician,
                            patient_for=patient_for, conversation_for=conversation_for,
-                           note_for=note_for, audit=_audit, same_origin_json=same_origin_json)
+                           note_for=note_for, audit=_audit, same_origin_json=same_origin_json,
+                           can_access_patient=can_access_patient)

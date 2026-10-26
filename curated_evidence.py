@@ -23,11 +23,29 @@ from rag.hosted_embeddings import encode,MODEL,DIMENSIONS
 
 CORPUS='cdc-antibiotic-demo-v1'
 POLICY='https://www.cdc.gov/other/agencymaterials.html'
-URLS=(
- 'https://www.cdc.gov/antibiotic-use/about/index.html',
- 'https://www.cdc.gov/antibiotic-use/hcp/clinical-care/adult-outpatient.html',
- 'https://www.cdc.gov/antibiotic-use/hcp/clinical-care/pediatric-outpatient.html',
-)
+CATALOG={
+ 'https://www.cdc.gov/antibiotic-use/about/index.html':('general','primary_care','General patient education;individual recommendations may still be age-specific.'),
+ 'https://www.cdc.gov/antibiotic-use/hcp/clinical-care/adult-outpatient.html':('adult','primary_care','Source explicitly addresses adult outpatient care.'),
+ 'https://www.cdc.gov/antibiotic-use/hcp/clinical-care/pediatric-outpatient.html':('pediatric','pediatrics','Source explicitly addresses pediatric outpatient care.'),
+ 'https://www.cdc.gov/stroke/signs-symptoms/index.html':('adult','neurology_emergency','Reviewed source describes stroke signs in men and women;no pediatric applicability review is claimed.'),
+ 'https://www.cdc.gov/diabetes/signs-symptoms/index.html':('general','endocrinology','Source explicitly discusses diabetes across ages and pregnancy;subsection applicability requires clinician review.'),
+ 'https://www.cdc.gov/asthma/about/index.html':('general','pulmonology','Source explicitly discusses asthma in children and adults;subsection applicability requires clinician review.'),
+}
+URLS=tuple(CATALOG)
+POPULATIONS={'adult','pediatric','general','unknown'}
+POPULATION_TAG_VERSION='cdc-reviewed-scope-v1'
+
+
+def source_population(url):
+    """Reviewed fixed-catalog classification,never arbitrary URL substring inference."""
+    return CATALOG.get(url,('unknown',None,None))[0]
+
+
+def source_scope(url):
+    if url not in CATALOG:raise ValueError('Source is outside the reviewed catalog.')
+    population,specialty,note=CATALOG[url]
+    return {'population':population,'specialty':specialty,'population_scope_note':note,'population_tag_version':POPULATION_TAG_VERSION}
+
 NOTICE='Source: CDC. Original material is available free on the linked CDC website. Raphael is not endorsed by CDC, HHS or the U.S. Government. Text excerpts retain original wording; consult the current source.'
 
 
@@ -65,7 +83,7 @@ def parse_source(url,markup,policy_hash):
         raise ValueError('Source body/date/title or reuse review is incomplete.')
     published=dated.group(1)
     if date.fromisoformat(published)>datetime.now(timezone.utc).date():raise ValueError('Future source date.')
-    return {'url':url,'title':html.unescape(re.sub('<[^>]+>','',title.group(1))).strip(),'source_date':published,
+    return {**source_scope(url),'url':url,'title':html.unescape(re.sub('<[^>]+>','',title.group(1))).strip(),'source_date':published,
             'text':body,'content_sha256':digest(body),'source_html_sha256':digest(markup),'retrieved_at':now(),
             'license':'CDC public-domain government text;exceptions reviewed;no images/logos/third-party works',
             'license_url':POLICY,'license_policy_sha256':policy_hash,'attribution_notice':NOTICE,
@@ -124,17 +142,52 @@ def ensure_compatible(c,probe,allow_create=False):
     if allow_create:
         # Managed Qdrant can require indexes for all filtered payload fields.
         indexed=c.get_collection(collection()).payload_schema
-        for field in ('corpus','doc_id','source_version','embedding_model','chunk_id'):
+        for field in ('corpus','doc_id','source_version','embedding_model','chunk_id','population'):
             if field not in indexed:c.create_payload_index(collection_name=collection(),field_name=field,field_schema=qm.PayloadSchemaType.KEYWORD,wait=True)
         if 'is_current' not in indexed:c.create_payload_index(collection_name=collection(),field_name='is_current',field_schema=qm.PayloadSchemaType.BOOL,wait=True)
     return points
+
+
+def migrate_population_metadata():
+    """Explicit append-only metadata migration;no vectors,IDs,text or counts changed.
+
+    Validate all selected points before the first write. Conflicting tags or
+    unreviewed corpus URLs require manual review;never overwrite such tags.
+    """
+    c=client()
+    try:
+        names={item.name for item in c.get_collections().collections}
+        if collection() not in names:raise ValueError('Evidence collection is absent;no population migration performed.')
+        points=inventory(c);updates=[];matched=0
+        for point in points:
+            payload=point.payload or {}
+            if payload.get('corpus')!=CORPUS:continue
+            matched+=1;expected=source_scope(payload.get('url'))
+            if payload.get('doc_id')!=digest(payload['url']):raise ValueError('Source identity requires manual review.')
+            for key,value in expected.items():
+                if key in payload and payload[key]!=value:raise ValueError('Conflicting source scope metadata;no overwrite allowed.')
+            missing={key:value for key,value in expected.items() if key not in payload}
+            if missing:updates.append((point.id,missing))
+        if matched:
+            indexed=c.get_collection(collection()).payload_schema
+            if 'population' not in indexed:c.create_payload_index(collection_name=collection(),field_name='population',field_schema=qm.PayloadSchemaType.KEYWORD,wait=True)
+        grouped={}
+        for identifier,missing in updates:grouped.setdefault(json.dumps(missing,sort_keys=True),[]).append(identifier)
+        for encoded,identifiers in grouped.items():
+            for start in range(0,len(identifiers),100):c.set_payload(collection_name=collection(),payload=json.loads(encoded),points=identifiers[start:start+100],wait=True)
+        after=c.count(collection(),exact=True).count
+        if after!=len(points):raise ValueError('Collection count changed during metadata migration;manual review required.')
+        return {'collection':collection(),'points_before':len(points),'points_after':after,'corpus_points_reviewed':matched,'points_metadata_updated':len(updates),'vectors_reembedded':0,'payload_tag_version':POPULATION_TAG_VERSION}
+    finally:c.close()
 
 
 def ingest(sources):
     probe=encode(['Raphael nonclinical dimension compatibility probe'])
     c=client()
     try:
-        before=ensure_compatible(c,probe,allow_create=True);known={str(point.id):point.payload for point in before};written=0;skipped=0
+        before=ensure_compatible(c,probe,allow_create=True)
+        if any(point.payload.get('corpus')==CORPUS and any(key not in point.payload for key in source_scope(point.payload.get('url'))) for point in before):raise ValueError('Run explicit population metadata migration before reingesting the existing corpus.')
+        known={str(point.id):point.payload for point in before};written=0;skipped=0
         for source in sources:
             doc_id=digest(source['url']);version=digest(source['content_sha256']+'|'+source['source_date'])
             records=[]
@@ -156,23 +209,33 @@ def ingest(sources):
     finally:c.close()
 
 
-def current_filter():
-    return qm.Filter(must=[qm.FieldCondition(key='corpus',match=qm.MatchValue(value=CORPUS)),qm.FieldCondition(key='is_current',match=qm.MatchValue(value=True)),qm.FieldCondition(key='embedding_model',match=qm.MatchValue(value=MODEL))])
+def current_filter(population='unknown'):
+    if population not in POPULATIONS:raise ValueError('Invalid patient population.')
+    result=qm.Filter(must=[qm.FieldCondition(key='corpus',match=qm.MatchValue(value=CORPUS)),qm.FieldCondition(key='is_current',match=qm.MatchValue(value=True)),qm.FieldCondition(key='embedding_model',match=qm.MatchValue(value=MODEL))])
+    if population!='unknown':
+        allowed=['general'] if population=='general' else [population,'general']
+        result.must.append(qm.FieldCondition(key='population',match=qm.MatchAny(any=allowed)))
+    return result
 
 
-def search(query,top_k=6):
+def search(query,top_k=6,population='unknown'):
     if not isinstance(query,str) or not 1<=len(query)<=1000 or not 1<=top_k<=12:raise ValueError('Bounded evidence query required.')
+    if population not in POPULATIONS:raise ValueError('Invalid patient population.')
     vector=encode([query]);c=client()
     try:
-        ensure_compatible(c,vector)
-        hits=c.search(collection_name=collection(),query_vector=vector[0].tolist(),query_filter=current_filter(),limit=top_k,score_threshold=.35,with_payload=True)
+        points=ensure_compatible(c,vector)
+        if population!='unknown' and any((point.payload or {}).get('corpus')==CORPUS and (point.payload or {}).get('population')!=source_population((point.payload or {}).get('url','')) for point in points):raise ValueError('Explicit population metadata migration/review is required before scoped retrieval.')
+        hits=c.search(collection_name=collection(),query_vector=vector[0].tolist(),query_filter=current_filter(population),limit=top_k,score_threshold=.35,with_payload=True)
         stop={'the','and','for','with','what','this','that','from','have','does','should','patient','synthetic','explain','please','about','only','could','would','there','their','information','provide','source','evidence','uncertainty','clinical','review','sources'}
         terms=set(re.findall(r'\b[a-z]{3,}\b',query.lower()))-stop;out=[]
         for hit in hits:
             payload=hit.payload or {}
+            actual_population=source_population(payload.get('url',''))
+            if population!='unknown' and actual_population not in ({'general'} if population=='general' else {population,'general'}):continue
+            if payload.get('population',actual_population)!=actual_population:raise ValueError('Source population tag conflicts with reviewed scope.')
             if not terms.intersection(re.findall(r'\b[a-z]{3,}\b',payload['text'].lower())):continue
             age=(datetime.now(timezone.utc).date()-date.fromisoformat(payload['source_date'])).days
-            out.append({**payload,'score':float(hit.score),'score_kind':'cosine_similarity_not_clinical_confidence','retrieval_method':'qdrant_hosted_embedding','freshness_status':'older_than_two_years' if age>730 else 'dated_within_two_years','citation_path':'/api/dev/intelligence/evidence/'+payload['chunk_id']})
+            out.append({**payload,'population':actual_population,'patient_population':population,'population_applicability':'patient_population_unknown_requires_review' if population=='unknown' and actual_population in ('adult','pediatric') else 'scope_matched_not_clinically_validated','score':float(hit.score),'score_kind':'cosine_similarity_not_clinical_confidence','retrieval_method':'qdrant_hosted_embedding','freshness_status':'older_than_two_years' if age>730 else 'dated_within_two_years','citation_path':'/api/dev/intelligence/evidence/'+payload['chunk_id']})
         return out
     finally:c.close()
 
@@ -188,10 +251,12 @@ def citation(chunk_id):
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--ingest',action='store_true',required=True);args=parser.parse_args()
+    parser=argparse.ArgumentParser();mode=parser.add_mutually_exclusive_group(required=True);mode.add_argument('--ingest',action='store_true');mode.add_argument('--migrate-populations',action='store_true');args=parser.parse_args()
     try:
+        if args.migrate_populations:
+            print(json.dumps(migrate_population_metadata(),indent=2));return 0
         sources=fetch_sources();first=ingest(sources);second=ingest(sources)
-        print(json.dumps({'first':first,'repeat':second,'sources':[{k:s[k] for k in ('url','title','source_date','content_sha256','license','license_url','license_policy_sha256','retrieved_at')} for s in sources]},indent=2))
+        print(json.dumps({'first':first,'repeat':second,'sources':[{k:s[k] for k in ('url','title','source_date','content_sha256','license','license_url','license_policy_sha256','retrieved_at','population','specialty','population_scope_note')} for s in sources]},indent=2))
     except Exception as error:
         print(json.dumps({'status':'failed','error_type':type(error).__name__,'http_status':getattr(error,'status_code',None)}));return 1
     return 0

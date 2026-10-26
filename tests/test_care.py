@@ -47,6 +47,7 @@ class CareJourneyTests(unittest.TestCase):
         identifier=self.intake();path=f'/api/dev/care/intakes/{identifier}'
         self.login('receiver');self.assertEqual(self.client.get(path).status_code,404)
         self.login();self.share(identifier);self.login('receiver')
+        self.assertEqual(self.client.get(f'/api/dev/patients/{self.patient}').status_code,404)  # Snapshot consent never grants the underlying chart.
         r=self.client.get(path);self.assertEqual(r.status_code,200);snapshot=r.json()['snapshot'];self.assertEqual(snapshot['patient_report']['history'],'Synthetic patient history');self.assertEqual({e['kind'] for e in snapshot['chart_entries']},{'medication','allergy'});self.assertEqual(r.json()['transport_status'],'not_transmitted_externally')
         self.client.post(path+'/summary',json={'expected_version':0,'content':'Synthetic draft summary','followup':'Synthetic followup'}).raise_for_status()
         self.login();self.assertEqual(self.client.get(path).json()['summaries'],[])

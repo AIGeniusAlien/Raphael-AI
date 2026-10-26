@@ -23,6 +23,8 @@ COMPONENTS = (
     ("knowledge", "dev_knowledge", "init_knowledge_schema"),
     ("care", "dev_care", "init_care_schema"),
     ("intelligence", "dev_intelligence", "init_intelligence_schema"),
+    ("account", "dev_account", "init_account_schema"),
+    ("patient_ai", "dev_patient_ai", "init_patient_ai_schema"),
 )
 
 

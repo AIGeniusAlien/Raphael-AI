@@ -814,6 +814,10 @@ if DEV_PORTAL:
     install_knowledge(app, portal_context)
     install_intelligence(app, portal_context, assessment_generator=development_assessment)
     install_care(app, portal_context)
+    from dev_patient_ai import install_patient_ai,export_patient_ai
+    from dev_account import install_account
+    install_patient_ai(app,portal_context)
+    install_account(app,portal_context,patient_ai_exporter=export_patient_ai)
 
     @app.get("/api/dev/status")
     def portal_status(user=Depends(portal_context.user)):

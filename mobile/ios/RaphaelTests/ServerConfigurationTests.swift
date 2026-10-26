@@ -1,4 +1,5 @@
 import XCTest
+import WebKit
 @testable import Raphael
 
 final class ServerConfigurationTests: XCTestCase {
@@ -25,4 +26,27 @@ final class ServerConfigurationTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testPublicWebKitBridgeResolvesPromiseWithoutOverlayLibrary() async throws {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
+        let web = WKWebView(frame: .zero, configuration: configuration)
+        let loaded = expectation(description: "Synthetic local document loaded")
+        let navigation = BridgeTestNavigation(loaded: loaded)
+        web.navigationDelegate = navigation
+        defer { web.navigationDelegate = nil; _ = navigation }
+        web.loadHTMLString("<html><body>Synthetic bridge test;no patient data.</body></html>", baseURL: nil)
+        await fulfillment(of: [loaded], timeout: 10)
+        let value = try await WebKitScriptBridge.call("return await Promise.resolve(true)", in: web)
+        XCTAssertEqual(value as? Bool, true)
+    }
+
+}
+
+
+@MainActor
+private final class BridgeTestNavigation: NSObject, WKNavigationDelegate {
+    let loaded: XCTestExpectation
+    init(loaded: XCTestExpectation) { self.loaded = loaded }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { loaded.fulfill() }
 }

@@ -23,3 +23,7 @@ ENABLE_USER_SCRIPT_SANDBOXING = YES
 // App/test bundles and Xcode's debug dylib must resolve from their own signed
 // bundle locations. Never search a writable global directory or remote path.
 LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks @loader_path/Frameworks @executable_path
+
+// Xcode16.4's simulator may lack the optional Swift WebKit overlay. The app uses
+// the public Objective-C bridge,not symbols from this optional overlay.
+OTHER_LDFLAGS = $(inherited) -weak-lswiftWebKit

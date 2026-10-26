@@ -48,7 +48,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             guard let self else { return }
             let remotelyRevoked: Bool
             do {
-                let value = try await self.webView.callAsyncJavaScript(script, arguments: [:], in: nil, contentWorld: .page)
+                let value = try await WebKitScriptBridge.call(script, in: self.webView)
                 remotelyRevoked = value as? Bool == true
             } catch {
                 remotelyRevoked = false
@@ -146,5 +146,22 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         confirmationMessage = nil
         callback?(accepted)
         alertCallback?()
+    }
+}
+
+
+/// The public Objective-C selector handles promises without the optional Swift
+/// overlay absent from the observed Xcode16.4/iOS18.5 simulator runtime.
+/// __callAsyncJavaScript is the Swift importer name for the PUBLIC refined
+/// callAsyncJavaScript:arguments:inFrame:inContentWorld:completionHandler: API.
+@MainActor
+enum WebKitScriptBridge {
+    static func call(_ body: String, in view: WKWebView) async throws -> Any? {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Any?, Error>) in
+            view.__callAsyncJavaScript(body, arguments: [:], inFrame: nil, in: .page) { value, error in
+                if let error { continuation.resume(throwing: error) }
+                else { continuation.resume(returning: value) }
+            }
+        }
     }
 }

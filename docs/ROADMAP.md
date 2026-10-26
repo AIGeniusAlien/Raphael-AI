@@ -1,0 +1,22 @@
+# Development roadmap
+
+The immediate recovery is a local synthetic-data development build. It is not a clinically validated product or an approved clinical deployment. Feature IDs and acceptance gates are in REQUIREMENTS_MATRIX.md. Mocked integrations cannot satisfy live-service gates.
+
+| Milestone | Deliverable and exit criteria | Dependencies / scoped implementation tasks |
+| --- | --- | --- |
+| M1: Working development application | Recovery tests pass; browser works; dev identity and authorization work; synthetic patients and conversations persist; dedicated development LLM and evidence retrieval work end to end. | REC-001–006 complete. Finish DEV-01–05 below before claiming the full test release. |
+| M2: Evidence-grounded medical intelligence | Licensed/public source acquisition, provenance, verified citations, hybrid retrieval and reranking, source updates and conservative structured answers tested on reviewed fixtures. | MK requirements, CI-001, CI-006. Build on M1 live-service verification; do not treat presence-only citation checks as verification. |
+| M3: Advanced diagnostic reasoning | Differential reasoning, supporting/contradictory evidence, uncertainty, red flags, deterministic safety checks and clinician oversight evaluated. | CI and CS requirements. Requires M2 sources and clinical evaluation design. |
+| M4: Multimodal imaging, voice, and clinical integrations | DICOM/PACS, validated image models, voice transcription, reviewed documentation and SMART-on-FHIR workflows with provenance. | RI, PI, VD requirements. Sandbox integrations can proceed alongside M2/M3 after M1 identity boundaries. |
+| M5: Clinical evaluation and security hardening | Expert-reviewed benchmarks, red-team tests, tenant isolation, RBAC, encryption, backups, monitoring, reproducible evaluation and clinical safety review. | ER and EP requirements. Evaluation design and identity hardening start in M1; final gate needs M2–M4 integration results. |
+| M6: Regulated clinical deployment readiness | Regulatory and risk-management documentation, external validation, recovery exercises, operational controls and explicit deployment approval. | Completed M5 gates, intended-use definition, relevant jurisdictional review. No automatic deployment or autonomous clinical decisions. |
+
+Next implementation tasks, in priority order:
+
+1. **DEV-01 — Development identity and access enforcement (EP-001/002, PI-008).** Design a dev-only identity source with no default shared secret; wire auth dependencies and tenant boundaries into APIs and UI; test missing/invalid/expired credentials, cross-tenant requests and role denial. Existing JWT helpers alone do not satisfy this task.
+2. **DEV-02 — Browser safety and realistic browser tests (REL-002).** Replace remaining untrusted `innerHTML` interpolation for patient names, conversation titles and document search results. Add browser automation covering navigation, creation, upload, chat, reload and API failures. Current Node tests use a minimal DOM double.
+3. **DEV-03 — Dedicated service verification (REL-006/007/008).** Configure an approved development LLM provider, Qdrant instance and embedding model cache; ingest verified, legally reusable source excerpts; verify draft/critic outputs, citation membership and uncertainty with live development services. Never use production credentials or represent local synthetic Qdrant and mock HTTP as live functionality.
+4. **DEV-04 — Input, persistence and output contracts (PI, CI, MK).** Add typed API inputs, relationship validation, migrations, consistent evidence tiers between legacy `rag/` and active `main.py`, verified source identities, source-count semantics, schema-constrained model outputs, robust failure handling and cross-patient tests. General chat currently bypasses evidence grounding. Preserve existing APIs with compatibility tests.
+5. **DEV-05 — Reproducible release checks (EP-010, ER-010/011).** Align pyproject/requirements runtime dependencies, establish a reviewed dependency lock and CI, replace the obsolete `/cases` evaluation harness with current API evaluation, add dedicated-service smoke gates, document and review a development release candidate. Electron and FHIR demo pages currently have integration gaps.
+
+Later implementation tasks should be split by each matrix ID, with explicit acceptance tests, source licensing and clinician review where relevant. Maintain statuses as evidence changes. Publishing a cloud environment is separate from deploying the application.

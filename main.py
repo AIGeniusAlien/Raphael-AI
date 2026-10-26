@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 
 from sqlalchemy import create_engine, text
+from database import execute_sqlite_script
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qm
@@ -18,7 +19,7 @@ from pypdf import PdfReader
 
 # New modules you added
 from corpus.fetch import fetch_url
-from corpus.indexer import build_payload, doc_id_for, sha256 as sha256_hex
+from corpus.indexer import build_payload, doc_id_for, point_id_for, sha256 as sha256_hex
 from corpus.registry import list_sources
 from pubmed.query_packs import QUERY_PACKS
 from pubmed.ingest import ingest_pubmed_query
@@ -200,7 +201,7 @@ def ingest_evidence_text(*,
             evidence_strength=evidence_strength,
             text=txt,
         )
-        points.append({"id": chunk_id, "vector": v.tolist(), "payload": payload})
+        points.append(qm.PointStruct(id=point_id_for(chunk_id), vector=v.tolist(), payload=payload))
 
     client.upsert(collection_name=QDRANT_COLLECTION, points=points)
     return len(points)
@@ -419,13 +420,8 @@ def raphael_generate(case_context: str, question: str, mode: str = "radiology") 
 @app.on_event("startup")
 def startup():
     with engine.begin() as c:
-        for stmt in DDL.strip().split(";\n\n"):
-            if stmt.strip():
-                c.execute(text(stmt))
-        for stmt in TRIGGERS.strip().split(";\n"):
-            s = stmt.strip().rstrip(";")
-            if s:
-                c.execute(text(s))
+        execute_sqlite_script(c, DDL)
+        execute_sqlite_script(c, TRIGGERS)
     ensure_feedback_table(engine)
     try:
         if QDRANT_URL:

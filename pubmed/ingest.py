@@ -6,6 +6,7 @@ import hashlib
 
 from pubmed.client import esearch_pubmed, esummary_pubmed
 from pubmed.classify import infer_study_type, evidence_strength_for
+from corpus.indexer import point_id_for
 
 def sha256(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
@@ -90,7 +91,7 @@ async def ingest_pubmed_query(*,
         client.upsert(
             collection_name=collection,
             points=[
-                {"id": pid, "vector": v.tolist(), "payload": payload}
+                qm.PointStruct(id=point_id_for(pid), vector=v.tolist(), payload=payload)
                 for (pid, _t, payload), v in zip(points, vecs)
             ],
         )

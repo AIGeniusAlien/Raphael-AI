@@ -1,5 +1,4 @@
 let state = {
-  env: null,
   patients: [],
   currentPatient: null,
   conversations: [],
@@ -70,7 +69,6 @@ function renderMessages() {
 }
 
 async function boot() {
-  state.env = await api("/api/env");
   await loadPatients();
   bindUI();
 }
@@ -84,7 +82,8 @@ async function loadPatients() {
 
 async function loadConversations() {
   state.conversations = await api(`/api/conversations?patient_id=${state.currentPatient.id}`);
-  if (!state.currentConversation && state.conversations.length) state.currentConversation = state.conversations[0];
+  state.currentConversation = state.conversations.find(c => c.id === state.currentConversation?.id)
+    || state.conversations[0] || null;
   renderConversations();
   if (state.currentConversation) await loadMessages();
   else {

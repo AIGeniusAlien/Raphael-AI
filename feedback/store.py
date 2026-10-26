@@ -1,4 +1,5 @@
 from sqlalchemy import text
+from database import execute_sqlite_script
 
 FEEDBACK_DDL = """
 CREATE TABLE IF NOT EXISTS feedback (
@@ -17,10 +18,7 @@ CREATE TABLE IF NOT EXISTS feedback (
 
 def ensure_feedback_table(engine):
     with engine.begin() as c:
-        for stmt in FEEDBACK_DDL.strip().split(";\n"):
-            s = stmt.strip().rstrip(";")
-            if s:
-                c.execute(text(s))
+        execute_sqlite_script(c, FEEDBACK_DDL)
 
 def insert_feedback(engine, rec: dict):
     with engine.begin() as c:

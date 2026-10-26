@@ -4,6 +4,7 @@ This grants access to an immutable intake snapshot only, not the whole chart.
 There is no external facility transport or emergency-services integration.
 """
 import json
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
@@ -26,6 +27,11 @@ CREATE TABLE IF NOT EXISTS dev_care_intakes (
  state TEXT NOT NULL DEFAULT 'DRAFT', recipient_id INTEGER, purpose TEXT,
  expires_at TEXT, allow_ai INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL,
  authorized_at TEXT, revoked_at TEXT
+);
+CREATE TABLE IF NOT EXISTS dev_care_summary_provenance (
+ summary_id INTEGER PRIMARY KEY, source_message_id INTEGER NOT NULL,
+ source_thread_id INTEGER NOT NULL, generation_id TEXT NOT NULL,
+ model TEXT, evidence TEXT NOT NULL, clinician_edited INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS dev_care_summaries (
  id INTEGER PRIMARY KEY AUTOINCREMENT, intake_id INTEGER NOT NULL, version INTEGER NOT NULL,
@@ -74,6 +80,7 @@ class Share(Input):
     expires_in_minutes:int=Field(ge=1,le=10080)
     allow_ai:StrictBool=False
 class Summary(Input):
+    source_message_id:int | None=Field(default=None,gt=0)
     expected_version:int=Field(ge=0)
     content:str=Field(min_length=1,max_length=20000)
     followup:str=Field(min_length=1,max_length=10000)
@@ -127,6 +134,9 @@ def install_care(app,ctx):
             record=authorized_intake(c,identifier,user)
             clause=" AND status='approved'" if user['role']=='patient' else ''
             record['summaries']=[dict(r) for r in c.execute(text('SELECT * FROM dev_care_summaries WHERE intake_id=:id'+clause+' ORDER BY version'),{'id':identifier}).mappings()]
+            for summary in record['summaries']:
+                provenance=c.execute(text('SELECT * FROM dev_care_summary_provenance WHERE summary_id=:id'),{'id':summary['id']}).mappings().first()
+                summary['ai_provenance']=dict(provenance,evidence=json.loads(provenance['evidence']),citation_check='original_response_retrieved_id_membership_only_not_factuality') if provenance else None
             record['transport_status']='not_transmitted_externally';ctx.audit(c,user,'read_care_intake','care_intake',identifier);return record
     @router.post('/intakes/{identifier}/authorize')
     def authorize(identifier:int,body:Share,user=Depends(patient_user)):
@@ -149,10 +159,27 @@ def install_care(app,ctx):
     def summary(identifier:int,body:Summary,user=Depends(ctx.clinician)):
         with engine.begin() as c:
             c.exec_driver_sql('BEGIN IMMEDIATE');authorized_intake(c,identifier,user)
-            current=c.execute(text('SELECT version,status FROM dev_care_summaries WHERE intake_id=:id ORDER BY version DESC LIMIT 1'),{'id':identifier}).first()
+            current=c.execute(text('SELECT version,status,id FROM dev_care_summaries WHERE intake_id=:id ORDER BY version DESC LIMIT 1'),{'id':identifier}).first()
             version=current[0] if current else 0
             if body.expected_version!=version or (current and current[1]=='approved'):raise HTTPException(409,'Summary changed or is already approved.')
-            c.execute(text("INSERT INTO dev_care_summaries(intake_id,version,content,followup,status) VALUES (:id,:v,:c,:f,'draft')"),{'id':identifier,'v':version+1,'c':body.content,'f':body.followup})
+            provenance=None
+            if body.source_message_id:
+                authorized_intake(c,identifier,user,require_ai=True)
+                source=c.execute(text("SELECT m.*,t.intake_id FROM dev_ai_messages m JOIN dev_ai_threads t ON t.id=m.thread_id WHERE m.id=:id AND t.tenant=:t AND t.owner_id=:u AND t.intake_id=:i AND m.role='assistant' AND m.status='complete'"),{'id':body.source_message_id,'t':user['tenant'],'u':user['id'],'i':identifier}).mappings().first()
+                if not source:raise HTTPException(404,'Choose a completed response from your authorized intake conversation.')
+                stored=c.execute(text('SELECT evidence FROM dev_ai_generation_evidence WHERE generation_id=:g'),{'g':source['generation_id']}).scalar()
+                evidence=json.loads(stored) if stored else []
+                allowed={item['chunk_id'] for item in evidence}
+                citations=re.findall(r'\[([^\[\]]+)\]',source['content'])
+                if not citations or any(item not in allowed for item in citations):raise HTTPException(409,'Stored source evidence is unavailable or citation membership is invalid.')
+                provenance={'source_message_id':source['id'],'source_thread_id':source['thread_id'],'generation_id':source['generation_id'],'model':source['model'],'evidence':stored,'clinician_edited':int(body.content!=source['content'])}
+            elif current:
+                previous=c.execute(text('SELECT * FROM dev_care_summary_provenance WHERE summary_id=:id'),{'id':current[2]}).mappings().first()
+                if previous:provenance={**dict(previous),'clinician_edited':1}
+            summary_id=c.execute(text("INSERT INTO dev_care_summaries(intake_id,version,content,followup,status) VALUES (:id,:v,:c,:f,'draft')"),{'id':identifier,'v':version+1,'c':body.content,'f':body.followup}).lastrowid
+            if provenance:
+                c.execute(text('INSERT INTO dev_care_summary_provenance(summary_id,source_message_id,source_thread_id,generation_id,model,evidence,clinician_edited) VALUES (:id,:source_message_id,:source_thread_id,:generation_id,:model,:evidence,:clinician_edited)'),{**provenance,'id':summary_id})
+                ctx.audit(c,user,'link_ai_draft_to_care_summary','care_intake',identifier)
             ctx.audit(c,user,'draft_care_summary','care_intake',identifier);return {'version':version+1,'status':'draft'}
     @router.post('/intakes/{identifier}/approve')
     def approve(identifier:int,body:Approval,user=Depends(ctx.clinician)):

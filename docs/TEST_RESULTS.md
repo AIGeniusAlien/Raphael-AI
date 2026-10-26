@@ -1,3 +1,14 @@
+# Connected development sprint — current result
+
+- Full Python:`python -m unittest discover -s tests -v`:130passed in47.005s,exit0. Includes11care tests,new-engine/application persistence,AI provenance,source/intake/owner denial,expiry,approval and retrieval-time revocation without initial provider transmission. Existing startup/restart,/healthz,synthetic database/API operations and recovery tests pass.
+- Node:`node --test tests/*.test.cjs`:26passed,0failed,0skipped.
+- Actual Chromium:`python -m unittest discover -s e2e -v`:4passed in21.309s,exit0. Extended390px care journey now goes through actual SDK SSE against a clearly labeled local nonclinical provider fixture,evidence reload,explicit handoff,clinician edits,versioned save/approval,patient summary/follow-up,provenance and revocation. No external medical model,microphone,physical mobile or real facility transmission is represented by this result.
+- Focused care browser:1passed in7.135s before final full suite. Focused care API:10passed in6.843s before adding the11th revocation regression. No failed tests in this sprint;local diagnostic SDK option/context-manager incompatibilities were corrected before recording the final403 diagnosis.
+- Real external smoke:`python -m dev_services --live`:exit1. All five runtime variables present;OpenAI401AuthenticationError,Qdrant403UnexpectedResponse. A bounded read-only follow-up classified OpenAI invalid-key indication and generic QdrantForbidden;both HTTPS destination scopes match saved bindings. No further live retry without changed credentials/policy.
+- Live ingestion this execution:0. Collection schema/counts,actual embedding model/dimension agreement,genuine medical retrieval/citation examples and real AI care encounter remain unverified. No collection/cluster creation or modification.
+- Saved reusable start_skill instructions (requires_publish=true) preserve secure setup and new handoff;no runtime configuration application/publication or deployment occurred. Dependencies unchanged;no fresh dependency-audit claim.
+- Complete sprint directive retained;all1106previous requirement IDs/descriptions preserved. Current requirement matrix has1109IDs. Review check and runtime-key-value scan recorded with final commit;no secrets committed.
+
 # Published runtime and startup checkpoint — 2026-10-26
 
 - Full Python rerun:`python -m unittest discover -s tests -v`:126passed in148.809s,exit0. Includes real run_local.sh startup/restart,/healthz,synthetic patient/conversation persistence and service diagnostic regressions.

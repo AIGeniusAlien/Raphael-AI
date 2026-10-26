@@ -3849,3 +3849,280 @@ Do not merely describe what should be built.
 Inspect the existing application, execute the highest-priority implementation, verify it, and preserve the results.
 
 BEGIN IMPLEMENTATION NOW.
+
+
+## Full development completion sprint — received2026-10-26
+
+This complete directive is retained as the target;CONNECTED_RELEASE_CANDIDATE.md records the bounded delivered workflow and open gates.
+
+# RAPHAEL AI — FULL DEVELOPMENT COMPLETION SPRINT
+## Execute Today | Integrated Working Product | No More Disconnected Prototypes
+
+You are the principal engineering team responsible for bringing Raphael AI's existing application to a complete, functioning, integrated development release as rapidly as possible.
+
+The founder has already defined the product vision in the existing repository, master specification, requirements matrix, and prior engineering directives.
+
+DO NOT ask the founder to repeat requirements.
+
+DO NOT create another high-level plan as the primary deliverable.
+
+DO NOT create a replacement application.
+
+DO NOT report completion based only on unit tests or mocked services.
+
+Your objective is to produce a WORKING, ACCESSIBLE, END-TO-END RAPHAEL DEVELOPMENT APPLICATION using the existing repository and infrastructure.
+
+Work autonomously, make sound routine engineering decisions, and use the available execution time efficiently.
+
+## 1. EXISTING PROJECT
+
+Repository: AlGeniusAlien/Raphael-AI
+
+Continue the existing development branch and draft PR #1.
+
+Inspect the current application, implementation reports, AGENTS.md, requirements matrix, existing integrations, and tests.
+
+Preserve all completed functionality.
+
+Do not perform unnecessary rewrites.
+
+## 2. IMMEDIATE INFRASTRUCTURE REPAIR
+
+The previous execution confirmed:
+
+- Four environment variables were present.
+- OpenAI returned HTTP 401.
+- QDRANT_API_KEY was unavailable.
+- The existing Qdrant development cluster is healthy.
+- Application startup, persistence, consent, and browser workflows passed their latest regression tests.
+
+First determine whether the corrected credentials are now available in the active, published Raphael-AI environment.
+
+Never display secret values.
+
+Perform bounded authenticated tests against OpenAI and Qdrant.
+
+If OpenAI still returns HTTP 401, identify the exact authentication failure and report the minimum user action needed. Do not attempt to bypass authentication or fabricate success.
+
+If QDRANT_API_KEY remains absent, identify the missing binding and report the exact user action needed.
+
+Do not waste the execution repeatedly retrying inaccessible services.
+
+If external credentials are blocked, continue building and validating the rest of the application using explicitly labeled synthetic fixtures.
+
+## 3. COMPLETE THE MEDICAL KNOWLEDGE ENGINE
+
+Once live infrastructure is accessible:
+
+- Inspect the existing embedding model and collection schema.
+- Confirm vector dimensions and collection compatibility.
+- Create the required development collection if absent.
+- Implement idempotent document ingestion.
+- Retrieve and index a curated set of authoritative, legally reusable medical references.
+- Preserve source URLs, dates, document identifiers, provenance, and licensing information.
+- Verify real Qdrant retrieval.
+- Connect retrieved evidence to OpenAI clinical conversations.
+- Display genuine citations.
+- Test missing, conflicting, outdated, and insufficient evidence handling.
+
+Create a repeatable ingestion process for future expansion.
+
+Do not claim access to medical documents that have not actually been indexed or connected.
+
+## 4. COMPLETE THE PATIENT EXPERIENCE
+
+Finish and integrate the existing patient portal:
+
+- Login and profile
+- Longitudinal medical history
+- Conditions, medications, and allergies
+- Laboratory and imaging information
+- Appointment preparation
+- Primary care and pediatric intake
+- Urgent-care intake
+- Emergency medical information
+- Consent-controlled sharing
+- Expiring and revocable access
+- Patient-to-clinician messaging
+- AI conversations
+- Approved care summaries
+- Follow-up information
+- Mobile-responsive interface
+
+All workflows must persist correctly across application restarts.
+
+Use synthetic patient data only.
+
+## 5. COMPLETE THE CLINICIAN EXPERIENCE
+
+Finish and integrate the existing clinician portal:
+
+- Authenticated clinician login
+- Authorized patient worklist
+- Patient chart and timeline
+- Review of submitted intake
+- Medications, allergies, labs, and relevant records
+- Evidence-grounded clinical AI
+- Differential diagnosis support
+- Source inspection
+- Secure patient messaging
+- Clinical documentation
+- Note editing and versioning
+- Explicit note approval
+- Patient-facing approved summaries
+- Audit trails
+- Referral and follow-up foundations
+
+The clinician should be able to complete an entire synthetic encounter without relying on disconnected demonstrations.
+
+## 6. EMERGENCY AND INTERNATIONAL CARE
+
+Implement a complete development demonstration of:
+
+1. A patient preparing emergency or urgent-care intake.
+2. Raphael assembling an authorized emergency medical summary.
+3. The patient selecting a participating synthetic receiving facility.
+4. Consent-controlled transmission within the development system.
+5. The receiving clinician reviewing the intake and records.
+6. The clinician accessing Raphael's clinical intelligence.
+7. The clinician documenting and approving a care summary.
+8. The patient receiving appropriate follow-up information.
+
+Include multilingual architecture and international record-sharing foundations.
+
+Do not claim real emergency department delivery or universal healthcare connectivity.
+
+## 7. MOBILE EXPERIENCE
+
+Deliver a polished mobile-responsive Raphael patient experience that works in current mobile browsers.
+
+Prioritize:
+- Login
+- Medical record
+- Emergency information
+- Intake
+- AI chat
+- Messaging
+- Appointments
+- Consent management
+
+Evaluate the simplest maintainable route to an iOS App Store application.
+
+If feasible within the existing architecture, create an initial buildable iOS-compatible application shell or project.
+
+Do not spend the entire run on mobile packaging at the expense of working core functionality.
+
+Do not claim App Store publication without completing Apple's requirements and review.
+
+## 8. VOICE AND CLINICAL DOCUMENTATION
+
+Preserve and finish as much of the existing voice and ambient documentation implementation as feasible.
+
+Verify:
+- Explicit microphone consent
+- Browser speech recognition
+- Hands-free controls
+- Wake phrase behavior where supported
+- Transcript persistence
+- Note drafting
+- Clinician edits
+- Version history
+- Explicit note approval
+
+Distinguish simulated provider audio from tested live device functionality.
+
+## 9. DESIGN AND USER EXPERIENCE
+
+Raphael should look like a professional healthcare platform, not a developer demonstration.
+
+Improve the existing interface where needed to provide:
+
+- Clear patient and clinician navigation
+- Consistent design
+- Readable medical information
+- Accessible forms
+- Responsive mobile layouts
+- Visible permission and consent states
+- Useful loading and error states
+- Clear distinctions between AI suggestions and clinician-approved information
+
+Avoid unrelated cosmetic work.
+
+## 10. SECURITY AND CLINICAL SAFETY
+
+Preserve tenant isolation, patient authorization, consent, audit logging, secure sessions, secret management, and clinician approval.
+
+Use synthetic data only.
+
+No real patient communications.
+No real hospital transmissions.
+No production patient data.
+No real billing charges.
+No autonomous medical decisions.
+
+Do not claim clinical validation, HIPAA compliance, regulatory authorization, or production readiness without appropriate independent evidence.
+
+## 11. AUTOMATED END-TO-END VERIFICATION
+
+Run existing tests and add missing regression coverage.
+
+Verify the complete synthetic care journey through the application:
+
+Patient login → medical record → intake → authorized sharing → receiving clinician review → clinical AI → approved documentation → patient summary → follow-up.
+
+Test:
+- Persistence
+- Access control
+- Consent revocation
+- Unauthorized access denial
+- Real evidence retrieval where available
+- Citation integrity
+- Mobile viewport
+- Error handling
+- Startup and restart
+- Browser workflows
+
+Run the development application and provide a working preview if the environment supports it.
+
+## 12. DELIVER A USABLE RELEASE CANDIDATE
+
+Produce a cohesive, tested development release candidate using the existing codebase.
+
+Do not confuse this with a clinically validated production release.
+
+If deployment permissions and infrastructure are available, prepare a staging deployment using synthetic data and no real clinical integrations. Do not publish externally or merge without explicit authorization.
+
+Update the existing draft PR with verified changes.
+
+Provide:
+- Exact implementation results
+- Live OpenAI and Qdrant connection status
+- Working features
+- Tests passed and failed
+- Preview instructions
+- Synthetic patient and clinician setup instructions
+- Mobile access instructions
+- Remaining blockers
+- Release-candidate readiness checklist
+- Exact next actions requiring owner approval
+
+Do not hide incomplete features behind broad success claims.
+
+## 13. EXECUTION PRIORITIES
+
+Use the available execution budget in this order:
+
+1. Restore live OpenAI and Qdrant authentication.
+2. Verify actual evidence retrieval and clinical conversations.
+3. Complete the integrated patient-to-clinician journey.
+4. Fix blocking defects and security issues.
+5. Deliver a working development preview.
+6. Improve mobile usability.
+7. Extend voice and documentation.
+8. Prepare iOS packaging and staging deployment.
+
+If execution time becomes limited, finish the highest-priority incomplete workflow, run its tests, preserve the changes, and leave exact continuation instructions.
+
+The founder should be able to open Raphael, sign in as a synthetic patient or clinician, and test a complete connected care experience.
+
+BEGIN IMPLEMENTATION IMMEDIATELY.

@@ -4,23 +4,46 @@
     "LLM_BASE_URL": true,
     "LLM_MODEL": true,
     "QDRANT_URL": true,
-    "QDRANT_API_KEY": false
+    "QDRANT_API_KEY": true
   },
-  "qdrant": {
-    "status": "blocked_missing_runtime_binding",
-    "no_requests": true,
-    "no_mutations": true
-  },
+  "live_requested": true,
   "openai": {
     "status": "failed",
     "error_type": "AuthenticationError",
-    "http_status": 401,
-    "elapsed_seconds": 1.39
+    "http_status": 401
+  },
+  "qdrant": {
+    "status": "failed",
+    "error_type": "UnexpectedResponse",
+    "http_status": 403
   },
   "checked_on": "2026-10-26",
-  "configuration_source": "published environment configuration; proxy-scoped OpenAI secret; three direct runtime variable bindings",
-  "openai_destination_scope_matches": true,
+  "configuration_source": "published environment;all five runtime variables present;both secrets have saved bindings",
+  "secret_destination_scopes_match": true,
+  "authentication_diagnosis": {
+    "openai": {
+      "http_status": 401,
+      "error_type": "AuthenticationError",
+      "provider_error_code": "unclassified",
+      "provider_error_type": "unclassified",
+      "indicates_missing_key": false,
+      "indicates_invalid_key": true,
+      "indicates_proxy_policy": false,
+      "indicates_forbidden": false,
+      "body_is_json": true
+    },
+    "qdrant": {
+      "http_status": 403,
+      "error_type": "UnexpectedResponse",
+      "indicates_invalid_key": false,
+      "indicates_missing_key": false,
+      "indicates_proxy_policy": false,
+      "indicates_forbidden": true,
+      "indicates_authorization_failure": false
+    }
+  },
   "embedding_model_verified": false,
-  "collection_state": "unknown; no Qdrant requests",
-  "ingestion_count_this_execution": 0
+  "collection_state": "unknown;read denied403",
+  "ingestion_count_this_execution": 0,
+  "no_collection_mutations": true
 }

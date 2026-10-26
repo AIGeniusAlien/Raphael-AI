@@ -1,3 +1,5 @@
+Current integration:each generation now preserves its retrieved evidence for reload/export. A consented-intake thread links back to the same intake;only its receiver can explicitly stage a completed,evidence-linked response as a versioned care-summary draft. Source provenance survives clinician edits. AI permission and expiry/revocation are rechecked before the initial provider call and on handoff. No automatic note approval occurs. Live provider status is INFRASTRUCTURE_STATUS.md (current401/403);older unset-variable statements below are historical.
+
 # Core intelligence workspace
 
 Sign in to the synthetic portal as a clinician and open **Clinical conversations and active notes**. The patient chart link passes the authorized patient ID; a new conversation can instead select general research. Context is fixed for an existing thread. Use **New conversation/change patient** to select another context. Patients and administrators are denied this clinician workspace API.

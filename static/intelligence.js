@@ -21,6 +21,10 @@
       holder.append(node(heading ? 'strong' : 'div', heading ? heading[1] : bullet ? '• ' + bullet[1] : line));
     }
   }
+  function renderEvidence(sources) {
+    $('evidence').replaceChildren();
+    for(const source of sources){const article=node('article','');article.append(node('strong',source.title),node('p',source.text),node('code',source.chunk_id));const a=node('a','Resolve stored citation');a.href='/api/dev/knowledge/citations/'+encodeURIComponent(source.chunk_id);a.target='_blank';a.rel='noopener';article.append(a);try{const url=new URL(source.url);if(url.protocol==='https:'&&!url.username&&!url.password){const original=node('a','Open supplied source URL');original.href=url.href;original.target='_blank';original.rel='noopener';article.append(original);}}catch(_){}article.append(node('p','Evidence snapshot at generation time. Source membership is not factuality or current-guideline verification.'));$('evidence').append(article);}
+  }
   async function loadThreads() { const rows=await api('/intelligence/threads?q='+encodeURIComponent($('search').value));$('threads').replaceChildren();for(const t of rows){const b=node('button',t.title);b.onclick=()=>action(()=>selectThread(t.id));$('threads').append(b);} }
   async function selectThread(id) {
     if(state.busy)throw new Error('Stop generation before changing conversations.');
@@ -29,7 +33,11 @@
     const thread=await api('/intelligence/threads/'+id);
     if(epoch!==state.epoch)return;
     state.thread=thread;$('thread-scope').textContent=thread.intake_id?'Uses only the authorized intake snapshot. No live chart is included; expired or revoked consent denies future access.':thread.patient_id?'Authorized current chart context is included.':'General research conversation; no patient chart is included.';$('thread-title').textContent=state.thread.title;$('patient').value=state.thread.patient_id||'';$('patient').disabled=true;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();
-    for(const m of state.thread.messages)entry(m.role,m.content,m.status);
+    for(const m of state.thread.messages){entry(m.role,m.content,m.status);if(m.evidence?.length){const inspect=node('button','Inspect evidence for response '+m.id);inspect.onclick=()=>renderEvidence(m.evidence);$('messages').append(inspect);}}
+    const latestEvidence=[...state.thread.messages].reverse().find(m=>m.evidence?.length);
+    if(latestEvidence)renderEvidence(latestEvidence.evidence);
+    $('intake-return').hidden=!thread.intake_id;
+    $('intake-return').href=thread.intake_id?'/static/care.html?intake='+thread.intake_id+'&thread='+thread.id:'/static/care.html';
     const interrupted = state.thread.messages.find(m=>m.status==='streaming');
     state.generation=interrupted?.generation_id||null;state.busy=!!interrupted;
     $('cancel').disabled=!interrupted;$('send').disabled=!!interrupted;
@@ -54,7 +62,7 @@
         while((boundary=buffer.indexOf('\n\n'))>=0){const frame=buffer.slice(0,boundary);buffer=buffer.slice(boundary+2);const type=frame.split('\n').find(l=>l.startsWith('event: '))?.slice(7);const payload=frame.split('\n').filter(l=>l.startsWith('data: ')).map(l=>l.slice(6)).join('\n');if(!payload)continue;const data=JSON.parse(payload);
           if(type==='start')state.generation=data.generation_id;
           if(type==='delta'){full+=data.text;renderMarkdown(output,full);}
-          if(type==='evidence'){ $('evidence').replaceChildren();for(const source of data){const article=node('article','');article.append(node('strong',source.title),node('p',source.text),node('code',source.chunk_id));const a=node('a','Resolve stored citation');a.href='/api/dev/knowledge/citations/'+encodeURIComponent(source.chunk_id);a.target='_blank';a.rel='noopener';article.append(a);try{const url=new URL(source.url);if(url.protocol==='https:'&&!url.username&&!url.password){const original=node('a','Open supplied source URL');original.href=url.href;original.target='_blank';original.rel='noopener';article.append(original);}}catch(_){}article.append(node('p','Reviewed excerpt provenance, not independent factuality verification.'));$('evidence').append(article);} }
+          if(type==='evidence')renderEvidence(data);
           if(type==='error'||type==='abstained'){status(data.detail);output.textContent=full||data.detail;}
           if(type==='complete'){status('Draft complete. Citation membership checked; clinical factuality remains unvalidated.');if($('speak').checked)voice.speak(full);}
           if(type==='cancelled')status('Generation cancelled.');
@@ -74,7 +82,7 @@
     $('intelligence').hidden=false;await loadThreads();await encounters();const linked=new URLSearchParams(location.search).get('thread');if(linked&&/^\d+$/.test(linked))await selectThread(Number(linked));$('voice-status').textContent=voice.supported()?'Microphone off. Recognition available; explicit permission required.':'Speech recognition unavailable. Manual synthetic transcript entry supported.';
   }
   $('assessment').onclick=()=>action(async()=>{if(!state.thread||state.busy)throw new Error('Select a conversation and finish generation first.');const epoch=state.epoch;const output=await api('/intelligence/threads/'+state.thread.id+'/assessment',{content:$('prompt').value});if(epoch!==state.epoch)return;const holder=$('structured-assessment');holder.replaceChildren(node('p','Structured clinician draft — requires review.'));for(const [key,value] of Object.entries(output)){holder.append(node('h3',key.replaceAll('_',' ')),node('pre',typeof value==='string'?value:JSON.stringify(value,null,2)));}status('Structured assessment saved. No note was approved and no message was sent.');});
-  $('new-draft').onclick=()=>action(async()=>{if(state.busy)throw new Error('Stop generation before starting a new conversation.');voice.stop();state.epoch++;state.thread=null;state.session=null;state.version=0;state.dirty=false;$('patient').disabled=false;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();$('note').value='';$('transcript').textContent='';$('audit').replaceChildren();$('versions').replaceChildren();$('consent').checked=false;$('session-id').value='';$('note-status').textContent='';$('thread-title').textContent='New conversation';$('export').disabled=true;$('retry').disabled=true;await encounters();});
+  $('new-draft').onclick=()=>action(async()=>{if(state.busy)throw new Error('Stop generation before starting a new conversation.');voice.stop();state.epoch++;state.thread=null;$('intake-return').hidden=true;state.session=null;state.version=0;state.dirty=false;$('patient').disabled=false;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();$('note').value='';$('transcript').textContent='';$('audit').replaceChildren();$('versions').replaceChildren();$('consent').checked=false;$('session-id').value='';$('note-status').textContent='';$('thread-title').textContent='New conversation';$('export').disabled=true;$('retry').disabled=true;await encounters();});
   $('search-button').onclick=()=>action(loadThreads);$('patient').onchange=()=>action(async()=>{if(state.thread){$('patient').value=state.thread.patient_id||'';throw new Error('Create a new thread to change its patient context.');}await encounters();});
   $('thread-form').onsubmit=e=>{e.preventDefault();action(async()=>{const t=await api('/intelligence/threads',{title:$('title').value,patient_id:$('patient').value?Number($('patient').value):null});await loadThreads();await selectThread(t.id);});};
   $('prompt-form').onsubmit=e=>{e.preventDefault();action(()=>send($('prompt').value));};$('cancel').onclick=()=>action(cancel);$('retry').onclick=()=>action(()=>send(state.lastPrompt));

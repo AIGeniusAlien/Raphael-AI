@@ -107,3 +107,74 @@ class CareJourneyTests(unittest.TestCase):
             r=self.client.post(f'/api/dev/intelligence/threads/{thread}/stream',json={'content':'Synthetic'})
         self.assertIn('event: cancelled',r.text);self.assertNotIn('MUST-NOT-APPEAR',r.text)
         with self.engine.connect() as c:self.assertEqual(c.execute(text("SELECT status FROM dev_ai_messages WHERE thread_id=:id AND role='assistant'"),{'id':thread}).scalar(),'cancelled')
+
+    def completed_intake_response(self,identifier):
+        self.login('receiver')
+        thread=self.client.post('/api/dev/intelligence/threads',json={'title':'Synthetic handoff','intake_id':identifier}).json()['id']
+        with patch('dev_knowledge.search_evidence',return_value=[{'chunk_id':'fixture','title':'Nonclinical synthetic fixture','text':'Test-owned fixture content','url':'https://example.org/test'}]):
+            self.assertIn('event: complete',self.client.post(f'/api/dev/intelligence/threads/{thread}/stream',json={'content':'Synthetic fixture question'}).text)
+        response=self.client.get(f'/api/dev/intelligence/threads/{thread}').json()['messages'][-1]
+        return thread,response
+
+    def test_ai_summary_handoff_preserves_source_and_requires_review_and_approval(self):
+        identifier=self.intake();self.share(identifier,ai=True);thread,response=self.completed_intake_response(identifier)
+        self.assertEqual(response['evidence'][0]['chunk_id'],'fixture')
+        path=f'/api/dev/care/intakes/{identifier}'
+        body={'expected_version':0,'content':response['content'],'followup':'Clinician entered synthetic followup','source_message_id':response['id']}
+        self.client.post(path+'/summary',json=body).raise_for_status()
+        draft=self.client.get(path).json()['summaries'][0]
+        self.assertEqual(draft['status'],'draft');self.assertEqual(draft['ai_provenance']['source_thread_id'],thread);self.assertFalse(draft['ai_provenance']['clinician_edited'])
+        self.login();self.assertEqual(self.client.get(path).json()['summaries'],[])
+        self.login('receiver')
+        self.client.post(path+'/summary',json={'expected_version':1,'content':'Clinician edited synthetic output','followup':'Reviewed followup'}).raise_for_status()
+        provenance=self.client.get(path).json()['summaries'][-1]['ai_provenance'];self.assertTrue(provenance['clinician_edited']);self.assertEqual(provenance['source_message_id'],response['id'])
+        self.assertEqual(self.client.post(path+'/approve',json={'expected_version':1}).status_code,409)
+        self.client.post(path+'/approve',json={'expected_version':2}).raise_for_status()
+        self.login();summary=self.client.get(path).json()['summaries'][0];self.assertEqual(summary['content'],'Clinician edited synthetic output');self.assertEqual(summary['ai_provenance']['evidence'][0]['chunk_id'],'fixture')
+        self.assertIn('link_ai_draft_to_care_summary',[e['event'] for e in self.client.get(path+'/audit').json()])
+        init_care_schema(self.engine);init_intelligence_schema(self.engine)
+        self.assertEqual(self.client.get(path).json()['summaries'][0]['ai_provenance']['generation_id'],response['generation_id'])
+        # Reopen the file with a new engine/application, as on process restart.
+        from dev_runtime import migrate
+        restarted_engine=create_engine(self.engine.url);self.addCleanup(restarted_engine.dispose);migrate(restarted_engine)
+        restarted_app=FastAPI();restarted_ctx=install_dev_portal(restarted_app,restarted_engine);install_care(restarted_app,restarted_ctx)
+        with TestClient(restarted_app) as restarted:
+            restarted.post('/api/dev/login',json={'tenant':'one','username':'patient','password':self.password}).raise_for_status()
+            self.assertEqual(restarted.get(path).json()['summaries'][0]['ai_provenance']['generation_id'],response['generation_id'])
+            self.assertIn('Reviewed followup',restarted.get(f'/api/dev/patients/{self.patient}/notes').json()[0]['content'])
+
+
+    def test_handoff_denies_wrong_intake_owner_status_and_absent_evidence(self):
+        identifier=self.intake();self.share(identifier,ai=True);thread,response=self.completed_intake_response(identifier)
+        path=f'/api/dev/care/intakes/{identifier}'
+        body={'expected_version':0,'content':'Edited synthetic draft','followup':'Synthetic followup','source_message_id':response['id']}
+        self.login();other=self.intake();self.share(other,ai=True);self.login('receiver')
+        self.assertEqual(self.client.post(f'/api/dev/care/intakes/{other}/summary',json=body).status_code,404)
+        self.login('other');self.assertEqual(self.client.post(path+'/summary',json=body).status_code,404)
+        self.login('receiver')
+        with self.engine.begin() as c:c.execute(text("UPDATE dev_ai_messages SET status='failed' WHERE id=:id"),{'id':response['id']})
+        self.assertEqual(self.client.post(path+'/summary',json=body).status_code,404)
+        with self.engine.begin() as c:
+            c.execute(text("UPDATE dev_ai_messages SET status='complete' WHERE id=:id"),{'id':response['id']})
+            c.execute(text("DELETE FROM dev_ai_generation_evidence WHERE generation_id=:g"),{'g':response['generation_id']})
+        self.assertEqual(self.client.post(path+'/summary',json=body).status_code,409)
+        self.assertEqual(self.client.get(path).json()['summaries'],[])
+
+    def test_handoff_rechecks_ai_consent_and_expiry(self):
+        identifier=self.intake();self.share(identifier,ai=True);thread,response=self.completed_intake_response(identifier)
+        path=f'/api/dev/care/intakes/{identifier}'
+        body={'expected_version':0,'content':'Synthetic','followup':'Synthetic','source_message_id':response['id']}
+        with self.engine.begin() as c:c.execute(text('UPDATE dev_care_intakes SET allow_ai=0 WHERE id=:id'),{'id':identifier})
+        self.assertEqual(self.client.post(path+'/summary',json=body).status_code,404)
+        with self.engine.begin() as c:c.execute(text("UPDATE dev_care_intakes SET allow_ai=1,expires_at='2000-01-01T00:00:00+00:00' WHERE id=:id"),{'id':identifier})
+        self.assertEqual(self.client.post(path+'/summary',json=body).status_code,404)
+
+    def test_revocation_during_retrieval_prevents_initial_provider_transmission(self):
+        identifier=self.intake();self.share(identifier,ai=True);self.login('receiver')
+        thread=self.client.post('/api/dev/intelligence/threads',json={'title':'Synthetic revoke before inference','intake_id':identifier}).json()['id']
+        def retrieved(*args):
+            with self.engine.begin() as c:c.execute(text("UPDATE dev_care_intakes SET state='REVOKED' WHERE id=:id"),{'id':identifier})
+            return [{'chunk_id':'fixture','title':'Synthetic fixture'}]
+        with patch('dev_knowledge.search_evidence',side_effect=retrieved):
+            result=self.client.post(f'/api/dev/intelligence/threads/{thread}/stream',json={'content':'Synthetic question'})
+        self.assertIn('event: error',result.text);self.assertEqual(self.prompts,[])

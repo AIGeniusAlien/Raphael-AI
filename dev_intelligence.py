@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS dev_ai_messages (
  role TEXT NOT NULL, content TEXT NOT NULL, status TEXT NOT NULL,
  generation_id TEXT UNIQUE, model TEXT, created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS dev_ai_generation_evidence (
+ generation_id TEXT PRIMARY KEY, evidence TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS dev_active_sessions (
  id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id INTEGER NOT NULL,
  encounter_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, consent INTEGER NOT NULL,
@@ -181,6 +184,9 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
         with engine.begin() as c:
             result = thread_for(c, identifier, user)
             result['messages'] = [dict(r) for r in c.execute(text('SELECT * FROM dev_ai_messages WHERE thread_id=:id ORDER BY id'), {'id': identifier}).mappings()]
+            for message in result['messages']:
+                stored = c.execute(text('SELECT evidence FROM dev_ai_generation_evidence WHERE generation_id=:g'), {'g': message['generation_id']}).scalar() if message['generation_id'] else None
+                message['evidence'] = json.loads(stored) if stored else []
             return result
 
     @router.post('/threads/{identifier}/stream')
@@ -208,6 +214,8 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                 context = {'consented_snapshot_only': intake['snapshot'], 'reported_symptoms': intake['symptoms'], 'purpose': intake['purpose']}
         try:
             evidence = search_evidence(engine, user['tenant'], body.content[:1000])
+            with engine.begin() as c:
+                c.execute(text('INSERT INTO dev_ai_generation_evidence(generation_id,evidence) VALUES (:g,:v)'), {'g': generation, 'v': json.dumps(evidence)})
         except Exception:
             with engine.begin() as c:
                 c.execute(text("UPDATE dev_ai_messages SET status='failed' WHERE generation_id=:g"), {'g': generation})
@@ -227,6 +235,12 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                     status = 'abstained'
                     yield event('abstained', {'detail': 'No reviewed evidence retrieved. No model request was made.'})
                     return
+                # Retrieval can take time: revoke/disable must prevent the initial
+                # provider transmission too, not just subsequent streamed deltas.
+                with engine.connect() as c:
+                    thread_for(c, identifier, user)
+                    if not c.execute(text('SELECT active FROM dev_users WHERE id=:u'), {'u': user['id']}).scalar():
+                        raise HTTPException(403, 'Account is inactive.')
                 source = iter((token_provider or openai_tokens)(messages, model))
                 for delta in source:
                     with engine.connect() as c:

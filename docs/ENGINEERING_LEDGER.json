@@ -2,13 +2,13 @@
   "schema_version": 1,
   "source": "docs/REQUIREMENTS_MATRIX.md",
   "state_counts": {
-    "PARTIAL": 861,
+    "PARTIAL": 862,
     "NOT_IMPLEMENTED": 194,
-    "VERIFIED": 44,
+    "VERIFIED": 46,
     "BLOCKED_EXTERNAL": 11,
-    "IMPLEMENTED_UNVERIFIED": 24
+    "IMPLEMENTED_UNVERIFIED": 23
   },
-  "requirement_count": 1134,
+  "requirement_count": 1136,
   "clinical_validation": false,
   "requirements": [
     {
@@ -15864,7 +15864,7 @@
       "description": "Actual authenticated native simulator workflows against trusted synthetic HTTPS backend",
       "state": "IMPLEMENTED_UNVERIFIED",
       "code_location": "mobile/scripts/authenticated_ci.py;RaphaelUITests.swift;development.yml",
-      "test_coverage": "Native source audit;remote native execution pending on new source",
+      "test_coverage": "Actual configured native run failed SwiftUI navigation-bar ownership assertion;stable section header fix awaiting remote rerun",
       "external_dependency": "macOS CI;simulator trusted ephemeral test certificate",
       "remaining_work": "New authenticated simulator execution unverified;physical device,owner signing and independent review remain",
       "acceptance_criteria": "Actual main:app;random synthetic test-only accounts;patient/clinician login,navigation,approved note,logout/relaunch;no ATS bypass",
@@ -15876,15 +15876,43 @@
     {
       "requirement_id": "MASTER-006",
       "description": "Actual rendered desktop tablet mobile and enlarged-text documentation screenshots with overflow checks",
-      "state": "IMPLEMENTED_UNVERIFIED",
+      "state": "VERIFIED",
       "code_location": "e2e/test_intelligence_browser.py;dev_verify.py",
-      "test_coverage": "Screenshot generation and inspection pending",
+      "test_coverage": "Actual Chromium four-view screenshots inspected;tablet977pxoverflow reproduced and fixed through URL/identifier wrapping",
       "external_dependency": "Chromium",
       "remaining_work": "Physical Safari/iPad and comprehensive accessibility review remain",
       "acceptance_criteria": "Actual synthetic application rendering;320px/20px text through desktop;retain brand assets and palette",
       "next_implementation_action": "Physical Safari/iPad and comprehensive accessibility review remain",
       "priority": "P0",
       "milestone": "M1/M5",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "MASTER-007",
+      "description": "Preserve existing collections during bounded bibliographic PubMed discovery and indexing",
+      "state": "PARTIAL",
+      "code_location": "pubmed/client.py;pubmed/ingest.py",
+      "test_coverage": "test_pubmed_space.py7synthetic regressions;legacy clinical retrieval exclusion test;real request ProxyError;MASTER_PUBMED_CONNECTIVITY.json",
+      "external_dependency": "NCBI eutils network access;article-specific rights review",
+      "remaining_work": "Live NCBI blocked by missing eutils.ncbi.nlm.nih.gov egress;no full-text licensing,supersession-link monitoring or clinical claim support",
+      "acceptance_criteria": "Check existing model/dimension tags;probe actual embeddings before creation;numeric IDs/body/query/record bounds;explicit retraction types excluded;canonical IDs and metadata-only scope",
+      "next_implementation_action": "Live NCBI blocked by missing eutils.ncbi.nlm.nih.gov egress;no full-text licensing,supersession-link monitoring or clinical claim support",
+      "priority": "P0",
+      "milestone": "M2",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "MASTER-008",
+      "description": "Bounded read-only live catalog routing and source-integrity evaluation",
+      "state": "VERIFIED",
+      "code_location": "eval/retrieval_eval.py",
+      "test_coverage": "MASTER_RETRIEVAL_RESULTS.json5actual cases;expected source first for4topics;missing query0",
+      "external_dependency": "Existing OpenAI/Qdrant/CDC authorization",
+      "remaining_work": "Tiny catalog benchmark;not clinical accuracy,specialty competence or expert safety adjudication",
+      "acceptance_criteria": "Recall@6andMRR1.0on4source-routing queries;fresh source hash/excerpt and population compatibility;no writes or answer generation",
+      "next_implementation_action": "Tiny catalog benchmark;not clinical accuracy,specialty competence or expert safety adjudication",
+      "priority": "P0",
+      "milestone": "M2/M5",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
     }
   ]

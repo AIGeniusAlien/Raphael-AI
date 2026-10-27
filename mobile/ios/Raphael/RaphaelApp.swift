@@ -42,41 +42,42 @@ struct PatientApplication: View {
 
     var body: some View {
         ZStack {
-            NavigationStack {
-                VStack(spacing: 0) {
-                    Text("Synthetic development • Not an emergency channel")
-                        .font(.footnote).padding(8).frame(maxWidth: .infinity)
-                        .background(Color.yellow.opacity(0.18))
-                        .accessibilityIdentifier("synthetic-notice")
-                    if session.loading {
-                        ProgressView("Loading secure workspace").padding(8)
-                    }
-                    if let problem = session.problem {
-                        VStack(spacing: 8) {
-                            Text(problem).font(.callout).accessibilityAddTraits(.updatesFrequently)
-                            Button("Retry this section") { session.retry() }
+            VStack(spacing: 0) {
+                // Sections replace the one shared WKWebView;there is no pushed
+                // view hierarchy. A stable native header avoids duplicate UIKit
+                // navigation-bar ownership during configured launch on iOS18.5.
+                HStack {
+                    Menu {
+                        ForEach(PatientSection.allCases) { section in
+                            Button(section.title, systemImage: section.symbol) { session.open(section) }
                         }
-                        .padding().frame(maxWidth: .infinity).background(Color.orange.opacity(0.15))
-                    }
-                    PatientWebView(webView: session.webView)
-                        .accessibilityIdentifier("patient-web-workspace")
+                    } label: { Label("Sections", systemImage: "line.3.horizontal") }
+                    .accessibilityLabel("Patient sections")
+                    Spacer()
+                    Text(session.currentSection.title).font(.headline).accessibilityAddTraits(.isHeader)
+                    Spacer()
+                    Button("Settings", systemImage: "gearshape") { settings = true }
+                        .labelStyle(.iconOnly)
+                        .accessibilityLabel("Privacy and session settings")
                 }
-                .navigationTitle(session.currentSection.title)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Menu {
-                            ForEach(PatientSection.allCases) { section in
-                                Button(section.title, systemImage: section.symbol) { session.open(section) }
-                            }
-                        } label: { Label("Sections", systemImage: "line.3.horizontal") }
-                        .accessibilityLabel("Patient sections")
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Settings", systemImage: "gearshape") { settings = true }
-                            .accessibilityLabel("Privacy and session settings")
-                    }
+                .padding(.horizontal).padding(.vertical, 8)
+                Divider()
+                Text("Synthetic development • Not an emergency channel")
+                    .font(.footnote).padding(8).frame(maxWidth: .infinity)
+                    .background(Color.yellow.opacity(0.18))
+                    .accessibilityIdentifier("synthetic-notice")
+                if session.loading {
+                    ProgressView("Loading secure workspace").padding(8)
                 }
+                if let problem = session.problem {
+                    VStack(spacing: 8) {
+                        Text(problem).font(.callout).accessibilityAddTraits(.updatesFrequently)
+                        Button("Retry this section") { session.retry() }
+                    }
+                    .padding().frame(maxWidth: .infinity).background(Color.orange.opacity(0.15))
+                }
+                PatientWebView(webView: session.webView)
+                    .accessibilityIdentifier("patient-web-workspace")
             }
             .privacySensitive()
             if scenePhase != .active {

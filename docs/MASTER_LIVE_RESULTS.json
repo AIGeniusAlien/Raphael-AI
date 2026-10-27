@@ -1,13 +1,14 @@
 {
   "status": "passed",
   "uses_mock_services": false,
+  "rendered_citation_links_resolve": true,
   "physician_status": "complete",
   "claim_screen": {
     "status": "passed",
     "checks": [
       {
         "segment_id": "S1",
-        "text": "Antibiotics do not work against viruses, as they are specifically ineffective for viral infections such as colds and runny noses, flu, and most sore throats. This evidence is supported by CDC guidance, which states, \"Antibiotics DO NOT work on viruses\" [a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2], dated September 23, 2025. This information is intended for general education purposes and requires clinician review for individual treatment decisions.",
+        "text": "Antibiotics do not work against viruses; they are effective only for certain bacterial infections. This is supported by the CDC, which states, \"Antibiotics DO NOT work on viruses. Viruses are germs different from bacteria... Antibiotics will NOT make you feel better if you have a virus\" [a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2], dated 2025-09-23. This information serves as general education and requires clinician review for individual treatment decisions.",
         "classification": "medical_claim",
         "verdict": "supported",
         "provider_verdict": "supported",
@@ -15,6 +16,10 @@
           {
             "chunk_id": "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2",
             "quote": "Antibiotics DO NOT work on viruses."
+          },
+          {
+            "chunk_id": "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2",
+            "quote": "Viruses are germs different from bacteria."
           },
           {
             "chunk_id": "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2",
@@ -45,14 +50,14 @@
     "timeout_seconds": 20,
     "max_retries": 0,
     "usage": {
-      "prompt_tokens": 6224,
-      "completion_tokens": 49,
-      "total_tokens": 6273
+      "prompt_tokens": 6227,
+      "completion_tokens": 58,
+      "total_tokens": 6285
     }
   },
   "question": "For this synthetic adult,answer in one short paragraph only: according to the supplied CDC evidence,do antibiotics work against viruses? Cite the exact evidence label and source date. State that this is general education requiring clinician review,not an individual treatment decision.",
-  "response": "Antibiotics do not work against viruses, as they are specifically ineffective for viral infections such as colds and runny noses, flu, and most sore throats. This evidence is supported by CDC guidance, which states, \"Antibiotics DO NOT work on viruses\" [a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2], dated September 23, 2025. This information is intended for general education purposes and requires clinician review for individual treatment decisions.",
-  "generation_id": "6oBMloZCj5rqJ1L8i45qEW5CGj12p4nl",
+  "response": "Antibiotics do not work against viruses; they are effective only for certain bacterial infections. This is supported by the CDC, which states, \"Antibiotics DO NOT work on viruses. Viruses are germs different from bacteria... Antibiotics will NOT make you feel better if you have a virus\" [a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2], dated 2025-09-23. This information serves as general education and requires clinician review for individual treatment decisions.",
+  "generation_id": "GrsbUjEH82h0zc2TzYlWEj6IFmvbWmxl",
   "model": "gpt-4o-mini",
   "citation_ids": [
     "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2"
@@ -362,7 +367,7 @@
   "clinician_approved": false,
   "patient_workflow": {
     "status": "complete",
-    "response": "Antibiotics are not effective against viruses, which are different from bacteria. They cannot treat infections caused by viruses such as those that lead to colds, flu, and most sore throats, except when strep throat is involved. Antibiotics will not help you feel better if you have a viral infection, and taking them unnecessarily can cause harmful side effects ([a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2], 2025-09-23).",
+    "response": "Antibiotics do not work on viruses. They are effective only against specific bacterial infections, and taking them for viral illnesses, such as colds or the flu, will not help you feel better and could lead to harmful side effects. This information is supported by the CDC, which highlights that antibiotics can only treat certain bacterial infections and are ineffective against viruses like those causing colds or bronchitis [a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2], [a19e2c8d050340d56b520fd0e04a222e68b8ae556d5948277bf91e7b1d5e45ca] (2025-09-23).",
     "evidence": [
       {
         "chunk_id": "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2",
@@ -378,7 +383,7 @@
         "attribution_notice": "Source: CDC. Original material is available free on the linked CDC website. Raphael is not endorsed by CDC, HHS or the U.S. Government. Text excerpts retain original wording; consult the current source.",
         "content_sha256": "57c9c24fbc5943653b5f11b3f9d257070ff09ea46b62f20450c7639b6ff8058c",
         "retrieval_method": "qdrant_semantic_bm25_rrf",
-        "score": 0.53552866,
+        "score": 0.5355655,
         "score_kind": "cosine_similarity_not_clinical_confidence"
       },
       {
@@ -395,7 +400,7 @@
         "attribution_notice": "Source: CDC. Original material is available free on the linked CDC website. Raphael is not endorsed by CDC, HHS or the U.S. Government. Text excerpts retain original wording; consult the current source.",
         "content_sha256": "0d4dbc57df368b61a4ae6f76a09de4ff840b364f1090363a6bbe148369d10a7b",
         "retrieval_method": "qdrant_semantic_bm25_rrf",
-        "score": 0.5413335,
+        "score": 0.54141676,
         "score_kind": "cosine_similarity_not_clinical_confidence"
       },
       {
@@ -412,7 +417,7 @@
         "attribution_notice": "Source: CDC. Original material is available free on the linked CDC website. Raphael is not endorsed by CDC, HHS or the U.S. Government. Text excerpts retain original wording; consult the current source.",
         "content_sha256": "57c9c24fbc5943653b5f11b3f9d257070ff09ea46b62f20450c7639b6ff8058c",
         "retrieval_method": "qdrant_semantic_bm25_rrf",
-        "score": 0.48268756,
+        "score": 0.48274088,
         "score_kind": "cosine_similarity_not_clinical_confidence"
       },
       {
@@ -429,7 +434,7 @@
         "attribution_notice": "Source: CDC. Original material is available free on the linked CDC website. Raphael is not endorsed by CDC, HHS or the U.S. Government. Text excerpts retain original wording; consult the current source.",
         "content_sha256": "0d4dbc57df368b61a4ae6f76a09de4ff840b364f1090363a6bbe148369d10a7b",
         "retrieval_method": "qdrant_semantic_bm25_rrf",
-        "score": 0.4705721,
+        "score": 0.47060674,
         "score_kind": "cosine_similarity_not_clinical_confidence"
       },
       {
@@ -446,7 +451,7 @@
         "attribution_notice": "Source: CDC. Original material is available free on the linked CDC website. Raphael is not endorsed by CDC, HHS or the U.S. Government. Text excerpts retain original wording; consult the current source.",
         "content_sha256": "0d4dbc57df368b61a4ae6f76a09de4ff840b364f1090363a6bbe148369d10a7b",
         "retrieval_method": "qdrant_semantic_bm25_rrf",
-        "score": 0.45800808,
+        "score": 0.45802325,
         "score_kind": "cosine_similarity_not_clinical_confidence"
       },
       {
@@ -463,7 +468,7 @@
         "attribution_notice": "Source: CDC. Original material is available free on the linked CDC website. Raphael is not endorsed by CDC, HHS or the U.S. Government. Text excerpts retain original wording; consult the current source.",
         "content_sha256": "0d4dbc57df368b61a4ae6f76a09de4ff840b364f1090363a6bbe148369d10a7b",
         "retrieval_method": "qdrant_semantic_bm25_rrf",
-        "score": 0.46348217,
+        "score": 0.46356294,
         "score_kind": "cosine_similarity_not_clinical_confidence"
       }
     ],
@@ -472,7 +477,7 @@
       "checks": [
         {
           "segment_id": "S1",
-          "text": "Antibiotics are not effective against viruses, which are different from bacteria. They cannot treat infections caused by viruses such as those that lead to colds, flu, and most sore throats, except when strep throat is involved. Antibiotics will not help you feel better if you have a viral infection, and taking them unnecessarily can cause harmful side effects ([a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2], 2025-09-23).",
+          "text": "Antibiotics do not work on viruses. They are effective only against specific bacterial infections, and taking them for viral illnesses, such as colds or the flu, will not help you feel better and could lead to harmful side effects. This information is supported by the CDC, which highlights that antibiotics can only treat certain bacterial infections and are ineffective against viruses like those causing colds or bronchitis [a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2], [a19e2c8d050340d56b520fd0e04a222e68b8ae556d5948277bf91e7b1d5e45ca] (2025-09-23).",
           "classification": "medical_claim",
           "verdict": "supported",
           "provider_verdict": "supported",
@@ -486,8 +491,12 @@
               "quote": "Antibiotics do not treat infections caused by viruses such as those that cause: Colds and runny noses, even if the mucus is thick, yellow or green Most sore throats (except strep throat) Flu Most cases of chest colds (bronchitis) Antibiotics will NOT make you feel better if you have a virus."
             },
             {
-              "chunk_id": "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2",
-              "quote": "Key points Antibiotics can save lives, but they aren't always the answer. Take these steps to use antibiotics appropriately so you can get the best treatment when you're sick, protect yourself from side effects caused by unnecessary antibiotic use and combat antimicrobial resistance. Take antibiotics ONLY when you need them Antibiotics ONLY treat certain infections caused by bacteria, such as: Strep throat Whooping cough Urinary tract infection (UTI) Some infections caused by bacteria can still get better without antibiotics. You DO NOT need antibiotics for some common bacterial infections, including many sinus infections and some ear infections. Antibiotics DO NOT work on viruses. Viruses are germs different from bacteria. Antibiotics do not treat infections caused by viruses such as those that cause: Colds and runny noses, even if the mucus is thick, yellow or green Most sore throats (except strep throat) Flu Most cases of chest colds (bronchitis) Antibiotics will NOT make you feel better if you have a virus. Taking antibiotics when you do not need them will not help you, and their"
+              "chunk_id": "a19e2c8d050340d56b520fd0e04a222e68b8ae556d5948277bf91e7b1d5e45ca",
+              "quote": "(bronchitis) Antibiotics will NOT make you feel better if you have a virus."
+            },
+            {
+              "chunk_id": "a19e2c8d050340d56b520fd0e04a222e68b8ae556d5948277bf91e7b1d5e45ca",
+              "quote": "Taking antibiotics when you do not need them will not help you, and their side effects can still cause harm."
             }
           ],
           "citations_without_support": [],
@@ -514,9 +523,9 @@
       "timeout_seconds": 20,
       "max_retries": 0,
       "usage": {
-        "prompt_tokens": 6259,
-        "completion_tokens": 58,
-        "total_tokens": 6317
+        "prompt_tokens": 6274,
+        "completion_tokens": 67,
+        "total_tokens": 6341
       }
     },
     "clinician_approved": false

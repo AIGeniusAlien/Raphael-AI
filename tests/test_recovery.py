@@ -20,6 +20,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from openai import OpenAI
 from qdrant_client import QdrantClient
+from qdrant_client.http import models as qm
 from sqlalchemy import create_engine
 
 from database import execute_sqlite_script
@@ -259,6 +260,17 @@ class ApplicationTests(unittest.TestCase):
             self.assertIn("Low", r.json()["confidence"])
             llm.assert_not_called()
 
+    def test_bibliographic_metadata_and_retracted_records_are_not_clinical_evidence(self):
+        qdrant=QdrantClient(location=':memory:');self.addCleanup(qdrant.close)
+        qdrant.create_collection(main.QDRANT_COLLECTION,vectors_config=qm.VectorParams(size=main.EMBED_DIM,distance=qm.Distance.COSINE))
+        vector=np.ones((1,main.EMBED_DIM),dtype=np.float32)
+        records=[{'knowledge_scope':'bibliographic_metadata_not_full_text_or_claim_support'},{'org':'PubMed','section':'summary'},{'retracted':True},{'is_current':False},{}]
+        qdrant.upsert(main.QDRANT_COLLECTION,[qm.PointStruct(id=index,vector=vector[0].tolist(),payload={'chunk_id':'fixture-'+str(index),'text':'Synthetic nonclinical fixture',**metadata}) for index,metadata in enumerate(records,1)])
+        with patch.object(main,'qdrant_client',return_value=qdrant),patch.object(main,'embed_texts',return_value=vector):
+            hits=main.retrieve_evidence('Synthetic question')
+        self.assertEqual([item['chunk_id'] for item in hits],['fixture-5'])
+        self.assertEqual(qdrant.count(main.QDRANT_COLLECTION).count,5)
+
     def test_pubmed_and_legacy_ingestion_accept_qdrant_point_types_and_ids(self):
         qdrant = QdrantClient(location=":memory:")
         self.addCleanup(qdrant.close)
@@ -268,7 +280,7 @@ class ApplicationTests(unittest.TestCase):
             self.assertEqual(ingest_text(qdrant_url="http://unused.invalid", collection="legacy-test",
                 embed_model="synthetic", embed_dim=3, title="Synthetic", tier="TIER_1",
                 source_date=None, url=None, section=None, text="Synthetic fixture"), 1)
-        with patch.object(pubmed_ingest, "QdrantClient", return_value=qdrant), \
+        with patch.object(qdrant, "close"), patch.object(pubmed_ingest, "QdrantClient", return_value=qdrant), \
              patch.object(pubmed_ingest, "embed_texts", return_value=vector), \
              patch.object(pubmed_ingest, "esearch_pubmed", new=AsyncMock(return_value=["123"])), \
              patch.object(pubmed_ingest, "esummary_pubmed", new=AsyncMock(return_value={

@@ -270,6 +270,10 @@ def retrieve_evidence(query: str, top_k: int = TOP_K) -> List[Dict[str, Any]]:
     out = []
     for h in hits:
         p = h.payload or {}
+        # Bibliographic summaries are discovery records,not clinical claim
+        # support. Preserve old records but exclude them and explicit retractions.
+        if p.get('retracted') or p.get('is_current') is False or p.get('knowledge_scope')=='bibliographic_metadata_not_full_text_or_claim_support' or (p.get('org')=='PubMed' and p.get('section')=='summary'):
+            continue
         out.append({
             "chunk_id": p.get("chunk_id", ""),
             "doc_id": p.get("doc_id", ""),

@@ -12,6 +12,16 @@ from rag import hosted_embeddings as he
 
 
 class CuratedEvidenceTests(unittest.TestCase):
+    def test_hybrid_rerank_promotes_lexical_support_and_excludes_instruction_only_matches(self):
+        def hit(identifier,body):return NS(payload={'chunk_id':identifier,'text':body},score=.7)
+        hits=[hit('first','Antibiotics storage fixture.'),hit('second','Antibiotics do not work against viruses. Viruses fixture.'),hit('third','General education requires clinician review. Source date fixture.')]
+        result=ce.hybrid_rerank('Do antibiotics work against viruses? Cite source date and state general education requiring clinician review.',hits,2)
+        self.assertEqual(result[0]['hit'].payload['chunk_id'],'second')
+        self.assertEqual(result[0]['semantic_rank'],2);self.assertEqual(result[0]['lexical_rank'],1)
+        self.assertNotIn('third',[item['hit'].payload['chunk_id'] for item in result])
+        self.assertEqual(ce.hybrid_rerank('Cite source date general education',hits,6),[])
+        self.assertEqual(ce.hybrid_rerank('xylophone gyroscope',hits,6),[])
+
     def source(self,text=None):
         text=text or ('Antibiotic synthetic fixture guidance,not real medical evidence. '*7)
         return ce.parse_source(ce.URLS[0],'<h1>Synthetic fixture</h1><time datetime="2024-01-01"></time><div class="cdc-dfe-body"><p>'+text+'</p></div>','fixture-policy-hash')

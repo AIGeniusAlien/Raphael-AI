@@ -61,6 +61,7 @@ def main(argv=None):
     args=parser.parse_args(argv)
     directory=(args.output or Path(tempfile.mkdtemp(prefix='raphael-verification-'))).resolve();directory.mkdir(parents=True,exist_ok=True)
     env=isolated_environment();checks=[]
+    env['RAPHAEL_VISUAL_OUTPUT']=str(directory/'browser-screenshots')
     def run(name,command,available=True,reason=None,required=True,timeout=600):
         if available:checks.append(execute(name,command,env,directory,timeout))
         else:checks.append(dict(name=name,status='failed' if required else 'skipped',reason=reason))

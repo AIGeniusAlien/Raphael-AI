@@ -8,11 +8,13 @@ import hashlib
 import html
 from html.parser import HTMLParser
 import json
+import math
 import os
 import re
 import uuid
 from datetime import date,datetime,timezone
 from urllib.parse import urlsplit
+from collections import Counter
 
 import httpx
 import numpy as np
@@ -218,6 +220,32 @@ def current_filter(population='unknown'):
     return result
 
 
+def hybrid_rerank(query,hits,top_k):
+    """BM25/RRF over a bounded, already population/semantic-filtered pool.
+
+    Scores describe retrieval ordering, never clinical confidence. This does not
+    query external providers or rescue candidates below the semantic threshold.
+    """
+    stop={'the','and','for','with','what','this','that','from','have','does','should','patient','synthetic','explain','please','about','only','could','would','there','their','information','provide','source','evidence','uncertainty','clinical','review','sources','according','cite','exact','label','date','state','general','education','requiring','clinician','individual','treatment','decision','answer','short','paragraph','supplied'}
+    terms=set(re.findall(r'\b[a-z]{3,}\b',query.lower()))-stop
+    if not terms:return []
+    documents=[Counter(re.findall(r'\b[a-z]{3,}\b',(hit.payload or {}).get('text','').lower())) for hit in hits]
+    average=sum(sum(doc.values()) for doc in documents)/max(1,len(documents)) or 1
+    frequency={term:sum(term in doc for doc in documents) for term in terms}
+    candidates=[]
+    for rank,(hit,doc) in enumerate(zip(hits,documents),1):
+        matched=terms.intersection(doc)
+        if not matched:continue
+        length=sum(doc.values())
+        score=sum(math.log(1+(len(documents)-frequency[term]+.5)/(frequency[term]+.5))*doc[term]*2.2/(doc[term]+1.2*(.25+.75*length/average)) for term in matched)
+        candidates.append({'hit':hit,'semantic_rank':rank,'lexical_score':score,'matched_query_terms':sorted(matched)})
+    lexical=sorted(candidates,key=lambda item:(-item['lexical_score'],(item['hit'].payload or {})['chunk_id']))
+    for rank,item in enumerate(lexical,1):
+        item['lexical_rank']=rank
+        item['fusion_score']=1/(60+rank)+1/(60+item['semantic_rank'])
+    return sorted(candidates,key=lambda item:(-item['fusion_score'],-item['lexical_score'],(item['hit'].payload or {})['chunk_id']))[:top_k]
+
+
 def search(query,top_k=6,population='unknown'):
     if not isinstance(query,str) or not 1<=len(query)<=1000 or not 1<=top_k<=12:raise ValueError('Bounded evidence query required.')
     if population not in POPULATIONS:raise ValueError('Invalid patient population.')
@@ -225,17 +253,16 @@ def search(query,top_k=6,population='unknown'):
     try:
         points=ensure_compatible(c,vector)
         if population!='unknown' and any((point.payload or {}).get('corpus')==CORPUS and (point.payload or {}).get('population')!=source_population((point.payload or {}).get('url','')) for point in points):raise ValueError('Explicit population metadata migration/review is required before scoped retrieval.')
-        hits=c.search(collection_name=collection(),query_vector=vector[0].tolist(),query_filter=current_filter(population),limit=top_k,score_threshold=.35,with_payload=True)
-        stop={'the','and','for','with','what','this','that','from','have','does','should','patient','synthetic','explain','please','about','only','could','would','there','their','information','provide','source','evidence','uncertainty','clinical','review','sources'}
-        terms=set(re.findall(r'\b[a-z]{3,}\b',query.lower()))-stop;out=[]
-        for hit in hits:
+        hits=c.search(collection_name=collection(),query_vector=vector[0].tolist(),query_filter=current_filter(population),limit=48,score_threshold=.35,with_payload=True)
+        out=[]
+        for ranked in hybrid_rerank(query,hits,top_k):
+            hit=ranked['hit']
             payload=hit.payload or {}
             actual_population=source_population(payload.get('url',''))
             if population!='unknown' and actual_population not in ({'general'} if population=='general' else {population,'general'}):continue
             if payload.get('population',actual_population)!=actual_population:raise ValueError('Source population tag conflicts with reviewed scope.')
-            if not terms.intersection(re.findall(r'\b[a-z]{3,}\b',payload['text'].lower())):continue
             age=(datetime.now(timezone.utc).date()-date.fromisoformat(payload['source_date'])).days
-            out.append({**payload,'population':actual_population,'patient_population':population,'population_applicability':'patient_population_unknown_requires_review' if population=='unknown' and actual_population in ('adult','pediatric') else 'scope_matched_not_clinically_validated','score':float(hit.score),'score_kind':'cosine_similarity_not_clinical_confidence','retrieval_method':'qdrant_hosted_embedding','freshness_status':'older_than_two_years' if age>730 else 'dated_within_two_years','citation_path':'/api/dev/intelligence/evidence/'+payload['chunk_id']})
+            out.append({**payload,'population':actual_population,'patient_population':population,'population_applicability':'patient_population_unknown_requires_review' if population=='unknown' and actual_population in ('adult','pediatric') else 'scope_matched_not_clinically_validated','score':float(hit.score),'score_kind':'cosine_similarity_not_clinical_confidence','retrieval_method':'qdrant_semantic_bm25_rrf','retrieval_ranks':{key:ranked[key] for key in ('semantic_rank','lexical_rank','lexical_score','fusion_score','matched_query_terms')},'retrieval_candidate_limit':48,'freshness_status':'older_than_two_years' if age>730 else 'dated_within_two_years','citation_path':'/api/dev/intelligence/evidence/'+payload['chunk_id']})
         return out
     finally:c.close()
 

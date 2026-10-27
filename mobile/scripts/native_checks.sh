@@ -9,4 +9,8 @@ fi
 python3 "$mobile_root/scripts/project_audit.py"
 mkdir -p "$mobile_root/artifacts"
 result_dir="$(mktemp -d "$mobile_root/artifacts/NativeRun.XXXXXX")"
-xcodebuild -project "$mobile_root/ios/Raphael.xcodeproj" -scheme Raphael -configuration Debug -sdk iphonesimulator -destination "$RAPHAEL_SIMULATOR_DESTINATION" -derivedDataPath "$mobile_root/artifacts/DerivedData" -resultBundlePath "$result_dir/NativeTests.xcresult" CODE_SIGNING_ALLOWED=NO test
+build_settings=()
+if [[ "${RAPHAEL_AUTHENTICATED_CI:-}" == "1" ]]; then
+  build_settings+=(RAPHAEL_SERVER_URL=https://raphael-ci.test RAPHAEL_SERVER_HOST=raphael-ci.test)
+fi
+xcodebuild -project "$mobile_root/ios/Raphael.xcodeproj" -scheme Raphael -configuration Debug -sdk iphonesimulator -destination "$RAPHAEL_SIMULATOR_DESTINATION" -derivedDataPath "$mobile_root/artifacts/DerivedData" -resultBundlePath "$result_dir/NativeTests.xcresult" CODE_SIGNING_ALLOWED=NO "${build_settings[@]}" test

@@ -6354,3 +6354,621 @@ The objective is not another attractive prototype. It is a secure, reliable, evi
 Do not conclude with only recommendations or a list of future tasks.
 
 Deliver working code, reproducible test results, and the clearest possible path to a legitimate App Store release.
+
+
+---
+
+## Master directive received 2026-10-26 — preserved verbatim
+
+# RAPHAEL — MASTER PRODUCTION ENGINEERING, MEDICAL INTELLIGENCE & MOBILE RELEASE DIRECTIVE
+
+## YOUR MISSION
+
+You are the principal engineering organization responsible for Raphael, an advanced, multimodal, evidence-grounded medical AI platform designed to become an indispensable clinical and administrative copilot for healthcare professionals and a powerful health assistant for patients.
+
+Act with the combined expertise of:
+
+- Principal software architect and staff full-stack engineer
+- Senior iOS/Swift engineer and Apple release engineer
+- Clinical informatics architect and medical evidence engineer
+- Healthcare interoperability and FHIR specialist
+- Senior AI/ML, retrieval and evaluation engineer
+- Healthcare cybersecurity and privacy engineer
+- Senior database and infrastructure engineer
+- Principal product designer and healthcare UX specialist
+- QA automation, accessibility and reliability engineer
+- Technical release manager
+
+Your assignment is to **implement, integrate, test, debug, optimize and prepare Raphael for release**.
+
+Do not simply produce plans, recommendations, reports, or lists of unfinished work. Perform the engineering work yourself wherever the environment permits.
+
+Work autonomously through the complete development cycle. Diagnose root causes, fix defects, execute verification, and repeat until all independently achievable acceptance criteria pass.
+
+Never fabricate completion, conceal failures, weaken safety safeguards to make tests pass, or claim clinical or regulatory approval without evidence.
+
+---
+
+# 1. ESTABLISH THE VERIFIED BASELINE
+
+Begin by inspecting the entire existing Raphael repository and current GitHub state.
+
+The previous development run reported:
+
+- Draft pull request #1
+- Latest commit: `9feeab359223e06ebb5f448a86529096ac082f4b`
+- 193 passing Python tests
+- 26 passing frontend tests
+- 6 passing Chromium scenarios
+- 5 passing mobile structural tests
+- 7 passing native Xcode simulator tests
+- 14 passing safety protocol cases
+- Three passing GitHub CI jobs
+- 1,128 tracked requirements, including all 1,117 original requirements
+- Qdrant collection `raphael_evidence_v1` containing six active documents and 31 vectors
+- 384-dimensional `text-embedding-3-small` embeddings
+- A physician-draft workflow blocked because of insufficient supporting evidence
+- An unresolved set of clinical, privacy, account-management, deployment and distribution requirements
+
+Verify these facts against the actual repository, CI results, reports and current branch. Do not assume a prior status remains current.
+
+Preserve all existing functionality, user data, architecture decisions, approved branding, requirements, configuration and working integrations.
+
+Do not destructively modify Qdrant, delete production data, overwrite uncommitted work, or silently merge the draft PR.
+
+Create a complete implementation inventory and use it to direct development.
+
+# 2. THE RAPHAEL PRODUCT VISION
+
+Raphael must become a comprehensive healthcare platform, not merely a medical chatbot.
+
+It must support healthcare professionals and patients across the clinical journey, from intake and preventive care through diagnosis support, treatment planning, documentation, referrals, hospitalization, discharge and follow-up.
+
+Raphael should handle as much of the preparatory, analytical, organizational and administrative work as can be safely automated.
+
+Authorized healthcare professionals retain clinical judgment, review, correction, approval and final responsibility for regulated clinical actions.
+
+Patients retain appropriate consent, privacy and control over their information.
+
+Build around one integrated system with specialized workflows rather than unrelated features.
+
+The long-term vision includes primary care, specialty care, pediatrics, urgent care, emergency medicine, inpatient medicine, behavioral health, radiology, pharmacy support, care coordination, administration and international healthcare settings.
+
+Do not claim specialty readiness without specialty-specific evaluation.
+
+# 3. RAPHAEL'S MEDICAL KNOWLEDGE BRAIN — CRITICAL PRIORITY
+
+The medical evidence engine is foundational to the entire platform.
+
+The reported six documents and 31 Qdrant vectors are insufficient for the breadth of medical knowledge Raphael requires.
+
+However, first distinguish the local indexed corpus from external sources and live provider retrieval. Do not assume Qdrant represents the entire knowledge system.
+
+## 3.1 Investigate the physician-draft failure
+
+Reproduce the failed physician-draft case.
+
+Trace:
+
+- The clinical question and expected claims
+- Available patient context
+- Search-query generation
+- Source selection
+- PubMed and other provider responses
+- Retrieval results
+- Vector and lexical matching
+- Reranking
+- Evidence freshness
+- Supporting text spans
+- Claim verification
+- The exact reason the draft was blocked
+
+Determine whether the failure was caused by missing evidence, poor retrieval, unsupported clinical assertions, inadequate source access, incorrect thresholds or another defect.
+
+Correct the root cause.
+
+Preserve the requirement that unsupported medical claims must be blocked, qualified or omitted.
+
+Do not weaken the safety gate simply to make the workflow succeed.
+
+## 3.2 Build a comprehensive evidence architecture
+
+Use appropriate, authorized sources, including:
+
+**Biomedical literature**
+- PubMed and MEDLINE
+- PubMed Central where full-text access and licensing permit
+- Systematic reviews and meta-analyses
+- Randomized controlled trials
+- Relevant observational studies
+
+**Clinical guidance**
+- NIH
+- CDC
+- WHO
+- AHRQ
+- USPSTF
+- Relevant medical specialty society guidelines
+- Current clinical practice recommendations and consensus statements
+
+**Medication and safety**
+- FDA-approved labeling and safety communications
+- DailyMed
+- Appropriate medication terminology and identification resources
+- Validated drug-interaction and contraindication resources where properly licensed
+
+**Clinical interoperability**
+- Authorized EHR data
+- Institutional clinical pathways
+- Local formularies
+- Patient-specific laboratory, medication, allergy and history information
+
+Do not pretend that subscription services such as UpToDate, DynaMed or other proprietary clinical databases are accessible unless legitimate licensing and integration are verified.
+
+PubMed is a major foundation, but clinical guidance must not rely on PubMed abstracts alone.
+
+## 3.3 Build a continuously maintainable knowledge pipeline
+
+Implement:
+
+- Automated, authorized source discovery and ingestion
+- Incremental indexing and deduplication
+- Hybrid keyword/vector retrieval
+- Specialty-aware search routing
+- Semantic reranking
+- Evidence hierarchy appropriate to the clinical question
+- Publication and update timestamps
+- Guideline versioning
+- Retraction and supersession detection
+- Canonical PMID, PMCID, DOI and source identifiers
+- Source provenance and permissions
+- Claim-level citation verification
+- Freshness monitoring
+- Retrieval evaluation
+- Bounded cost and API usage
+- Observability and failure recovery
+
+Design the system so knowledge coverage can expand safely without rebuilding the entire platform.
+
+Do not indiscriminately ingest all of PubMed or imply that every article is authoritative.
+
+## 3.4 Medical reasoning and safety
+
+Raphael should assist with:
+
+- Patient history interpretation
+- Clinical summaries
+- Differential diagnosis generation
+- Relevant findings and missing information
+- Guideline-based considerations
+- Diagnostic testing considerations
+- Treatment-option comparisons
+- Medication safety checks
+- Contraindications and interactions
+- Referral recommendations
+- Preventive care
+- Follow-up planning
+- Patient education
+
+Every consequential clinical claim must be grounded in appropriate evidence and relevant patient context.
+
+Distinguish recommendations, possibilities, uncertainties and verified facts.
+
+Use deterministic and validated methods for high-risk calculations.
+
+Implement appropriate emergency escalation and refusal/abstention behavior.
+
+# 4. COMPLETE CLINICAL DOCUMENTATION AND PAPERWORK AUTOMATION
+
+This is a central Raphael capability.
+
+Healthcare professionals should not have to spend unnecessary hours completing documentation that Raphael can safely prepare.
+
+Build integrated workflows for:
+
+- History and physical documentation
+- SOAP notes
+- Progress notes
+- Consultation notes
+- Discharge summaries
+- Referral letters
+- After-visit summaries
+- Patient instructions
+- Care plans
+- Medical necessity letters
+- Prior authorization documentation
+- Insurance appeal drafts
+- Billing and coding suggestions
+- Quality reporting preparation
+- Administrative forms
+- Clinical correspondence
+- Appointment preparation
+- Record summarization
+
+Use actual authorized patient data and clinician-provided information.
+
+Never invent physical examination findings, procedures, diagnoses, treatment decisions, services performed or time spent.
+
+Every draft should be editable and reviewable, with clear provenance, missing fields, uncertainties, version history and approval status.
+
+Build complete end-to-end flows from intake to generated document to clinician review and authorized finalization.
+
+Do not automatically submit claims, prescriptions, orders or signed documentation without the required authorization.
+
+# 5. PREMIUM RAPHAEL VISUAL DESIGN — NONNEGOTIABLE
+
+Raphael must be beautiful.
+
+The application should feel like a premium, world-class software product, not a generic hospital dashboard or unfinished developer prototype.
+
+Its appearance must communicate:
+
+- Trust
+- Calm
+- Precision
+- Intelligence
+- Professionalism
+- Warmth
+- Simplicity
+- Exceptional usability
+
+## Preserve the established identity
+
+Inspect the repository, design files, logos, existing screenshots, CSS variables, design tokens, mobile assets and historical specifications.
+
+The Raphael branding and interface have already been developed.
+
+Preserve the actual approved colors, logo and layout. Do not arbitrarily replace them.
+
+The web logo and geometric iOS R icon were previously identified as different assets. Resolve their intended roles through existing design evidence rather than assuming either is approved for App Store distribution.
+
+Where exact approved design values are unavailable, report the ambiguity and preserve existing assets.
+
+## Deliver a complete design system
+
+Implement consistent:
+
+- Typography
+- Color tokens
+- Spacing
+- Layout grids
+- Navigation
+- Cards and panels
+- Forms
+- Buttons
+- Icons
+- Conversation components
+- Data visualization
+- Clinical warning states
+- Loading states
+- Error states
+- Empty states
+- Mobile navigation
+- Accessibility behavior
+
+Avoid excessive borders, harsh contrast, clutter, tiny text, awkward spacing and unnecessary visual effects.
+
+Use subtle depth, balanced whitespace and polished interactions.
+
+The interface should be comfortable for healthcare professionals using it for extended periods.
+
+## Preserve the conversational experience
+
+Maintain and refine the intended Raphael AI conversation interface, including:
+
+- Clear conversation area
+- Persistent conversation history
+- Intuitive sidebar/navigation
+- Streaming responses where supported
+- Medical citations
+- Patient-context controls
+- Document generation
+- Attachments
+- Voice controls
+- Appropriate role-specific tools
+
+Make complex medical workflows accessible without overwhelming the user.
+
+## Mandatory visual testing
+
+Use actual browser rendering and screenshots.
+
+Inspect desktop, tablet and mobile layouts.
+
+Test narrow viewports, enlarged text, accessibility settings and different content lengths.
+
+Identify and correct visual defects, including overflow, clipping, alignment errors, inconsistent typography and unusable controls.
+
+Capture representative before-and-after screenshots.
+
+Do not declare the UI finished based on passing unit tests alone.
+
+# 6. NATIVE IOS APPLICATION AND APP STORE PREPARATION
+
+Treat iOS as a first-class application, not an afterthought.
+
+The previous run successfully passed seven native simulator tests. Build on that progress.
+
+Complete:
+
+- Reliable app launch
+- Authentication
+- Secure session management
+- Native navigation
+- Patient and clinician workflows
+- Secure logout
+- Error recovery
+- Network interruption handling
+- Appropriate offline behavior
+- Deep linking where applicable
+- Accessibility
+- Responsive iPhone and iPad layouts
+- Privacy protections
+- Crash reporting without PHI leakage
+- Native permissions and entitlements
+- App icon and launch presentation
+- App Store privacy information
+- Signing and distribution configuration
+
+Test the actual app on macOS CI.
+
+Expand simulator coverage to include realistic authenticated workflows.
+
+Where physical-device testing, Apple credentials, certificates or account access are required, produce exact instructions and mark those items as externally blocked.
+
+Prepare a legitimate TestFlight release candidate once technical prerequisites pass.
+
+Do not claim App Store submission or approval without actual submission and confirmation.
+
+# 7. PATIENT AND CLINICIAN PORTALS
+
+Complete coherent, role-specific experiences.
+
+## Patient portal
+
+Include appropriate workflows for:
+
+- Personal health information
+- Medical history
+- Medication and allergy review
+- Health questions
+- Patient education
+- Appointment preparation
+- Clinical documents
+- Care instructions
+- Follow-up
+- Secure communication
+- Consent and authorized sharing
+
+## Clinician portal
+
+Include appropriate workflows for:
+
+- Patient selection and context
+- Chart review
+- Clinical reasoning assistance
+- Evidence retrieval
+- Documentation
+- Referral preparation
+- Care coordination
+- Administrative tasks
+- Review and approval queues
+- Auditability
+
+Enforce tenant separation and authorization at every relevant backend boundary.
+
+# 8. VOICE, MULTIMODAL AND IMAGING CAPABILITIES
+
+Preserve and advance the planned capabilities for:
+
+- Natural voice interaction
+- Hands-free Raphael activation where platform permissions permit
+- Streaming speech and responses
+- Consent-based ambient documentation
+- Medical document upload and analysis
+- Image attachment handling
+- DICOM/PACS integration architecture
+- Clinical image review assistance
+- Multimodal patient intake
+
+Clearly separate working features, sandbox demonstrations and integrations requiring external access.
+
+Do not represent unvalidated image interpretation as clinically reliable.
+
+# 9. HEALTHCARE INTEROPERABILITY
+
+Implement a robust integration architecture for:
+
+- SMART-on-FHIR
+- FHIR R4
+- Authorized EHR connections
+- Patient records
+- Encounter information
+- Medications
+- Allergies
+- Observations
+- Laboratory results
+- Clinical documents
+- Appointments
+- Consent and provenance
+- Secure data exchange
+
+Provide working sandbox integrations and automated tests where real vendor credentials are unavailable.
+
+Do not falsely claim live integration with Epic, Oracle Health or another vendor.
+
+# 10. SECURITY, PRIVACY AND ACCOUNT MANAGEMENT
+
+Address the specific remaining gaps identified in the prior report.
+
+Prioritize:
+
+- Account erasure and retention controls
+- Verified identity workflows
+- Multifactor authentication
+- Guardian and dependent-account permissions
+- Role-based access control
+- Tenant isolation
+- Secure authentication and session handling
+- Encryption
+- Audit trails
+- Data export
+- Consent management
+- Secure secrets
+- Rate limiting
+- API authorization
+- Prompt-injection defenses
+- Backup and recovery
+- Incident response readiness
+
+Ensure protected health information cannot leak through logs, telemetry, debugging output, third-party services or CI artifacts.
+
+Evaluate applicable HIPAA obligations, vendor BAAs, Apple privacy requirements and medical software regulatory considerations.
+
+Produce a documented controls and evidence matrix.
+
+Do not claim HIPAA compliance or FDA clearance based solely on engineering tests.
+
+# 11. COMPLETE END-TO-END VERIFICATION
+
+Create a consolidated verification process that checks the actual product.
+
+Cover:
+
+1. Installation and startup
+2. Authentication and account recovery
+3. Patient and clinician authorization
+4. Evidence retrieval and citations
+5. Medical safety and abstention
+6. Documentation generation
+7. Document editing and approval
+8. Patient-record handling
+9. Portal navigation
+10. Browser responsiveness
+11. Native iOS compilation
+12. Native simulator execution
+13. Accessibility
+14. Security
+15. Data integrity
+16. Performance
+17. Failure recovery
+18. Deployment readiness
+
+Use synthetic or appropriately authorized test data.
+
+Expand clinical evaluation across specialties, common conditions, high-risk scenarios and adversarial inputs.
+
+Measure retrieval quality, unsupported claims, citation accuracy, documentation errors and unsafe recommendations.
+
+Never hide failures by weakening tests.
+
+# 12. ENGINEERING EXECUTION REQUIREMENTS
+
+This assignment must produce substantial working code.
+
+Proceed in this order:
+
+**Phase A — Verify and stabilize**
+
+Inspect the actual current state, confirm CI, preserve existing work and reproduce remaining blockers.
+
+**Phase B — Strengthen the medical intelligence engine**
+
+Fix the physician-draft evidence failure, improve retrieval, expand authorized knowledge coverage and verify claim-level support.
+
+**Phase C — Complete clinical workflows**
+
+Deliver functional documentation, review, approval and administrative workflows.
+
+**Phase D — Complete the visual experience**
+
+Apply the approved design system across web and iOS, perform screenshot-based testing and fix usability defects.
+
+**Phase E — Finish security and integration work**
+
+Implement independently achievable account, privacy, authorization and interoperability requirements.
+
+**Phase F — Release engineering**
+
+Complete native builds, authenticated simulator tests, deployment verification, reliability checks and TestFlight preparation.
+
+Work in coherent, testable increments.
+
+Run the appropriate tests after every substantial change.
+
+Fix root causes rather than repeatedly patching symptoms.
+
+Do not overwrite functioning implementations or perform destructive operations.
+
+Do not ask the owner to complete routine coding or repetitive testing that can be automated.
+
+Continue until the environment, permissions, genuinely external dependencies or resource limits prevent further progress.
+
+# 13. REQUIREMENTS LEDGER
+
+Preserve every existing requirement ID and description.
+
+Update each requirement with:
+
+- Implementation status
+- Relevant source files
+- Verification method
+- Test results
+- Remaining dependencies
+- Release significance
+
+Do not equate a requirement's presence in the ledger with implementation.
+
+Identify any conflicting, duplicated or outdated requirements without silently deleting them.
+
+# 14. FINAL ACCEPTANCE CRITERIA
+
+Do not conclude the assignment merely because CI is green.
+
+The engineering deliverable must include:
+
+- A functioning, visually polished Raphael application
+- Verified web workflows
+- Verified native iOS workflows
+- Evidence-grounded clinical assistance
+- Functional documentation and review
+- Secure role-based access
+- Reliable persistence and recovery
+- Passing automated tests
+- Screenshot-based visual verification
+- Clear privacy and security controls
+- A reproducible build and deployment process
+- A TestFlight readiness assessment
+- A precise inventory of externally blocked items
+
+For each critical capability, provide a working demonstration or an automated end-to-end test with reproducible evidence.
+
+If a feature remains incomplete, do not label it complete.
+
+If a clinical or regulatory release gate remains unmet, do not declare the application safe for clinical production.
+
+# 15. FINAL DELIVERABLE
+
+At the end, provide:
+
+1. Exact Git commit SHA and branch/PR.
+2. All significant features implemented.
+3. Files and systems changed.
+4. Complete test results.
+5. Actual iOS simulator results.
+6. Screenshots of the working UI.
+7. Evidence-engine coverage and retrieval findings.
+8. Physician-draft root-cause analysis and resolution.
+9. Documentation workflow results.
+10. Security and privacy findings.
+11. External integration status.
+12. Requirements ledger completion summary.
+13. Remaining release blockers.
+14. Exact steps required to install a TestFlight build.
+15. Clear readiness classification for demonstration, controlled clinical pilot and production release.
+
+**Do not substitute a long status report for implementation. Deliver the strongest complete, tested, polished and safely releasable product that the available environment and authorizations permit.**
+
+Raphael must combine sophisticated medical intelligence with beautiful consumer-grade software and the accountability expected of healthcare technology.
+
+Begin immediately from the verified latest repository state. Implement, test, debug, refine and verify. Do not stop at planning.

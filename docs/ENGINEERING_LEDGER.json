@@ -2,13 +2,13 @@
   "schema_version": 1,
   "source": "docs/REQUIREMENTS_MATRIX.md",
   "state_counts": {
-    "PARTIAL": 859,
+    "PARTIAL": 861,
     "NOT_IMPLEMENTED": 194,
-    "VERIFIED": 42,
+    "VERIFIED": 44,
     "BLOCKED_EXTERNAL": 11,
-    "IMPLEMENTED_UNVERIFIED": 22
+    "IMPLEMENTED_UNVERIFIED": 24
   },
-  "requirement_count": 1128,
+  "requirement_count": 1134,
   "clinical_validation": false,
   "requirements": [
     {
@@ -15801,6 +15801,90 @@
       "next_implementation_action": "Corrective remote Chromium passed;physical Safari/device accessibility remains unverified",
       "priority": "P0",
       "milestone": "M1",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "MASTER-001",
+      "description": "Preserve and execute the complete master production medical intelligence and mobile release directive",
+      "state": "PARTIAL",
+      "code_location": "RAPHAEL_MASTER_SPEC.md;MASTER_ENGINEERING_REPORT.md",
+      "test_coverage": "Existing baseline and new bounded regressions;live results separately recorded",
+      "external_dependency": "Clinical/legal/identity/Apple/vendor access and evaluation",
+      "remaining_work": "Comprehensive corpus;advanced documentation;production identity/erasure;authenticated native validation and release gates remain",
+      "acceptance_criteria": "All prior IDs/descriptions retained;implementation evidence distinct from product vision",
+      "next_implementation_action": "Comprehensive corpus;advanced documentation;production identity/erasure;authenticated native validation and release gates remain",
+      "priority": "P0",
+      "milestone": "M1–M6",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "MASTER-002",
+      "description": "Diagnose physician blocking without weakening support gates and expose exact unsupported citations",
+      "state": "VERIFIED",
+      "code_location": "dev_intelligence.py;rag/claim_support.py",
+      "test_coverage": "Original saved blocked report;new live physician support screen passed;citation-padding regression",
+      "external_dependency": "Actual approved model and reviewed source excerpts",
+      "remaining_work": "Model semantic judgments remain fallible;independent clinical review required",
+      "acceptance_criteria": "No fabricated references or quote relaxation;minimum sufficient citations;original provider verdict and missing source IDs visible",
+      "next_implementation_action": "Model semantic judgments remain fallible;independent clinical review required",
+      "priority": "P0",
+      "milestone": "M1/M2",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "MASTER-003",
+      "description": "Bounded hybrid BM25 and vector reranking with transparent retrieval provenance",
+      "state": "VERIFIED",
+      "code_location": "curated_evidence.py",
+      "test_coverage": "Synthetic ranking/missing-match tests;actual live Qdrant retrieved sources matched fresh CDC originals",
+      "external_dependency": "Compatible Qdrant model space and authorized corpus",
+      "remaining_work": "Semantic candidate pool limits recall;no external PubMed query in this conversation;not comprehensive medical coverage",
+      "acceptance_criteria": "Population/current/model filters;48 candidate maximum;semantic threshold unchanged;BM25/RRF ranks recorded",
+      "next_implementation_action": "Semantic candidate pool limits recall;no external PubMed query in this conversation;not comprehensive medical coverage",
+      "priority": "P0",
+      "milestone": "M2",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "MASTER-004",
+      "description": "Versioned documentation formats with immutable authorized source snapshots and explicit clinician review/publication",
+      "state": "PARTIAL",
+      "code_location": "clinical_documentation.py;dev_intelligence.py;static/intelligence.*",
+      "test_coverage": "Five new format edit/approval/snapshot tests;actual Chromium discharge draft workflow",
+      "external_dependency": "Authorized synthetic chart and consented session transcript",
+      "remaining_work": "Deterministic preparation templates;no automatic chart synthesis or completed billing/prior authorization;clinician must verify every fact",
+      "acceptance_criteria": "SOAP/progress/H&P/consult/discharge/referral/AVS preserve missing facts and exact snapshot;stale edits denied;approved versions immutable",
+      "next_implementation_action": "Deterministic preparation templates;no automatic chart synthesis or completed billing/prior authorization;clinician must verify every fact",
+      "priority": "P0",
+      "milestone": "M1/M4",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "MASTER-005",
+      "description": "Actual authenticated native simulator workflows against trusted synthetic HTTPS backend",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "code_location": "mobile/scripts/authenticated_ci.py;RaphaelUITests.swift;development.yml",
+      "test_coverage": "Native source audit;remote native execution pending on new source",
+      "external_dependency": "macOS CI;simulator trusted ephemeral test certificate",
+      "remaining_work": "New authenticated simulator execution unverified;physical device,owner signing and independent review remain",
+      "acceptance_criteria": "Actual main:app;random synthetic test-only accounts;patient/clinician login,navigation,approved note,logout/relaunch;no ATS bypass",
+      "next_implementation_action": "New authenticated simulator execution unverified;physical device,owner signing and independent review remain",
+      "priority": "P0",
+      "milestone": "M1/M5",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "MASTER-006",
+      "description": "Actual rendered desktop tablet mobile and enlarged-text documentation screenshots with overflow checks",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "code_location": "e2e/test_intelligence_browser.py;dev_verify.py",
+      "test_coverage": "Screenshot generation and inspection pending",
+      "external_dependency": "Chromium",
+      "remaining_work": "Physical Safari/iPad and comprehensive accessibility review remain",
+      "acceptance_criteria": "Actual synthetic application rendering;320px/20px text through desktop;retain brand assets and palette",
+      "next_implementation_action": "Physical Safari/iPad and comprehensive accessibility review remain",
+      "priority": "P0",
+      "milestone": "M1/M5",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
     }
   ]

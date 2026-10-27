@@ -31,6 +31,18 @@ class ClaimSupportTests(unittest.TestCase):
         self.assertEqual(result['status'],'blocked');self.assertEqual(result['checks'][1]['verdict'],'unsupported')
         self.assertEqual(result['checks'][1]['reason_code'],'missing_support')
 
+    def test_physician_citation_padding_retains_original_verdict_and_exact_missing_reference(self):
+        evidence=self.evidence+[dict(self.evidence[0],chunk_id='source-2',text='Unrelated storage instructions in a synthetic fixture.')]
+        answer=self.answer.replace('[source-1]','[source-1] [source-2]')
+        result=validate_screen(answer,evidence,'adult',self.response())
+        check=result['checks'][1]
+        self.assertEqual(result['status'],'blocked')
+        self.assertEqual(check['provider_verdict'],'supported')
+        self.assertEqual(check['verdict'],'unsupported')
+        self.assertEqual(check['citations_without_support'],['source-2'])
+        self.assertEqual(check['reason_code'],'missing_support')
+
+
     def test_citation_membership_and_quote_source_mismatch_fail_closed(self):
         with self.assertRaises(ValueError):validate_screen(self.answer.replace('source-1','fabricated-id'),self.evidence,'adult',self.response())
         bad=self.response();bad['checks'][1]['supports'][0]['chunk_id']='another-source'

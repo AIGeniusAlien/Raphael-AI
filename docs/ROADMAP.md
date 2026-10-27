@@ -1,3 +1,7 @@
+## Current master engineering increment
+
+Read [MASTER_ENGINEERING_REPORT.md](MASTER_ENGINEERING_REPORT.md) first. New live physician and patient support screens passed with unchanged safety gates;bounded hybrid reranking and seven versioned source-snapshot documentation formats are implemented. Responsive and authenticated native verification are in progress. Historical results below remain scoped to their recorded sources. No clinical-production/AppStore readiness or deployment claim.
+
 ## Final verified source evidence
 
 Source commit1da515ac57bbdb7f9ce25b9ae9a6644474593979 passed all three GitHub Actions jobs in [run40422980175](https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175). Actual xcresulttool summary:7native tests passed,0failed,0skipped on Xcode16.4/iOS18.5. Final source also passes193Python,26frontend,6Chromium and5mobile source tests plus14deterministic safety protocol cases. Read-origin guards cover all portal reads/uploads without duplicate budget accounting. The final documentation follow-up changes evidence/ledger only. No merge/deployment/signing/clinical approval. Physical device/authenticated native journey and AppStore/production gates remain open.

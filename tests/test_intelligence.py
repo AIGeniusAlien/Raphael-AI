@@ -58,6 +58,16 @@ class IntelligenceTests(unittest.TestCase):
         history=self.client.get(path).json()['messages'];self.assertEqual([m['role'] for m in history],['user','assistant','user','assistant']);self.assertTrue(all(m['status']=='complete' for m in history));self.assertIn('First synthetic question',str(seen[1]));self.assertTrue(history[-1]['generation_id'])
         init_intelligence_schema(self.engine);self.assertEqual(len(self.client.get(path).json()['messages']),4)
 
+    def test_generation_prompt_requires_per_claim_support_without_priming_multiple_citations(self):
+        seen=[]
+        def provider(messages,model):
+            seen.append(messages[0]['content']);yield 'Synthetic draft [fixture-1]'
+        self.provider=provider
+        result=self.client.post(f'/api/dev/intelligence/threads/{self.thread()}/stream',json={'content':'Synthetic question'})
+        self.assertIn('event: complete',result.text)
+        self.assertIn('Every cited excerpt must directly support the adjacent claim',seen[0])
+        self.assertNotIn('Citation syntax examples:',seen[0])
+
     def test_claim_support_blocks_persists_and_session_revocation_prevents_completion(self):
         identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}'
         with patch.dict(os.environ,{'RAPHAEL_VERIFY_CLAIMS':'1'}):
@@ -148,11 +158,35 @@ class IntelligenceTests(unittest.TestCase):
         self.assertEqual(self.client.post(path+'/approve',json={'expected_version':2}).status_code,409)
         self.client.post(path+'/approve',json={'expected_version':3}).raise_for_status()
         self.assertEqual(self.client.post(path+'/notes',json={'expected_version':3,'content':'Overwrite'}).status_code,409)
+
         record=self.client.get(path).json();self.assertEqual(len(record['notes']),3);self.assertEqual(record['notes'][-1]['status'],'approved');self.assertEqual(record['notes'][-1]['approved_by'],record['owner_id']);self.assertTrue(self.client.get(path+'/audit').json())
         self.assertTrue(record['notes'][-1]['published_note_id'])
         self.login('patient')
         visible=self.client.get(f"/api/dev/patients/{self.patient['id']}/notes").json()
         self.assertEqual(len(visible),1);self.assertEqual(visible[0]['content'],'Clinician reviewed synthetic note')
+
+    def test_document_formats_preserve_snapshot_through_edit_and_publication(self):
+        for format in ('history_physical','consultation','discharge','referral','after_visit'):
+            with self.subTest(format=format):
+                session=self.session();path=f'/api/dev/intelligence/sessions/{session}'
+                self.client.post(path+'/segments',json={'content':'Synthetic reported cough. No exam performed.','origin':'manual_synthetic'}).raise_for_status()
+                draft=self.client.post(path+'/notes',json={'expected_version':0,'format':format})
+                self.assertEqual(draft.status_code,200,draft.text)
+                self.assertIn('No exam performed',draft.json()['content'])
+                self.assertIn('Missing fields',draft.json()['content'])
+                first=self.client.get(path).json()['notes'][0]
+                snapshot=json.loads(first['source_snapshot'])
+                self.assertEqual(snapshot['patient_id'],self.patient['id'])
+                self.assertEqual(len(snapshot['transcript_segments']),1)
+                edit=self.client.post(path+'/notes',json={'expected_version':1,'format':format,'content':draft.json()['content']+'\nClinician review pending.'})
+                self.assertEqual(edit.status_code,200,edit.text)
+                notes=self.client.get(path).json()['notes']
+                self.assertEqual(notes[0]['source_snapshot'],notes[1]['source_snapshot'])
+                self.assertEqual(self.client.post(path+'/approve',json={'expected_version':1}).status_code,409)
+                self.client.post(path+'/approve',json={'expected_version':2}).raise_for_status()
+                self.assertEqual(self.client.post(path+'/notes',json={'expected_version':2,'format':format,'content':'Overwrite approved'}).status_code,409)
+        init_intelligence_schema(self.engine)
+        self.assertEqual(len(self.client.get(path).json()['notes']),2)
 
     def test_retrieval_failure_does_not_leave_an_unrecoverable_generation(self):
         identifier=self.thread()
@@ -189,7 +223,7 @@ class IntelligenceTests(unittest.TestCase):
         evidence=[{'chunk_id':'fixture-1','text':'Synthetic population A fixture supports option A','source_date':'2024-01-01'},{'chunk_id':'fixture-2','text':'Synthetic population B fixture contradicts option A','source_date':'2025-01-01'}]
         with patch.dict(os.environ,{'RAPHAEL_STREAM_EVIDENCE_BACKEND':'qdrant'}),patch('curated_evidence.search',return_value=evidence):
             response=self.client.post(f'/api/dev/intelligence/threads/{thread}/stream',json={'content':'Synthetic conflicting evidence question'})
-        self.assertIn('event: complete',response.text);self.assertIn('Identify conflicting sources',seen[0][0]['content']);self.assertIn('[E1]',seen[0][0]['content']);self.assertIn('never add chunk_id:',seen[0][0]['content']);self.assertIn('population A',seen[0][0]['content']);self.assertIn('population B',seen[0][0]['content'])
+        self.assertIn('event: complete',response.text);self.assertIn('Identify conflicting sources',seen[0][0]['content']);self.assertIn('"chunk_id": "E1"',seen[0][0]['content']);self.assertIn('never add chunk_id:',seen[0][0]['content']);self.assertIn('population A',seen[0][0]['content']);self.assertIn('population B',seen[0][0]['content'])
 
     def test_qdrant_failure_is_redacted_and_missing_evidence_never_calls_provider(self):
         thread=self.thread();provider=MagicMock();self.provider=provider

@@ -78,7 +78,7 @@ def validate_screen(answer,evidence,population,response):
         unspecified=population=='unknown' and bool(populations.intersection({'adult','pediatric'}))
         if mismatch:verdict,reason='unsupported','population_mismatch'
         elif (unspecified or 'unknown' in populations) and verdict=='supported':verdict,reason='uncertain','uncertain'
-        clean.append({'segment_id':part['segment_id'],'text':part['text'],'classification':item['classification'],'verdict':verdict,'supports':supported,'reason_code':reason,'patient_population':population,'source_populations':sorted(populations)})
+        clean.append({'segment_id':part['segment_id'],'text':part['text'],'classification':item['classification'],'verdict':verdict,'provider_verdict':item['verdict'],'supports':supported,'citations_without_support':sorted(refs-quote_ids),'reason_code':reason,'patient_population':population,'source_populations':sorted(populations)})
     counts={key:sum(item['verdict']==key for item in clean) for key in sorted(VERDICTS)}
     passed=counts['supported']>0 and counts['unsupported']==0 and counts['uncertain']==0
     return {'status':'passed' if passed else 'blocked','checks':clean,'counts':counts,'screening_only':True,'clinical_validation':False,'clinician_approval_required':True,'coverage':'Every deterministic paragraph segment screened;semantic verdicts remain model judgments,not independent validation.'}

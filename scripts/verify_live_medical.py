@@ -69,6 +69,13 @@ def run(output):
                             page.locator('#prompt').fill(question);page.locator('#prompt-form button').click();page.wait_for_function("() => /Draft complete|blocked|failed|unavailable|No reviewed/.test(document.querySelector('#status').textContent)",timeout=90000)
                             stage='evidence_display'
                             expect(page.locator('#evidence')).to_contain_text('Source: CDC');expect(page.locator('#evidence')).to_contain_text('Official CDC')
+                            rendered_resolvers=page.locator('#evidence a').filter(has_text='Resolve stored citation')
+                            assert rendered_resolvers.count()>0
+                            for resolver in rendered_resolvers.all():
+                                href=resolver.get_attribute('href')
+                                assert href.startswith('/api/dev/intelligence/evidence/')
+                                assert context.request.get(href).status==200
+                            result['rendered_citation_links_resolve']=True
                             threads=context.request.get('/api/dev/intelligence/threads').json();thread=context.request.get('/api/dev/intelligence/threads/'+str(threads[0]['id'])).json();message=thread['messages'][-1]
                             assert message['status'] in ('complete','blocked') and message['role']=='assistant'
                             if message['status']=='blocked':assert message.get('claim_screen',{}).get('status')=='blocked'

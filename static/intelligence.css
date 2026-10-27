@@ -2,3 +2,5 @@
 /* Evidence identifiers and URLs must wrap within the existing responsive grid. */
 #evidence,#evidence a,#evidence code{overflow-wrap:anywhere;word-break:break-word;white-space:normal}
 #intelligence input,#intelligence textarea,#intelligence select{min-width:0;max-width:100%}
+#evidence article>code{display:block;margin:.5rem 0;color:#405c68;font-size:.9em}
+#evidence article>a{display:inline-block;margin:.35rem .8rem .35rem 0;line-height:1.6;text-underline-offset:.15em}

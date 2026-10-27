@@ -90,7 +90,9 @@ jobs:
           PY
           python -m pip install -r /tmp/raphael-native-runtime.txt
       - name: Prepare simulator-trusted actual HTTPS backend
-        run: python3 mobile/scripts/authenticated_ci.py
+        run: |
+          set -o pipefail
+          python3 mobile/scripts/authenticated_ci.py 2>&1 | tee native-setup.log
       - name: Compile and test native app
         run: |
           set -o pipefail
@@ -103,7 +105,9 @@ jobs:
         run: python3 .github/scripts/native_test_summary.py
       - name: Publish native failure diagnostics
         if: failure()
-        run: python3 .github/scripts/publish_diagnostics.py native-build.log --native-crashes
+        run: |
+          python3 .github/scripts/publish_diagnostics.py native-setup.log
+          python3 .github/scripts/publish_diagnostics.py native-build.log --native-crashes
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -111,4 +115,5 @@ jobs:
           path: |
             mobile/artifacts/NativeRun.*/NativeTests.xcresult
             native-build.log
+            native-setup.log
           retention-days: 14

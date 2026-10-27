@@ -17,9 +17,12 @@ class EvidencePopulationTests(unittest.TestCase):
         return factory
 
     def test_reviewed_catalog_has_bounded_verified_specialty_scopes(self):
-        self.assertEqual(len(ce.URLS),6)
+        self.assertEqual(len(ce.URLS),9)
         self.assertEqual(ce.source_population(ce.URLS[1]),'adult')
         self.assertEqual(ce.source_population(ce.URLS[2]),'pediatric')
+        self.assertEqual(ce.source_population(ce.URLS[6]),'adult')
+        self.assertEqual(ce.source_population(ce.URLS[7]),'general')
+        self.assertEqual(ce.source_population(ce.URLS[8]),'general')
         self.assertEqual(ce.source_population('https://example.org/pediatric.html'),'unknown')
         with self.assertRaises(ValueError):ce.source_scope('https://example.org/unreviewed')
 

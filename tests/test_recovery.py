@@ -12,6 +12,7 @@ from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
+from contextlib import ExitStack
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -56,14 +57,17 @@ class EmbeddingStartupTests(unittest.TestCase):
         from types import SimpleNamespace
         from unittest.mock import Mock
         import rag.embedder as rag_embedder
-        for module, cache in ((main, '_ST_MODEL'), (pubmed_ingest, '_MODEL'), (rag_embedder, '_MODEL')):
+        for module, cache in ((main, '_ST_MODEL'), (pubmed_ingest, None), (rag_embedder, '_MODEL')):
             with self.subTest(module=module.__name__):
                 model = Mock()
                 model.encode.return_value = [[1.0, 0.0]]
                 constructor = Mock(return_value=model)
                 args = () if module is main else (main.EMBED_MODEL,)
-                with patch.object(module, cache, None), patch.dict('sys.modules',
-                        {'sentence_transformers': SimpleNamespace(SentenceTransformer=constructor)}):
+                with ExitStack() as stack:
+                    if cache:stack.enter_context(patch.object(module,cache,None))
+                    else:
+                        module.get_model.cache_clear();stack.callback(module.get_model.cache_clear)
+                    stack.enter_context(patch.dict('sys.modules',{'sentence_transformers':SimpleNamespace(SentenceTransformer=constructor)}))
                     self.assertEqual(module.embed_texts(['synthetic'], *args).tolist(), [[1.0, 0.0]])
                     module.embed_texts(['second synthetic'], *args)
                 constructor.assert_called_once_with(main.EMBED_MODEL)

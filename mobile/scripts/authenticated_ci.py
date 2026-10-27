@@ -55,11 +55,19 @@ def prepare():
     tls=ssl.create_default_context(cafile=str(certificate))
     with httpx.Client(base_url='https://raphael-ci.test',verify=tls,trust_env=False,timeout=10) as client:
         deadline=time.monotonic()+60
+        last_status,last_transport_error=None,None
         while True:
-            if process.poll() is not None or time.monotonic()>deadline:raise RuntimeError('Synthetic HTTPS backend failed readiness;inspect private runner log.')
+            if process.poll() is not None or time.monotonic()>deadline:
+                # This CI-only backend has no provider credentials or real PHI.
+                # Expose startup exceptions,not the private account password.
+                startup=(private/'backend.log').read_text(errors='replace')[-10000:]
+                Path('native-backend-startup.log').write_text(startup.replace(password,'[SYNTHETIC PASSWORD REDACTED]'))
+                print('Backend startup failure metadata: '+json.dumps({'process_exit_code':process.poll(),'last_http_status':last_status,'last_transport_error_type':last_transport_error}),flush=True)
+                raise RuntimeError('Synthetic HTTPS backend failed readiness;bounded startup log published separately.')
             try:
-                if client.get('/readyz').status_code==200:break
-            except httpx.TransportError:pass
+                last_status=client.get('/readyz').status_code
+                if last_status==200:break
+            except httpx.TransportError as error:last_transport_error=type(error).__name__
             time.sleep(.2)
         client.post('/api/dev/login',json={'tenant':'native-ci','username':'native-clinician','password':password}).raise_for_status()
         record=client.post('/api/dev/patients',json={'name':'Synthetic native patient','patient_username':'native-patient','dob':'1994-01-01'});record.raise_for_status()

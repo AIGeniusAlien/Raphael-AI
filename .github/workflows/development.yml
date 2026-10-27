@@ -110,6 +110,7 @@ jobs:
         if: failure()
         run: |
           python3 .github/scripts/publish_diagnostics.py native-setup.log
+          if [ -f native-backend-startup.log ]; then python3 .github/scripts/publish_diagnostics.py native-backend-startup.log; fi
           python3 .github/scripts/publish_diagnostics.py native-build.log --native-crashes
       - uses: actions/upload-artifact@v4
         if: always()
@@ -120,4 +121,5 @@ jobs:
             mobile/artifacts/NativeRun.*/NativeAttachments/
             native-build.log
             native-setup.log
+            native-backend-startup.log
           retention-days: 14

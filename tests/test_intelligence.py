@@ -68,6 +68,38 @@ class IntelligenceTests(unittest.TestCase):
         self.assertIn('Every cited excerpt must directly support the adjacent claim',seen[0])
         self.assertNotIn('Citation syntax examples:',seen[0])
 
+    def test_date_inside_reference_is_rejected_with_persisted_redacted_failure_stage(self):
+        seen=[]
+        def provider(messages,model):
+            seen.append(messages[0]['content']);yield 'Synthetic fixture [E1, 2025-09-23]'
+        self.provider=provider
+        evidence=[{'chunk_id':'fixture-1','text':'Synthetic fixture only','source_date':'2025-09-23'}]
+        identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}'
+        with patch.dict(os.environ,{'RAPHAEL_STREAM_EVIDENCE_BACKEND':'qdrant'}),patch('curated_evidence.search',return_value=evidence),patch('rag.claim_support.screen_claims') as checker:
+            response=self.client.post(path+'/stream',json={'content':'Synthetic question with source date'})
+            checker.assert_not_called()
+        self.assertNotIn('event: complete',response.text)
+        self.assertIn('[E1] (source date: 2025-09-23)',seen[0])
+        message=self.client.get(path).json()['messages'][-1]
+        self.assertEqual(message['status'],'failed')
+        self.assertEqual(message['failure_code'],'citation_membership:ValueError')
+        init_intelligence_schema(self.engine)
+        self.assertEqual(self.client.get(path).json()['messages'][-1]['failure_code'],'citation_membership:ValueError')
+
+    def test_provider_cleanup_failure_cannot_emit_completion_or_reflect_provider_payload(self):
+        class FailingClose:
+            def __iter__(self):return self
+            def __next__(self):
+                if getattr(self,'sent',False):raise StopIteration
+                self.sent=True;return 'Synthetic [fixture-1]'
+            def close(self):raise RuntimeError('SECRET-PROVIDER-PAYLOAD')
+        self.provider=lambda *_:FailingClose()
+        identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}'
+        response=self.client.post(path+'/stream',json={'content':'Synthetic question'})
+        self.assertNotIn('event: complete',response.text);self.assertNotIn('SECRET-PROVIDER-PAYLOAD',response.text)
+        message=self.client.get(path).json()['messages'][-1]
+        self.assertEqual(message['status'],'failed');self.assertEqual(message['failure_code'],'provider_cleanup:RuntimeError')
+
     def test_claim_support_blocks_persists_and_session_revocation_prevents_completion(self):
         identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}'
         with patch.dict(os.environ,{'RAPHAEL_VERIFY_CLAIMS':'1'}):

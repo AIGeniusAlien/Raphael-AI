@@ -20,6 +20,12 @@
     "Supply registered bundle, signing team and real support/privacy URLs",
     "Complete legal/privacy/clinical review and policy-backed account deletion"
   ],
-  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40421429685",
-  "simulator_unit_ui_tests": "VERIFIED_REMOTE_CI"
+  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175",
+  "simulator_unit_ui_tests": "VERIFIED_REMOTE_CI",
+  "simulator_tests": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "source": "xcresulttool"
+  }
 }

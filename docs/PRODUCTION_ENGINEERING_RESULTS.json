@@ -126,7 +126,7 @@
     "structural_checks": "passed",
     "xcode_local": "NOT_RUN",
     "new_native_tests": "NOT_RUN",
-    "ci": "All three jobs passed run40421429685;final read-origin guard checked locally and queued for fresh CI",
+    "ci": "VERIFIED_REMOTE_CI",
     "device_signing": "NOT_RUN",
     "app_store_ready": false,
     "compiler_defect": {
@@ -139,11 +139,16 @@
       "cause": "Missing /usr/lib/swift/libswiftWebKit.dylib in iOS18.5 simulator",
       "fix": "Public Objective-C promise bridge and removal of unused dynamic overlay dependencies",
       "verified": true,
-      "verified_commit": "a45e247bba058e12b429e5bee6363c1459797a09",
-      "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40421429685"
+      "verified_commit": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+      "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175"
     },
-    "xcode_ci_compile": "VERIFIED on macOS Xcode16.4/iOS18.5",
-    "simulator_unit_ui": "VERIFIED at a45e247",
+    "xcode_ci_compile": "VERIFIED:Xcode16.4/iOS18.5",
+    "simulator_unit_ui": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "source": "xcresulttool result bundle via GitHub annotation"
+    },
     "authenticated_native_staging": "NOT_RUN"
   },
   "cross_platform": {
@@ -186,8 +191,8 @@
   "owner_commands": "docs/AUTOMATED_DEVELOPMENT.md",
   "security_scan_artifact": "docs/PRODUCTION_SOURCE_SCAN.json",
   "dependency_audit_artifact": "docs/PRODUCTION_DEPENDENCY_AUDIT.json",
-  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40421429685",
-  "ci_observed_status": "All three jobs succeeded on a45e247;final security/read-origin changes require current-head CI",
+  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175",
+  "ci_observed_status": "All three jobs succeeded on the final source commit",
   "evidence_inventory": {
     "collection": "raphael_evidence_v1",
     "total_vectors": 31,
@@ -213,6 +218,43 @@
     "includes_reads_and_uploads": true,
     "multipart_preserved": true,
     "duplicate_guard_accounting_prevented": true,
-    "tests": "Final local193Python/26frontend/6Chromium/5mobile source checks pass"
-  }
+    "tests": "Final local and remote CI193Python/26frontend/6Chromium/5mobile source checks pass"
+  },
+  "ci_source_commit": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+  "ci_jobs": [
+    {
+      "completed_at": "2026-10-26T23:56:13Z",
+      "conclusion": "success",
+      "head_sha": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+      "html_url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175/job/121921677192",
+      "id": 121921677192,
+      "name": "dependency-audit",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-10-26T23:58:39Z",
+      "conclusion": "success",
+      "head_sha": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+      "html_url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175/job/121921677524",
+      "id": 121921677524,
+      "name": "regression",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-10-26T23:58:54Z",
+      "conclusion": "success",
+      "head_sha": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+      "html_url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175/job/121921677526",
+      "id": 121921677526,
+      "name": "ios-simulator",
+      "status": "completed"
+    }
+  ],
+  "remaining_code_gaps": [
+    "Policy-backed account erasure;current workflow is review-only",
+    "Public identity/registration/recovery/MFA and guardian permissions",
+    "Android native and broader clinical/specialty/interoperability/voice capabilities",
+    "Production encryption,audit,distributed security and operations hardening"
+  ],
+  "report_scope": "Final evidence-only documentation follow-up;CI results identify the exact verified source commit."
 }

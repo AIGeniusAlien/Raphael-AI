@@ -2,9 +2,9 @@
   "schema_version": 1,
   "source": "docs/REQUIREMENTS_MATRIX.md",
   "state_counts": {
-    "PARTIAL": 860,
+    "PARTIAL": 859,
     "NOT_IMPLEMENTED": 194,
-    "VERIFIED": 41,
+    "VERIFIED": 42,
     "BLOCKED_EXTERNAL": 11,
     "IMPLEMENTED_UNVERIFIED": 22
   },
@@ -15708,13 +15708,13 @@
     {
       "requirement_id": "PROD-005",
       "description": "Least-privilege automated PR security,traceability and native iOS simulator CI gates",
-      "state": "PARTIAL",
+      "state": "VERIFIED",
       "code_location": ".github/workflows/development.yml",
-      "test_coverage": "Local runner and scan artifacts pass;remote workflow outcome must be inspected",
+      "test_coverage": "Actual all3CIjobs passed run40422980175 on1da515a;193Python/26frontend/6Chromium/5mobile source;7native XCTest/UI cases;fresh scans",
       "external_dependency": "GitHub Actions capacity;macOS simulator;advisory sources",
-      "remaining_work": "Workflow configuration is not successful remote CI execution;branch protection owner-managed",
+      "remaining_work": "Branch protection owner-managed;no production/AppStore release acceptance implied",
       "acceptance_criteria": "Python/frontend/Chromium/traceability/safety;dependency and source scan;unsigned iOS tests;no deploy",
-      "next_implementation_action": "Workflow configuration is not successful remote CI execution;branch protection owner-managed",
+      "next_implementation_action": "Branch protection owner-managed;no production/AppStore release acceptance implied",
       "priority": "P0",
       "milestone": "M1/M5",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."

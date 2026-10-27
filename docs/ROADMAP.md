@@ -1,6 +1,6 @@
 ## Current master engineering increment
 
-Read [MASTER_ENGINEERING_REPORT.md](MASTER_ENGINEERING_REPORT.md) first. New live physician and patient support screens passed with unchanged safety gates;bounded hybrid reranking and seven versioned source-snapshot documentation formats are implemented. Responsive and authenticated native verification are in progress. Historical results below remain scoped to their recorded sources. No clinical-production/AppStore readiness or deployment claim.
+Read [MASTER_ENGINEERING_REPORT.md](MASTER_ENGINEERING_REPORT.md) first. New live physician and patient support screens passed with unchanged safety gates;bounded hybrid reranking and seven versioned source-snapshot documentation formats are implemented. Responsive browser verification passed;configured native launch crash fixed but authenticated UI test rerun is pending. Development CDC corpus expanded non-destructively to9documents/48vectors with repeat0writes and8live routing checks passed. Historical results below remain scoped to their recorded sources. No clinical-production/AppStore readiness or deployment claim.
 
 ## Final verified source evidence
 

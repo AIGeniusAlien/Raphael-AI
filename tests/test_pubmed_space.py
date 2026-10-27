@@ -2,6 +2,8 @@
 import asyncio
 import unittest
 from unittest.mock import patch,AsyncMock
+from unittest.mock import Mock
+from types import SimpleNamespace
 import numpy as np
 import httpx
 from qdrant_client import QdrantClient
@@ -11,6 +13,16 @@ from pubmed import client as discovery
 
 
 class PubMedSpaceTests(unittest.TestCase):
+    def test_cached_encoder_cannot_silently_reuse_another_models_vectors(self):
+        first,second=object(),object()
+        constructor=Mock(side_effect=[first,second])
+        ingest.get_model.cache_clear();self.addCleanup(ingest.get_model.cache_clear)
+        with patch.dict('sys.modules',{'sentence_transformers':SimpleNamespace(SentenceTransformer=constructor)}):
+            self.assertIs(ingest.get_model('model-a'),first)
+            self.assertIs(ingest.get_model('model-a'),first)
+            self.assertIs(ingest.get_model('model-b'),second)
+        self.assertEqual([call.args[0] for call in constructor.call_args_list],['model-a','model-b'])
+
     def test_same_dimensions_different_or_untagged_model_never_mutates(self):
         for model in ('another-model',None):
             client=QdrantClient(location=':memory:');self.addCleanup(client.close)

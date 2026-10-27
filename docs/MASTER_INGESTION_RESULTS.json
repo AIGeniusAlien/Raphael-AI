@@ -1,0 +1,27 @@
+{
+  "uses_mock_services": false,
+  "production_data_used": false,
+  "first": {
+    "collection": "raphael_evidence_v1",
+    "actual_dimensions": 384,
+    "embedding_model": "text-embedding-3-small",
+    "vectors_before": 31,
+    "vectors_after": 48,
+    "active_vectors": 48,
+    "active_documents": 9,
+    "vectors_written": 17,
+    "vectors_deduplicated": 31
+  },
+  "repeat": {
+    "collection": "raphael_evidence_v1",
+    "actual_dimensions": 384,
+    "embedding_model": "text-embedding-3-small",
+    "vectors_before": 48,
+    "vectors_after": 48,
+    "active_vectors": 48,
+    "active_documents": 9,
+    "vectors_written": 0,
+    "vectors_deduplicated": 48
+  },
+  "existing_versions_preserved": true
+}

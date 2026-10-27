@@ -80,6 +80,7 @@ struct PatientApplication: View {
                     .accessibilityIdentifier("patient-web-workspace")
             }
             .privacySensitive()
+            .accessibilityHidden(scenePhase != .active)
             if scenePhase != .active {
                 Color(.systemBackground).ignoresSafeArea()
                 VStack(spacing: 12) {

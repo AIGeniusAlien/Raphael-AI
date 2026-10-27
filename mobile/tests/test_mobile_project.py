@@ -32,6 +32,7 @@ class MobileSourceProjectTests(unittest.TestCase):
         self.assertGreaterEqual(len(release.validate({})),3)
         values={'RAPHAEL_SERVER_URL':'https://raphael.example.org','RAPHAEL_SERVER_HOST':'raphael.example.org','RAPHAEL_BUNDLE_IDENTIFIER':'org.raphael.synthetic','RAPHAEL_SUPPORT_EMAIL':'support@example.org','CODE_SIGNING_ALLOWED':'NO'}
         self.assertEqual(release.validate(values),[])
+        self.assertIn('authorized_https_origin_and_matching_bound_hostname_required',release.validate({**values,'RAPHAEL_SERVER_URL':'https://raphael-ci.test','RAPHAEL_SERVER_HOST':'raphael-ci.test'}))
         for invalid in ('http://raphael.example.org','https://user:password@raphael.example.org','https://raphael.example.org?token=synthetic','https://raphael.example.org/private','https://raphael.example.org:8443'):
             with self.subTest(url=invalid):self.assertIn('authorized_https_origin_and_matching_bound_hostname_required',release.validate({**values,'RAPHAEL_SERVER_URL':invalid}))
 

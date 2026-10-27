@@ -79,6 +79,9 @@ def cleanup():
     private=Path(os.environ['RAPHAEL_NATIVE_CI_PRIVATE'])
     group=json.loads((private/'process.json').read_text())['process_group']
     subprocess.run(['sudo','kill','-TERM','--','-'+str(group)],check=False)
+    remaining=subprocess.check_output(['sudo',sys.executable,'-c',"import sqlite3,sys; c=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True); print(c.execute('SELECT count(*) FROM dev_sessions').fetchone()[0]); c.close()",str(private/'synthetic.db')],text=True,timeout=15).strip()
+    if remaining!='0':raise RuntimeError('Native workflow left an active synthetic server session;logout was not verified.')
+    print('::notice title=Raphael native backend verification::'+json.dumps({'synthetic_sessions_remaining':0,'provider_requests':0,'backend':'actual_main_app_https'}))
     print('Ephemeral synthetic backend stopped. Runner destroys its private database and test certificate.')
 
 

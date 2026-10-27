@@ -12,11 +12,20 @@ final class RaphaelUITests: XCTestCase {
         func login(_ username: String, workspace: String) {
             let organization = web.textFields["Development organization"]
             XCTAssertTrue(organization.waitForExistence(timeout: 30))
-            organization.tap(); organization.typeText("native-ci")
+            // Scroll the real WKWebView before focusing controls. WebKit's
+            // accessibility activation point can be invalid even when the
+            // field frame is on screen;coordinate taps are actual UI gestures.
+            web.swipeUp()
+            organization.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            organization.typeText("native-ci")
             let user = web.textFields["Username"]
-            user.tap(); user.typeText(username)
+            if !user.isHittable { web.swipeUp() }
+            user.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            user.typeText(username)
             let secure = web.secureTextFields["Password"]
-            secure.tap(); secure.typeText(password)
+            if !secure.isHittable { web.swipeUp() }
+            secure.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            secure.typeText(password)
             web.buttons["Sign in"].tap()
             XCTAssertTrue(web.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 20))
             XCTAssertTrue(web.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))
@@ -31,7 +40,15 @@ final class RaphaelUITests: XCTestCase {
         app.buttons["Patient sections"].tap()
         app.buttons["Dashboard"].tap()
         XCTAssertTrue(web.buttons["Sign out"].waitForExistence(timeout: 15))
-        web.buttons["Sign out"].tap()
+        app.buttons["Privacy and session settings"].tap()
+        let readiness = app.buttons["Check backend connection"]
+        XCTAssertTrue(readiness.waitForExistence(timeout: 10))
+        readiness.tap()
+        let ready = NSPredicate(format: "label BEGINSWITH %@", "Synthetic backend database ready.")
+        expectation(for: ready, evaluatedWith: app.staticTexts["native-readiness-status"])
+        waitForExpectations(timeout: 15)
+        app.buttons["Sign out and clear local session"].tap()
+        app.buttons["Sign out"].tap()
         XCTAssertTrue(web.textFields["Username"].waitForExistence(timeout: 15))
         app.terminate(); app.launch()
         login("native-clinician", workspace: "Physician workspace")

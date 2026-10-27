@@ -1,4 +1,4 @@
-"""Opt-in read-only live retrieval evaluation on the six reviewed CDC topics.
+"""Opt-in read-only live retrieval evaluation on the reviewed CDC catalog.
 
 This measures catalog routing/source integrity,not clinical reasoning or safety.
 No patient context,model answer generation,collection writes or fixture providers.
@@ -14,6 +14,9 @@ CASES=(
     ('stroke','What are signs and symptoms of stroke?',URLS[3],'adult'),
     ('diabetes','What are signs and symptoms of diabetes?',URLS[4],'adult'),
     ('asthma','What are asthma symptoms?',URLS[5],'pediatric'),
+    ('heart_attack','What are heart attack symptoms?',URLS[6],'adult'),
+    ('sepsis','What are signs and symptoms of sepsis?',URLS[7],'adult'),
+    ('flu','What are flu symptoms?',URLS[8],'pediatric'),
     ('missing','violet gyroscopic calibrator xylophone',None,'adult'),
 )
 
@@ -31,7 +34,7 @@ def run():
         passed=(rank is not None if expected else not hits) and integrity and applicability
         cases.append({'case_id':identifier,'query':query,'population':population,'expected_source':expected,'expected_source_rank':rank,'source_integrity':integrity,'population_filter_passed':applicability,'status':'passed' if passed else 'failed','returned_chunk_ids':[item['chunk_id'] for item in hits],'returned_urls':[item['url'] for item in hits]})
     topic=[case for case in cases if case['expected_source']]
-    return {'status':'passed' if all(case['status']=='passed' for case in cases) else 'failed','uses_mock_services':False,'read_only':True,'collection':collection(),'embedding_model':MODEL,'actual_dimensions':DIMENSIONS,'catalog_source_recall_at_6':sum(case['expected_source_rank'] is not None for case in topic)/len(topic),'catalog_source_mrr':sum(1/case['expected_source_rank'] if case['expected_source_rank'] else 0 for case in topic)/len(topic),'clinical_accuracy_evaluated':False,'coverage_limit':'Four source-routing questions plus one missing-evidence case;not comprehensive or expert clinical validation.','cases':cases}
+    return {'status':'passed' if all(case['status']=='passed' for case in cases) else 'failed','uses_mock_services':False,'read_only':True,'collection':collection(),'embedding_model':MODEL,'actual_dimensions':DIMENSIONS,'catalog_source_recall_at_6':sum(case['expected_source_rank'] is not None for case in topic)/len(topic),'catalog_source_mrr':sum(1/case['expected_source_rank'] if case['expected_source_rank'] else 0 for case in topic)/len(topic),'clinical_accuracy_evaluated':False,'coverage_limit':'Seven elementary source-routing questions plus one missing-evidence case;not comprehensive or expert clinical validation.','cases':cases}
 
 
 def main():

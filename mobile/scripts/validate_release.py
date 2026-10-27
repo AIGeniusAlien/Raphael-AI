@@ -11,7 +11,7 @@ def validate(values):
     raw=values.get('RAPHAEL_SERVER_URL','');host=values.get('RAPHAEL_SERVER_HOST','').lower()
     try:
         url=urlsplit(raw)
-        valid=(url.scheme=='https' and bool(url.hostname) and url.hostname.lower()==host and url.username is None and url.password is None and not url.query and not url.fragment and url.path in ('','/') and url.port in (None,443) and '.' in host and ':' not in host and not all(x.isdigit() for x in host.split('.')) and not host.endswith(('.invalid','.localhost','.local')) and '$' not in host)
+        valid=(url.scheme=='https' and bool(url.hostname) and url.hostname.lower()==host and url.username is None and url.password is None and not url.query and not url.fragment and url.path in ('','/') and url.port in (None,443) and '.' in host and ':' not in host and not all(x.isdigit() for x in host.split('.')) and not host.endswith(('.invalid','.localhost','.local','.test')) and '$' not in host)
     except ValueError:valid=False
     if not valid:issues.append('authorized_https_origin_and_matching_bound_hostname_required')
     bundle=values.get('RAPHAEL_BUNDLE_IDENTIFIER','')

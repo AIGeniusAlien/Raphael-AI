@@ -103,6 +103,9 @@ jobs:
       - name: Publish native test counts
         if: always()
         run: python3 .github/scripts/native_test_summary.py
+      - name: Export actual simulator screenshots
+        if: always()
+        run: python3 .github/scripts/native_screenshots.py
       - name: Publish native failure diagnostics
         if: failure()
         run: |
@@ -114,6 +117,7 @@ jobs:
           name: native-test-results
           path: |
             mobile/artifacts/NativeRun.*/NativeTests.xcresult
+            mobile/artifacts/NativeRun.*/NativeAttachments/
             native-build.log
             native-setup.log
           retention-days: 14

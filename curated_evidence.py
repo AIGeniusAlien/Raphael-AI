@@ -32,6 +32,9 @@ CATALOG={
  'https://www.cdc.gov/stroke/signs-symptoms/index.html':('adult','neurology_emergency','Reviewed source describes stroke signs in men and women;no pediatric applicability review is claimed.'),
  'https://www.cdc.gov/diabetes/signs-symptoms/index.html':('general','endocrinology','Source explicitly discusses diabetes across ages and pregnancy;subsection applicability requires clinician review.'),
  'https://www.cdc.gov/asthma/about/index.html':('general','pulmonology','Source explicitly discusses asthma in children and adults;subsection applicability requires clinician review.'),
+ 'https://www.cdc.gov/heart-disease/about/heart-attack.html':('adult','cardiology_emergency','Source describes heart attack signs in men and women;no pediatric applicability review is claimed.'),
+ 'https://www.cdc.gov/sepsis/about/index.html':('general','infectious_disease_emergency','CDC education explicitly discusses adults and children;not a patient-specific sepsis protocol.'),
+ 'https://www.cdc.gov/flu/signs-symptoms/index.html':('general','infectious_disease','Source explicitly separates child and adult warning signs;subsection applicability must be preserved.'),
 }
 URLS=tuple(CATALOG)
 POPULATIONS={'adult','pediatric','general','unknown'}

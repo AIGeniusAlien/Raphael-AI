@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
 import numpy as np
 import hashlib
+from functools import lru_cache
 
 from pubmed.client import esearch_pubmed, esummary_pubmed
 from pubmed.classify import infer_study_type, evidence_strength_for
@@ -17,14 +18,11 @@ from corpus.indexer import point_id_for
 def sha256(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
-_MODEL = None
-
+@lru_cache(maxsize=2)
 def get_model(model_name: str) -> SentenceTransformer:
-    global _MODEL
-    if _MODEL is None:
-        from sentence_transformers import SentenceTransformer
-        _MODEL = SentenceTransformer(model_name)
-    return _MODEL
+    # Cache by requested model,not a single mutable encoder shared across names.
+    from sentence_transformers import SentenceTransformer
+    return SentenceTransformer(model_name)
 
 def embed_texts(texts: list[str], model_name: str) -> np.ndarray:
     model = get_model(model_name)

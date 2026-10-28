@@ -26,6 +26,28 @@ final class ServerConfigurationTests: XCTestCase {
         }
     }
 
+    func testNativeSessionCookieScopeAndExpiryAreStrict() throws {
+        let origin = try XCTUnwrap(URL(string: "https://raphael.example.org"))
+        let now = Date()
+        let properties: [HTTPCookiePropertyKey: Any] = [
+            .name: "raphael_dev_session", .value: "synthetic-token", .domain: "raphael.example.org",
+            .path: "/api/dev", .secure: "TRUE", .expires: now.addingTimeInterval(600),
+            HTTPCookiePropertyKey("HttpOnly"): "TRUE"
+        ]
+        let valid = try XCTUnwrap(HTTPCookie(properties: properties))
+        XCTAssertTrue(NativeIdentity.accepts(valid, origin: origin, now: now))
+        for (key, value) in [(HTTPCookiePropertyKey.domain, "other.example.org" as Any),
+                              (.path, "/" as Any), (.name, "other" as Any),
+                              (.expires, now.addingTimeInterval(-1) as Any)] {
+            var changed = properties; changed[key] = value
+            XCTAssertFalse(NativeIdentity.accepts(try XCTUnwrap(HTTPCookie(properties: changed)), origin: origin, now: now))
+        }
+        var insecure = properties; insecure.removeValue(forKey: .secure)
+        XCTAssertFalse(NativeIdentity.accepts(try XCTUnwrap(HTTPCookie(properties: insecure)), origin: origin, now: now))
+        var readable = properties; readable.removeValue(forKey: HTTPCookiePropertyKey("HttpOnly"))
+        XCTAssertFalse(NativeIdentity.accepts(try XCTUnwrap(HTTPCookie(properties: readable)), origin: origin, now: now))
+    }
+
     @MainActor
     func testPublicWebKitBridgeResolvesPromiseWithoutOverlayLibrary() async throws {
         let configuration = WKWebViewConfiguration()

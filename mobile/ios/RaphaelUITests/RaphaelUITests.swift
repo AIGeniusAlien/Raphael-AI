@@ -20,29 +20,14 @@ final class RaphaelUITests: XCTestCase {
         }
         let app = XCUIApplication()
         app.launch()
-        func scrollForm() {
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
-                .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)))
-        }
         func login(_ username: String, workspace: String) {
             let organization = app.textFields["Development organization"]
             XCTAssertTrue(organization.waitForExistence(timeout: 30))
-            // Query the labeled controls through the application tree:the first
-            // SwiftUI-hosted WebView remote subtree is not a stable AX scope.
-            // Scroll the real page before focusing controls. WebKit's
-            // accessibility activation point can be invalid even when the
-            // field frame is on screen;coordinate taps are actual UI gestures.
-            scrollForm()
-            organization.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            organization.typeText("native-ci")
+            organization.tap(); organization.typeText("native-ci")
             let user = app.textFields["Username"]
-            if !user.isHittable { scrollForm() }
-            user.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            user.typeText(username)
+            user.tap(); user.typeText(username)
             let secure = app.secureTextFields["Password"]
-            if !secure.isHittable { scrollForm() }
-            secure.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            secure.typeText(password)
+            secure.tap(); secure.typeText(password)
             app.buttons["Sign in"].tap()
             XCTAssertTrue(app.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 20))
             XCTAssertTrue(app.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))

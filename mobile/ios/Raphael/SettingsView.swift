@@ -32,7 +32,7 @@ struct SettingsView: View {
                 }
                 Section("On-device protections") {
                     Label("Memory-only web session", systemImage: "lock")
-                    Text("No tokens are copied into native storage. Web authentication uses the server's HttpOnly HTTPS cookies in an ephemeral WebKit store. You must sign in after the app process restarts.")
+                    Text("Native sign-in and the web workspace share the server's HttpOnly HTTPS cookie through an ephemeral WebKit store. No token or password is saved to disk. You must sign in after the app process restarts.")
                     Text("No offline medical record, service-worker cache, analytics SDK or push registration is added by this native client. Downloads and microphone capture are disabled. Native device behavior still requires verification.")
                     Text("Protect your device. The app cannot prevent deliberate screenshots or guarantee the operating system never retains temporary memory.")
                 }

@@ -42,6 +42,9 @@ struct PatientApplication: View {
 
     var body: some View {
         ZStack {
+            if session.identity == nil {
+                NativeSignInView(session: session)
+            } else {
             VStack(spacing: 0) {
                 // Sections replace the one shared WKWebView;there is no pushed
                 // view hierarchy. A stable native header avoids duplicate UIKit
@@ -82,6 +85,7 @@ struct PatientApplication: View {
             }
             .privacySensitive()
             .accessibilityHidden(scenePhase != .active)
+            }
             if scenePhase != .active {
                 Color(.systemBackground).ignoresSafeArea()
                 VStack(spacing: 12) {
@@ -92,9 +96,16 @@ struct PatientApplication: View {
                 .accessibilityElement(children: .combine)
             }
         }
-        .onAppear { if session.webView.url == nil { session.open(.dashboard) } }
+        .onAppear { if session.identity != nil && session.webView.url == nil { session.open(.dashboard) } }
+        .task {
+            while !Task.isCancelled {
+                if scenePhase == .active { await session.checkAuthentication() }
+                do { try await Task.sleep(for: .seconds(15)) } catch { break }
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { session.finishConfirmation(false) }
+            else { Task { await session.checkAuthentication() } }
         }
         .sheet(isPresented: $settings) {
             SettingsView(session: session) { settings = false }
@@ -139,4 +150,39 @@ struct PublicSourceBrowser: UIViewControllerRepresentable {
     let url: URL
     func makeUIViewController(context: Context) -> SFSafariViewController { SFSafariViewController(url: url) }
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+}
+
+struct NativeSignInView: View {
+    @ObservedObject var session: PatientWebSession
+    @State private var tenant = ""
+    @State private var username = ""
+    @State private var password = ""
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Image("BrandMark").resizable().scaledToFit().frame(height: 64).accessibilityHidden(true)
+                    Text("Welcome to Raphael").font(.title.bold())
+                    Text("Sign in to your authorized synthetic workspace. Not an emergency service.").font(.callout)
+                }
+                Section("Secure sign-in") {
+                    TextField("Development organization", text: $tenant).textContentType(.organizationName)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    TextField("Username", text: $username).textContentType(.username)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    SecureField("Password", text: $password).textContentType(.password)
+                    Button(session.authenticating ? "Signing in" : "Sign in") {
+                        let submitted = password
+                        password = ""
+                        Task { await session.signIn(tenant: tenant, username: username, password: submitted) }
+                    }.disabled(session.authenticating || tenant.isEmpty || username.isEmpty || password.isEmpty)
+                    if session.authenticating { ProgressView("Connecting securely") }
+                    if let problem = session.authenticationProblem { Text(problem).accessibilityAddTraits(.updatesFrequently) }
+                }
+                Section("Privacy") {
+                    Text("Credentials are sent only to the configured HTTPS Raphael service. Sessions are memory-only and end locally when the app process closes. Use your organization's recovery process if you cannot sign in.").font(.footnote)
+                }
+            }.navigationTitle("Raphael")
+        }
+    }
 }

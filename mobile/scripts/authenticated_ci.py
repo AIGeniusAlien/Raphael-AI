@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 import platform
 import secrets
+import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -48,10 +50,17 @@ def prepare():
     subprocess.run(['xcrun','simctl','bootstatus',identifier,'-b'],check=True,timeout=240)
     subprocess.run(['xcrun','simctl','keychain',identifier,'add-root-cert',str(certificate)],check=True)
     server_environment={**environment,'DATABASE_URL':database,'RAPHAEL_DEV_PORTAL':'1','RAPHAEL_DEV_SYNTHETIC_ONLY':'1','PYTHONDONTWRITEBYTECODE':'1'}
-    command=['sudo','env',*[key+'='+value for key,value in server_environment.items()],sys.executable,'-m','uvicorn','main:app','--host','127.0.0.1','--port','443','--ssl-keyfile',str(key),'--ssl-certfile',str(certificate),'--no-access-log']
+    forwarder=shutil.which('socat')
+    if not forwarder:raise RuntimeError('Install socat for the isolated loopback443 TCP forwarder.')
+    # Keep the actual application unprivileged. The forwarder carries encrypted
+    # bytes only;TLS still terminates in uvicorn with the verified test certificate.
+    command=[sys.executable,'-m','uvicorn','main:app','--host','127.0.0.1','--port','8443','--ssl-keyfile',str(key),'--ssl-certfile',str(certificate),'--no-access-log']
     with (private/'backend.log').open('w') as log:
-        process=subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=log,start_new_session=True)
-    (private/'process.json').write_text(json.dumps({'process_group':process.pid}))
+        process=subprocess.Popen(command,cwd=ROOT,env=server_environment,stdout=log,stderr=log,start_new_session=True)
+    with (private/'forwarder.log').open('w') as log:
+        bridge=subprocess.Popen(['sudo','-n',forwarder,'TCP-LISTEN:443,bind=127.0.0.1,reuseaddr,fork','TCP:127.0.0.1:8443'],stdout=log,stderr=log,start_new_session=True)
+    (private/'process.json').write_text(json.dumps({'server_group':process.pid,'forwarder_group':bridge.pid}))
+    with open(os.environ['GITHUB_ENV'],'a') as output:output.write('RAPHAEL_NATIVE_CI_PRIVATE='+str(private)+'\n')
     import ssl
     import httpx
     tls=ssl.create_default_context(cafile=str(certificate))
@@ -59,12 +68,12 @@ def prepare():
         deadline=time.monotonic()+60
         last_status,last_transport_error=None,None
         while True:
-            if process.poll() is not None or time.monotonic()>deadline:
+            if process.poll() is not None or bridge.poll() is not None or time.monotonic()>deadline:
                 # This CI-only backend has no provider credentials or real PHI.
                 # Expose startup exceptions,not the private account password.
-                startup=(private/'backend.log').read_text(errors='replace')[-10000:]
+                startup=((private/'backend.log').read_text(errors='replace')+'\nForwarder:\n'+(private/'forwarder.log').read_text(errors='replace'))[-10000:]
                 Path('native-backend-startup.log').write_text(startup.replace(password,'[SYNTHETIC PASSWORD REDACTED]'))
-                print('Backend startup failure metadata: '+json.dumps({'process_exit_code':process.poll(),'last_http_status':last_status,'last_transport_error_type':last_transport_error}),flush=True)
+                print('Backend startup error: '+json.dumps({'process_exit_code':process.poll(),'forwarder_exit_code':bridge.poll(),'last_http_status':last_status,'last_transport_error_type':last_transport_error}),flush=True)
                 raise RuntimeError('Synthetic HTTPS backend failed readiness;bounded startup log published separately.')
             try:
                 last_status=client.get('/readyz').status_code
@@ -87,9 +96,12 @@ def prepare():
 
 def cleanup():
     private=Path(os.environ['RAPHAEL_NATIVE_CI_PRIVATE'])
-    group=json.loads((private/'process.json').read_text())['process_group']
-    subprocess.run(['sudo','kill','-TERM','--','-'+str(group)],check=False)
-    remaining=subprocess.check_output(['sudo',sys.executable,'-c',"import sqlite3,sys; c=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True); print(c.execute('SELECT count(*) FROM dev_sessions').fetchone()[0]); c.close()",str(private/'synthetic.db')],text=True,timeout=15).strip()
+    groups=json.loads((private/'process.json').read_text())
+    subprocess.run(['sudo','-n','kill','-TERM','--','-'+str(groups['forwarder_group'])],check=False)
+    try:os.killpg(groups['server_group'],signal.SIGTERM)
+    except ProcessLookupError:pass
+    import sqlite3
+    with sqlite3.connect('file:'+str(private/'synthetic.db')+'?mode=ro',uri=True) as connection:remaining=str(connection.execute('SELECT count(*) FROM dev_sessions').fetchone()[0])
     if remaining!='0':raise RuntimeError('Native workflow left an active synthetic server session;logout was not verified.')
     print('::notice title=Raphael native backend verification::'+json.dumps({'synthetic_sessions_remaining':0,'provider_requests':0,'backend':'actual_main_app_https'}))
     print('Ephemeral synthetic backend stopped. Runner destroys its private database and test certificate.')

@@ -92,6 +92,7 @@ jobs:
       - name: Prepare simulator-trusted actual HTTPS backend
         run: |
           set -o pipefail
+          command -v socat >/dev/null || brew install socat
           python3 mobile/scripts/authenticated_ci.py 2>&1 | tee native-setup.log
       - name: Compile and test native app
         run: |

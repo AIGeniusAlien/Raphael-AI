@@ -86,7 +86,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             let (data, response) = try await request("api/dev/login", body: body)
             guard epoch == authenticationEpoch else { return }
             guard response.statusCode == 200 else {
-                authenticationProblem = response.statusCode == 429 ? "Too many sign-in attempts. Wait before trying again." : "Sign-in was not accepted. Check your organization and credentials."
+                authenticationProblem = response.statusCode == 429 ? "Too many sign-in attempts. Wait before trying again." : "Sign-in was not accepted (HTTP \(response.statusCode)). Check your organization and credentials."
                 return
             }
             let user = try JSONDecoder().decode(NativeIdentity.self, from: data)
@@ -106,7 +106,8 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             identity = user
             open(.dashboard)
         } catch {
-            authenticationProblem = "The secure service could not be reached. Check your connection and try again."
+            let code = (error as NSError).code
+            authenticationProblem = "The secure service could not complete sign-in (error \(code)). Check your connection and service configuration, then try again."
         }
     }
 

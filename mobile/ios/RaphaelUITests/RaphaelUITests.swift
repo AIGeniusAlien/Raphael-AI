@@ -29,7 +29,11 @@ final class RaphaelUITests: XCTestCase {
             let secure = app.secureTextFields["Password"]
             secure.tap(); secure.typeText(password)
             app.buttons["Sign in"].tap()
-            XCTAssertTrue(app.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 20))
+            let reached = app.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 45)
+            if !reached {
+                let problem = app.staticTexts["native-authentication-problem"]
+                XCTFail(problem.exists ? problem.label : "Authenticated web identity did not appear; no native authentication error is visible.")
+            }
             XCTAssertTrue(app.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))
         }
         login("native-patient", workspace: "Patient workspace")

@@ -181,7 +181,7 @@ struct NativeSignInView: View {
                         Task { await session.signIn(tenant: tenant, username: username, password: submitted, otp: submittedOTP) }
                     }.disabled(session.authenticating || tenant.isEmpty || username.isEmpty || password.isEmpty)
                     if session.authenticating { ProgressView("Connecting securely") }
-                    if let problem = session.authenticationProblem { Text(problem).accessibilityAddTraits(.updatesFrequently) }
+                    if let problem = session.authenticationProblem { Text(problem).accessibilityAddTraits(.updatesFrequently).accessibilityIdentifier("native-authentication-problem") }
                 }
                 Section("Privacy") {
                     Text("Credentials are sent only to the configured HTTPS Raphael service. Sessions are memory-only and end locally when the app process closes. Use your organization's recovery process if you cannot sign in.").font(.footnote)

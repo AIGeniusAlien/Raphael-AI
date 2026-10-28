@@ -10,6 +10,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     @Published private(set) var authenticating = false
     @Published var authenticationProblem: String?
     private var authenticationEpoch = 0
+    private var nativeCookie: HTTPCookie?
     @Published private(set) var loading = false
     @Published var problem: String?
     @Published var externalSource: URL?
@@ -59,8 +60,9 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(self.configuration.origin.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/")), forHTTPHeaderField: "Origin")
-        let cookies = await webView.configuration.websiteDataStore.httpCookieStore.allCookies()
-        let scoped = cookies.filter { NativeIdentity.accepts($0, origin: self.configuration.origin) }
+        // Native authentication must not await a not-yet-mounted WebKit process.
+        // This private cookie is memory-only and scoped identically to WebKit.
+        let scoped = nativeCookie.map { NativeIdentity.accepts($0, origin: self.configuration.origin) ? [$0] : [] } ?? []
         for (key, value) in HTTPCookie.requestHeaderFields(with: scoped) { request.setValue(value, forHTTPHeaderField: key) }
         if let body {
             request.httpMethod = "POST"
@@ -97,11 +99,12 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             let cookies = HTTPCookie.cookies(withResponseHeaderFields: headers, for: configuration.origin)
                 .filter { NativeIdentity.accepts($0, origin: configuration.origin) }
             guard cookies.count == 1 else { throw URLError(.badServerResponse) }
-            await webView.configuration.websiteDataStore.httpCookieStore.setCookie(cookies[0])
-            guard epoch == authenticationEpoch else { await clearAuthentication(); return }
+            nativeCookie = cookies[0]
             let (sessionData, sessionResponse) = try await request("api/dev/session")
             guard sessionResponse.statusCode == 200,
                   try JSONDecoder().decode(NativeIdentity.self, from: sessionData) == user else { throw URLError(.userAuthenticationRequired) }
+            guard epoch == authenticationEpoch else { await clearAuthentication(); return }
+            await webView.configuration.websiteDataStore.httpCookieStore.setCookie(cookies[0])
             guard epoch == authenticationEpoch else { await clearAuthentication(); return }
             identity = user
             open(.dashboard)
@@ -130,6 +133,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     private func clearAuthentication() async {
         authenticationEpoch += 1
         identity = nil
+        nativeCookie = nil
         finishConfirmation(false)
         webView.stopLoading()
         await webView.configuration.websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)

@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-28T22:23:20.238118+00:00",
+  "platform": "Linux",
+  "python": "3.12.14",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "python",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 78.091,
+      "counts": {
+        "tests": 213
+      },
+      "log": "/workspace/.raphael/rc-final-verification/python.log"
+    },
+    {
+      "name": "frontend",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.274,
+      "counts": {
+        "tests": 26,
+        "pass": 26,
+        "fail": 0,
+        "skipped": 0
+      },
+      "log": "/workspace/.raphael/rc-final-verification/frontend.log"
+    },
+    {
+      "name": "chromium",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 36.532,
+      "counts": {
+        "tests": 6
+      },
+      "log": "/workspace/.raphael/rc-final-verification/chromium.log"
+    },
+    {
+      "name": "mobile-structure",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.065,
+      "counts": {},
+      "log": "/workspace/.raphael/rc-final-verification/mobile-structure.log"
+    },
+    {
+      "name": "mobile-tests",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.164,
+      "counts": {
+        "tests": 5
+      },
+      "log": "/workspace/.raphael/rc-final-verification/mobile-tests.log"
+    },
+    {
+      "name": "traceability",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.064,
+      "counts": {},
+      "log": "/workspace/.raphael/rc-final-verification/traceability.log"
+    },
+    {
+      "name": "safety-evaluation",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.872,
+      "counts": {},
+      "log": "/workspace/.raphael/rc-final-verification/safety-evaluation.log"
+    },
+    {
+      "name": "ios-native",
+      "status": "skipped",
+      "reason": "macOS,Xcode and RAPHAEL_SIMULATOR_DESTINATION required;no native build ran."
+    },
+    {
+      "name": "live-services",
+      "status": "skipped",
+      "reason": "Requires explicit --live;no provider credentials transmitted. Historical live evidence is not rerun evidence."
+    },
+    {
+      "name": "dependency-advisory-audit",
+      "status": "skipped",
+      "reason": "Separate CI pip-audit gate queries advisory databases;no fresh audit implied by local tests."
+    }
+  ],
+  "clinical_validation": false,
+  "production_data_used": false,
+  "source_commit": "5dfe75379b476deda4700601e8507055274e7dd1"
+}

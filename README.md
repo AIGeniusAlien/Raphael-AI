@@ -1,3 +1,5 @@
+Release readiness:see [the2026-10-28 source-scoped audit](docs/RC_RELEASE_AUDIT.md). Historical test/live reports do not imply TestFlight or clinical-production approval.
+
 One-command synthetic setup: `python -m dev_start --setup --provision` (Python3.12). Automated verification: `python -m dev_verify --all --require-browser`. See [automated development](docs/AUTOMATED_DEVELOPMENT.md) and [current engineering report](docs/PRODUCTION_ENGINEERING_REPORT.md) for actual platform results and release blockers.
 
 Raphael AI development prototype: FastAPI, SQLite, browser chat and evidence retrieval scaffolds.

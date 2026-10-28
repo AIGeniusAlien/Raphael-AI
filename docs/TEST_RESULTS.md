@@ -1,3 +1,5 @@
+> Release audit,2026-10-28: [Current source-scoped readiness audit](RC_RELEASE_AUDIT.md). Sections below are historical checkpoints;older "current" or "final" wording is not a release approval.
+
 ## Final verified source evidence
 
 Source commit1da515ac57bbdb7f9ce25b9ae9a6644474593979 passed all three GitHub Actions jobs in [run40422980175](https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175). Actual xcresulttool summary:7native tests passed,0failed,0skipped on Xcode16.4/iOS18.5. Final source also passes193Python,26frontend,6Chromium and5mobile source tests plus14deterministic safety protocol cases. Read-origin guards cover all portal reads/uploads without duplicate budget accounting. The final documentation follow-up changes evidence/ledger only. No merge/deployment/signing/clinical approval. Physical device/authenticated native journey and AppStore/production gates remain open.

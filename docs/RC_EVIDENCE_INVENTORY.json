@@ -1,0 +1,10 @@
+{
+  "read_only": true,
+  "uses_mock_services": false,
+  "collection": "raphael_evidence_v1",
+  "model": "text-embedding-3-small",
+  "actual_dimensions": 384,
+  "total_vectors": 48,
+  "active_vectors": 48,
+  "active_documents": 9
+}

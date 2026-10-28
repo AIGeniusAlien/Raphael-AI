@@ -1,0 +1,56 @@
+{
+  "run_id": 40782065504,
+  "url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40782065504",
+  "source_commit": "5710cb65f8708257504994485a25b6c384418d5f",
+  "status": "completed",
+  "conclusion": "failure",
+  "jobs": [
+    {
+      "name": "regression",
+      "id": 123145961666,
+      "conclusion": "success"
+    },
+    {
+      "name": "dependency-audit",
+      "id": 123145961960,
+      "conclusion": "success"
+    },
+    {
+      "name": "ios-simulator",
+      "id": 123145962092,
+      "conclusion": "failure"
+    }
+  ],
+  "native_annotations": [
+    {
+      "title": "Raphael failure diagnostics",
+      "message": "n 78.966 (78.971) seconds\n2026-10-28 22:50:50.184 xcodebuild[2980:13053] [MT] IDETestOperationsObserverDebug: 159.383 elapsed -- Testing started completed.\n2026-10-28 22:50:50.185 xcodebuild[2980:13053] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start\n\tRaphaelUITests.testAuthenticatedPatientAndClinicianUseActualHTTPSBackend()\n\n** TEST FAILED **\n\nTesting started"
+    },
+    {
+      "title": "Raphael failure diagnostics",
+      "message": "ning or doesn't have entitlement com.apple.developer.web-browser-engine.networking AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.webcontent))}>\n2026-10-28 22:48:49.746573+0000 Raphael[8719:29752] [ProcessSuspension] 0x11300ff20 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'WebProcess NearSuspended Assertion' for process with PID=9264, error: (null)\n2026-10-28 22:48:49.748662+0000 Raphael[8719:28879] [general] Failed to terminate process: Error Domain=com.apple.extensionKit.errorDomain Code=18 \"(null)\" UserInfo={NSUnderlyingError=0x600000cf7990 {Error Domain=RBSRequestErrorDomain Code=3 \"No such process found\" UserInfo={NSLocalizedFailureReason=No such process found}}}\n2026-10-28 22:48:49.751889+0000 Raphael[8719:28879] [general] Failed to terminate process: Error Domain=com.apple.extensionKit.errorDomain Code=18 \"(null)\" UserInfo={NSUnderlyingError=0x600000cf7ae0 {Error Domain=RBSRequestErrorDomain Code=3 \"No such process found\" UserInfo={NSLocalizedFailureReason=No such process found}}}\n2026-10-28 22:48:52.260891+0000 RaphaelUITests-Runner[9271:30360] [Default] Running tests...\n    t =      nans Interface orientation changed to Portrait\nTest Suite 'All tests' started at 2026-10-28 22:48:59.672.\n    t =    70.96s         Find: Descendants matching type TextField\n    t =    70.96s         Requesting snapshot of accessibility hierarchy for app with pid 9653\n/Users/runner/work/Raphael-AI/Raphael-AI/mobile/ios/RaphaelUITests/RaphaelUITests.swift:36: error: -[RaphaelUITests.RaphaelUITests testAuthenticatedPatientAndClinicianUseActualHTTPSBackend] : Failed to get matching snapshot: No matches found for Descendants matching type TextField from input {(\n    Application, pid: 9653, label: 'Raphael'\n)}\n    t =    72.24s Tear Down\n    t =    72.27s     Ignoring failure to get hierarchy for remote element in process 9757 (Error getting main window kAXErrorServerNotFound)\n    t =    72.49s     Added attachment named 'Final synthetic native UI state;workflow result is separate'\nTest Case '-[RaphaelUITests.RaphaelUITests testAuthenticatedPatientAndClinicianUseActualHTTPSBackend]' failed (72.776 seconds).\nTest Case '-[RaphaelUITests.RaphaelUITests testUnconfiguredBuildFailsSafelyWithoutConnecting]' started.\n    t =     0.00s Start Test at 2026-10-28 22:50:12.451\n    t =     0.07s Set Up\n    t =     5.97s     Added attachment named 'Final synthetic native UI state;workflow result is separate'\nTest Case '-[RaphaelUITests.RaphaelUITests testUnconfiguredBuildFailsSafelyWithoutConnecting]' passed (6.191 seconds).\nTest Suite 'RaphaelUITests' failed at 2026-10-28 22:50:18.642.\n\t Executed 2 tests, with 1 failure (0 unexpected) in 78.966 (78.967) seconds\nTest Suite 'RaphaelUITests.xctest' failed at 2026-10-28 22:50:18.642.\n\t Executed 2 tests, with 1 failure (0 unexpected) in 78.966 (78.969) seconds\nTest Suite 'All tests' failed at 2026-10-28 22:50:18.643.\n\t Executed 2 tests, with 1 failure (0 unexpected) i"
+    },
+    {
+      "title": "Raphael failure diagnostics",
+      "message": "\nnote: Run script build phase 'Run Script' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'Raphael' from project 'Raphael')\n2026-10-28 22:48:42.231102+0000 Raphael[8719:29737] [default] Failed to resolve host network app id to config: bundleID: com.apple.WebKit.Networking instance ID: Optional([_EXExtensionInstanceIdentifier: B7FE5F89-28A2-437F-B9C4-4814296AFB35])\n2026-10-28 22:48:42.301113+0000 Raphael[8719:28879] [library] load_eligibility_plist: Failed to open /Users/runner/Library/Developer/CoreSimulator/Devices/DC4CD8B3-4457-4153-9087-A0D7A2F9BFD9/data/Containers/Data/Application/4B0FD910-F365-4378-A77D-81673D9F283A/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)\n2026-10-28 22:48:42.912124+0000 Raphael[8719:28879] [ResourceLoadStatistics] Failed to request storage access user agent string quirks from WebPrivacy.\n2026-10-28 22:48:42.912855+0000 Raphael[8719:28879] [ResourceLoadStatistics] Failed to request storage access quirks from WebPrivacy.\nTest Suite 'All tests' started at 2026-10-28 22:48:48.888.\nTest Suite 'RaphaelTests.xctest' started at 2026-10-28 22:48:48.890.\nTest Suite 'NavigationPolicyTests' started at 2026-10-28 22:48:48.891.\nTest Case '-[RaphaelTests.ServerConfigurationTests testHTTPSOriginAndMatchingBoundHostAreRequired]' passed (0.007 seconds).\nTest Case '-[RaphaelTests.ServerConfigurationTests testPublicWebKitBridgeResolvesPromiseWithoutOverlayLibrary]' started.\n2026-10-28 22:48:48.917706+0000 Raphael[8719:28879] [ResourceLoadStatistics] Failed to request query parameters from WebPrivacy.\n2026-10-28 22:48:49.501062+0000 Raphael[8719:28879] [ResourceLoadStatistics] Failed to request allowed query parameters from WebPrivacy.\n2026-10-28 22:48:49.501622+0000 Raphael[8719:28879] [ResourceLoadStatistics] Failed to request restricted opener domains from WebPrivacy\nTest Case '-[RaphaelTests.ServerConfigurationTests testPublicWebKitBridgeResolvesPromiseWithoutOverlayLibrary]' passed (0.784 seconds).\nTest Case '-[RaphaelTests.ServerConfigurationTests testReadinessRejectsLegacyMissingAndMalformedServiceResponses]' started.\nTest Case '-[RaphaelTests.ServerConfigurationTests testReadinessRejectsLegacyMissingAndMalformedServiceResponses]' passed (0.006 seconds).\n\t Executed 6 tests, with 0 failures (0 unexpected) in 0.802 (0.806) seconds\n2026-10-28 22:48:49.746067+0000 Raphael[8719:29752] [assertion] Error acquiring assertion: <Error Domain=RBSServiceErrorDomain Code=1 \"((target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.rendering AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.networking AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.webcontent))\" UserInfo={NSLocalizedFailureReason=((target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.rendering AND target is not run"
+    },
+    {
+      "title": "Raphael failure diagnostics",
+      "message": "[2026-10-28 22:44:26 +0000] Status=2, isTerminal=NO, Elapsed=00:55.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)\n\t\tMigration Elapsed:00:44 seconds\n\n[2026-10-28 22:44:27 +0000] Status=2, isTerminal=NO, Elapsed=00:56.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)\n\t\tMigration Elapsed:00:45 seconds\n\n[2026-10-28 22:44:27 +0000] Status=2, isTerminal=NO, Elapsed=00:57.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)\n\t\tMigration Elapsed:00:46 seconds\n\n[2026-10-28 22:44:29 +0000] Status=2, isTerminal=NO, Elapsed=00:58.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)\n\t\tMigration Elapsed:00:47 seconds\n\n[2026-10-28 22:44:30 +0000] Status=2, isTerminal=NO, Elapsed=00:59.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.WebBookmarks.migrator (WebBookmarks.migrator)\n\t\tMigration Elapsed:00:48 seconds\n\n[2026-10-28 22:44:31 +0000] Status=2, isTerminal=NO, Elapsed=01:00.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.PreferencesMigrator (PreferencesMigrator.migrator)\n\t\tMigration Elapsed:00:49 seconds\n\n[2026-10-28 22:44:33 +0000] Status=2, isTerminal=NO, Elapsed=01:02.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.managedconfiguration.cleanup.migrator (MCCleanup.migrator)\n\t\tMigration Elapsed:00:50 seconds\n\n[2026-10-28 22:44:34 +0000] Status=4, isTerminal=NO, Elapsed=01:03.\n\tWaiting on System App\n\n[2026-10-28 22:44:35 +0000] Status=4, isTerminal=NO, Elapsed=01:04.\n\tWaiting on System App\n\n[2026-10-28 22:44:38 +0000] Status=4294967295, isTerminal=YES, Elapsed=01:07.\n\tFinished\n\nActual synthetic main:app HTTPS ready;simulator trust installed;no provider requests."
+    },
+    {
+      "title": "Raphael native screenshots",
+      "message": "{\"exported_png_files\": 3, \"source\": \"actual_xcresult_attachments\", \"authenticated_workflow_result_is_separate\": true}"
+    },
+    {
+      "title": "Raphael native test summary",
+      "message": "{\"source\": \"xcresulttool\", \"status\": \"reported\", \"native_job_result_is_separate\": true, \"passedTests\": 7, \"failedTests\": 1, \"skippedTests\": 0, \"totalTestCount\": 8}"
+    },
+    {
+      "title": "Raphael native backend verification",
+      "message": "{\"synthetic_sessions_remaining\": 0, \"provider_requests\": 0, \"backend\": \"actual_main_app_https\"}"
+    }
+  ],
+  "authenticated_native_result": "FAIL;remote accessibility snapshot unavailable before successful login",
+  "no_native_success_inferred_from_zero_remaining_sessions": true
+}

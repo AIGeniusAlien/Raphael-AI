@@ -1,3 +1,5 @@
+> Release audit,2026-10-28: [Current source-scoped readiness audit](RC_RELEASE_AUDIT.md). Sections below are historical checkpoints;older "current" or "final" wording is not a release approval.
+
 ## Expanded-corpus live conversation acceptance
 
 The first9-document conversation attempt failed strict membership because the model wrote `[E1, 2025-09-23]`. The exact failed draft and original source snapshots are retained in MASTER_EXPANDED_INITIAL_FAILURE.json. No fuzzy citation normalization or relaxed support check was introduced. A single formatting example now places the date outside the brackets;regression still requires combined label/date references to fail before support checking. The next real OpenAI/Qdrant/Chromium physician AND patient workflows completed with exact rendered resolver links,source hashes/excerpts and automated support screens verified. MASTER_EXPANDED_LIVE_RESULTS.json contains the actual outputs. No clinician approval or clinical-validation claim.

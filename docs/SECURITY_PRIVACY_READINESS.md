@@ -1,3 +1,5 @@
+> Current release disposition and owner/engineering gates:[RC_RELEASE_AUDIT.md](RC_RELEASE_AUDIT.md). Earlier dated evidence below is historical and is not compliance certification.
+
 # Technical security and HIPAA readiness evidence
 
 Raphael is synthetic-development-only. This matrix supports qualified assessment;it is not a finding of HIPAA compliance,legal advice,completed risk analysis or permission to process PHI. No BAA,workforce program,production infrastructure or clinical authorization is established by source code. Applicability and implementation specifications must be evaluated by the owner's qualified privacy/security/legal officers.

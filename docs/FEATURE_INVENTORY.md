@@ -1,3 +1,5 @@
+> Release audit,2026-10-28: [Current source-scoped readiness audit](RC_RELEASE_AUDIT.md). Sections below are historical checkpoints;older "current" or "final" wording is not a release approval.
+
 ## Current master engineering increment
 
 Read [MASTER_ENGINEERING_REPORT.md](MASTER_ENGINEERING_REPORT.md) first. New live physician and patient support screens passed with unchanged safety gates;bounded hybrid reranking and seven versioned source-snapshot documentation formats are implemented. Responsive browser verification passed;configured native launch crash fixed but authenticated UI test rerun is pending. Development CDC corpus expanded non-destructively to9documents/48vectors with repeat0writes and8live routing checks passed. Historical results below remain scoped to their recorded sources. No clinical-production/AppStore readiness or deployment claim.

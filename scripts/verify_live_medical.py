@@ -100,7 +100,7 @@ def run(output):
                             patient_threads=patient_context.request.get('/api/dev/patient-ai/threads').json()
                             patient_thread=patient_context.request.get('/api/dev/patient-ai/threads/'+str(patient_threads[0]['id'])).json()
                             patient_message=patient_thread['messages'][-1]
-                            result['patient_workflow']={'status':patient_message['status'],'response':patient_message['content'],'evidence':patient_message['evidence'],'claim_screen':patient_message.get('claim_screen'),'clinician_approved':False}
+                            result['patient_workflow']={'status':patient_message['status'],'response':patient_message['content'],'evidence':patient_message['evidence'],'claim_screen':patient_message.get('claim_screen'),'failure_code':patient_message.get('failure_code'),'clinician_approved':False}
                             assert patient_message['status'] in ('complete','blocked')
                             if patient_message['status']=='blocked':assert patient_message.get('claim_screen',{}).get('status')=='blocked'
                             for item in patient_message['evidence']:

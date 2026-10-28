@@ -35,6 +35,7 @@ def init_patient_ai_schema(engine):
     with engine.begin() as c:
         execute_sqlite_script(c,SCHEMA)
         if 'claim_screen' not in {row[1] for row in c.exec_driver_sql('PRAGMA table_info(dev_patient_ai_messages)')}:c.exec_driver_sql('ALTER TABLE dev_patient_ai_messages ADD COLUMN claim_screen TEXT')
+        if 'failure_code' not in {row[1] for row in c.exec_driver_sql('PRAGMA table_info(dev_patient_ai_messages)')}:c.exec_driver_sql('ALTER TABLE dev_patient_ai_messages ADD COLUMN failure_code TEXT')
 
 class Input(BaseModel):model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
 class ThreadIn(Input):
@@ -167,6 +168,7 @@ def install_patient_ai(app,ctx,token_provider=None,evidence_provider=None):
         messages=[{'role':'system','content':prompt}]+history+[{'role':'user','content':body.content}]
         def events():
             content='';status='failed';source=None;claim_screen=None
+            phase,failure_code='provider_stream',None
             def event(kind,data):return 'event: '+kind+'\ndata: '+json.dumps(data)+'\n\n'
             try:
                 yield event('start',{'generation_id':generation,'model':None if notice else model,'provisional':True})
@@ -185,11 +187,16 @@ def install_patient_ai(app,ctx,token_provider=None,evidence_provider=None):
                     if current!='streaming':status='cancelled';yield event('cancelled',{});return
                     if not isinstance(delta,str) or len(content)+len(delta)>30000:raise ValueError('Invalid model output.')
                     content+=delta;yield event('delta',{'text':delta})
+                phase='provider_cleanup'
+                if source is not None and hasattr(source,'close'):
+                    source.close();source=None
+                phase='citation_membership'
                 references=re.findall(r'\[([^\[\]]+)\]',content)
                 if not references or any(ref not in aliases and ref not in aliases.values() for ref in references):raise ValueError('Unknown reference.')
                 content=re.sub(r'\[([^\[\]]+)\]',lambda m:'['+aliases.get(m.group(1),m.group(1))+']',content)
                 yield event('canonical',{'text':content})
                 if os.getenv('RAPHAEL_VERIFY_CLAIMS')=='1':
+                    phase='claim_support'
                     from rag.claim_support import screen_claims
                     with engine.connect() as c:
                         active(c,identifier,user,request)
@@ -207,13 +214,16 @@ def install_patient_ai(app,ctx,token_provider=None,evidence_provider=None):
             except GeneratorExit:status='cancelled';raise
             except HTTPException:
                 status='cancelled';yield event('cancelled',{'notice':'Consent,account or record access is no longer active.'})
-            except Exception:yield event('error',{'notice':'Generation failed or citation validation was invalid.Provisional text is not medical advice.'})
+            except Exception as error:
+                from rag.claim_support import ClaimScreenUnavailable
+                failure_code=phase+':'+(error.failure_code if isinstance(error,ClaimScreenUnavailable) else type(error).__name__)
+                yield event('error',{'notice':'Generation failed or citation validation was invalid.Provisional text is not medical advice.','failure_code':failure_code})
             finally:
                 if source is not None and hasattr(source,'close'):
                     try:source.close()
                     except Exception:status='failed'
                 with engine.begin() as c:
-                    c.execute(text("UPDATE dev_patient_ai_messages SET content=:v,status=CASE WHEN status='cancelled' THEN 'cancelled' ELSE :s END,claim_screen=:cs WHERE generation_id=:g"),{'v':content,'s':status,'g':generation,'cs':json.dumps(claim_screen) if claim_screen else None})
+                    c.execute(text("UPDATE dev_patient_ai_messages SET content=:v,status=CASE WHEN status='cancelled' THEN 'cancelled' ELSE :s END,claim_screen=:cs,failure_code=:fc WHERE generation_id=:g"),{'v':content,'s':status,'g':generation,'cs':json.dumps(claim_screen) if claim_screen else None,'fc':failure_code})
                     ctx.audit(c,user,'patient_ai_'+status,'patient_ai_thread',identifier)
         return StreamingResponse(events(),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})
     app.include_router(router)

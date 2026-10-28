@@ -87,6 +87,7 @@ class ClaimSupportTests(unittest.TestCase):
                 else:create.return_value=fixture
                 with self.assertRaises(ClaimScreenUnavailable) as error:screen_claims(self.answer,self.evidence,'adult')
                 self.assertNotIn('SECRET-REFLECTION',str(error.exception));self.assertEqual(create.call_count,1)
+                self.assertIn(error.exception.failure_code.split(':')[0],('provider','response_structure'))
 
     def test_invalid_input_is_rejected_before_provider_transmission(self):
         with patch('rag.claim_support.OpenAI') as sdk:

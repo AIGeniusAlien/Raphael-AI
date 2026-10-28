@@ -115,6 +115,29 @@ class PatientAITests(unittest.TestCase):
             response=self.ask(identifier)
         self.assertIn('event: error',response.text);self.assertNotIn('SECRET-VERIFIER',response.text);self.assertNotIn('event: complete',response.text)
 
+    def test_checker_failure_stage_persists_without_provider_payload(self):
+        from rag.claim_support import ClaimScreenUnavailable
+        identifier=self.thread()
+        with patch.dict(os.environ,{'RAPHAEL_VERIFY_CLAIMS':'1'}),patch('rag.claim_support.screen_claims',side_effect=ClaimScreenUnavailable('Safe verifier failure',failure_code='quote_resolution:ValueError')):
+            response=self.ask(identifier)
+        self.assertNotIn('event: complete',response.text)
+        init_patient_ai_schema(self.engine)
+        message=self.client.get(f'/api/dev/patient-ai/threads/{identifier}').json()['messages'][-1]
+        self.assertEqual(message['status'],'failed');self.assertEqual(message['failure_code'],'claim_support:quote_resolution:ValueError')
+
+    def test_provider_cleanup_failure_cannot_falsely_complete_patient_response(self):
+        class FailingClose:
+            def __iter__(self):return self
+            def __next__(self):
+                if getattr(self,'sent',False):raise StopIteration
+                self.sent=True;return 'Synthetic explanation [E1]'
+            def close(self):raise RuntimeError('SECRET-PROVIDER-PAYLOAD')
+        self.tokens=lambda *_:FailingClose()
+        identifier=self.thread();response=self.ask(identifier)
+        self.assertNotIn('event: complete',response.text);self.assertNotIn('SECRET-PROVIDER-PAYLOAD',response.text)
+        message=self.client.get(f'/api/dev/patient-ai/threads/{identifier}').json()['messages'][-1]
+        self.assertEqual(message['status'],'failed');self.assertEqual(message['failure_code'],'provider_cleanup:RuntimeError')
+
     def test_revoke_between_tokens_and_claim_screen_prevents_checker_request(self):
         identifier=self.thread()
         def tokens(m,v):

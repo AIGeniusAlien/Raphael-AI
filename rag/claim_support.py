@@ -19,6 +19,10 @@ REASONS={'direct_support','missing_support','population_mismatch','conflict','mi
 
 class ClaimScreenUnavailable(RuntimeError):
     """Safe failure without provider payload,credentials or endpoint reflection."""
+    def __init__(self,message,failure_code='unavailable',http_status=None):
+        super().__init__(message)
+        self.failure_code=failure_code
+        self.http_status=http_status if type(http_status) is int and 100<=http_status<=599 else None
 
 
 def segments(answer):
@@ -131,12 +135,15 @@ def screen_claims(answer,evidence,population='unknown',model=None):
     )
     data={'patient_population':population,'segments':model_parts,'evidence':registered}
     schema={'type':'object','additionalProperties':False,'required':['checks'],'properties':{'checks':{'type':'array','items':{'type':'object','additionalProperties':False,'required':['segment_id','classification','verdict','supports','reason_code'],'properties':{'segment_id':{'type':'string','enum':[part['segment_id'] for part in parts]},'classification':{'type':'string','enum':sorted(CLASSIFICATIONS)},'verdict':{'type':'string','enum':sorted(VERDICTS)},'reason_code':{'type':'string','enum':sorted(REASONS)},'supports':{'type':'array','items':{'type':'object','additionalProperties':False,'required':['quote_ref'],'properties':{'quote_ref':{'type':'string','enum':list(spans)}}}}}}}}}
+    phase='provider'
     try:
         with OpenAI(base_url=base,api_key=os.environ['LLM_API_KEY'],timeout=20,max_retries=0) as client:
             result=client.chat.completions.create(model=selected,messages=[{'role':'system','content':system},{'role':'user','content':json.dumps(data)}],response_format={'type':'json_schema','json_schema':{'name':'raphael_claim_screen','strict':True,'schema':schema}},max_completion_tokens=3000)
+        phase='response_structure'
         if not result.choices or getattr(result.choices[0],'finish_reason',None) not in (None,'stop'):raise ValueError('Incomplete checker response.')
         parsed=json.loads(result.choices[0].message.content)
         if not isinstance(parsed,dict) or set(parsed)!={'checks'} or not isinstance(parsed['checks'],list):raise ValueError('Invalid checker object.')
+        phase='quote_resolution'
         for check in parsed['checks']:
             if not isinstance(check,dict) or not isinstance(check.get('supports'),list):raise ValueError('Invalid checker supports.')
             resolved=[]
@@ -144,9 +151,10 @@ def screen_claims(answer,evidence,population='unknown',model=None):
                 if not isinstance(span,dict) or set(span)!={'quote_ref'} or span['quote_ref'] not in spans:raise ValueError('Unknown registered supporting quote.')
                 resolved.append(dict(spans[span['quote_ref']]))
             check['supports']=resolved
+        phase='protocol_validation'
         checked=validate_screen(answer,evidence,population,parsed)
-    except Exception:
-        raise ClaimScreenUnavailable('Automated claim-support screening failed or could not verify required structure/spans.') from None
+    except Exception as error:
+        raise ClaimScreenUnavailable('Automated claim-support screening failed or could not verify required structure/spans.',failure_code=phase+':'+type(error).__name__,http_status=getattr(error,'status_code',None)) from None
     checked.update(model_requested=selected,model_returned=getattr(result,'model',None),provider_calls=1,timeout_seconds=20,max_retries=0)
     usage=getattr(result,'usage',None)
     checked['usage']={name:getattr(usage,name,None) for name in ('prompt_tokens','completion_tokens','total_tokens')}

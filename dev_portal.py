@@ -191,6 +191,8 @@ def init_portal_schema(engine):
     with engine.begin() as c:
         c.exec_driver_sql('BEGIN IMMEDIATE')
         execute_sqlite_script(c, SCHEMA)
+        from dev_mfa import SCHEMA as MFA_SCHEMA
+        execute_sqlite_script(c, MFA_SCHEMA)
         columns={row[1] for row in c.exec_driver_sql('PRAGMA table_info(dev_patients)')}
         if 'created_by_id' not in columns:
             c.exec_driver_sql('ALTER TABLE dev_patients ADD COLUMN created_by_id INTEGER REFERENCES dev_users(id)')
@@ -248,6 +250,7 @@ class Input(BaseModel):
 
 
 class Login(Input):
+    otp: SecretStr | None = Field(default=None, max_length=100)
     tenant: str = Field(min_length=1, max_length=100)
     username: str = Field(min_length=1, max_length=100)
     password: SecretStr = Field(min_length=1, max_length=128)
@@ -409,6 +412,9 @@ def install_dev_portal(app, engine, assessment_generator=None):
                             {"t": body.tenant, "u": body.username}).mappings().first()
             stored = row["password_hash"] if row else "00" * 16 + ":" + "00" * 64
             valid = _password_matches(body.password.get_secret_value(), stored) and bool(row and row["active"])
+            if valid:
+                from dev_mfa import verify
+                valid = verify(c, row["id"], body.otp.get_secret_value() if body.otp else "")
             if not valid:
                 reset_at = (datetime.now(timezone.utc) + timedelta(seconds=LOGIN_WINDOW_SECONDS)).isoformat()
                 c.execute(text("INSERT INTO dev_login_attempts(key_hash,failures,reset_at) VALUES (:h,1,:r) "
@@ -669,7 +675,10 @@ def install_dev_portal(app, engine, assessment_generator=None):
             return dict(target, active=body.active)
 
     app.include_router(router)
-    return SimpleNamespace(engine=engine, user=current_user, clinician=clinician,
+    context = SimpleNamespace(engine=engine, user=current_user, clinician=clinician,
                            patient_for=patient_for, conversation_for=conversation_for,
                            note_for=note_for, audit=_audit, same_origin_json=same_origin_json, request_guard=request_guard,
                            can_access_patient=can_access_patient)
+    from dev_mfa import install_mfa
+    install_mfa(app, context)
+    return context

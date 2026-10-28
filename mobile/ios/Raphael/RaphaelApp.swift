@@ -157,6 +157,7 @@ struct NativeSignInView: View {
     @State private var tenant = ""
     @State private var username = ""
     @State private var password = ""
+    @State private var otp = ""
     var body: some View {
         NavigationStack {
             Form {
@@ -171,10 +172,13 @@ struct NativeSignInView: View {
                     TextField("Username", text: $username).textContentType(.username)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                     SecureField("Password", text: $password).textContentType(.password)
+                    SecureField("Authenticator or recovery code (if enabled)", text: $otp).textContentType(.oneTimeCode)
                     Button(session.authenticating ? "Signing in" : "Sign in") {
                         let submitted = password
+                        let submittedOTP = otp
+                        otp = ""
                         password = ""
-                        Task { await session.signIn(tenant: tenant, username: username, password: submitted) }
+                        Task { await session.signIn(tenant: tenant, username: username, password: submitted, otp: submittedOTP) }
                     }.disabled(session.authenticating || tenant.isEmpty || username.isEmpty || password.isEmpty)
                     if session.authenticating { ProgressView("Connecting securely") }
                     if let problem = session.authenticationProblem { Text(problem).accessibilityAddTraits(.updatesFrequently) }

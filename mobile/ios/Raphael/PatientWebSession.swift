@@ -74,7 +74,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         return (data, http)
     }
 
-    func signIn(tenant: String, username: String, password: String) async {
+    func signIn(tenant: String, username: String, password: String, otp: String = "") async {
         guard !authenticating else { return }
         authenticating = true
         authenticationProblem = nil
@@ -82,7 +82,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         let epoch = authenticationEpoch
         defer { authenticating = false }
         do {
-            let body = try JSONSerialization.data(withJSONObject: ["tenant": tenant, "username": username, "password": password])
+            let body = try JSONSerialization.data(withJSONObject: ["tenant": tenant, "username": username, "password": password, "otp": otp])
             let (data, response) = try await request("api/dev/login", body: body)
             guard epoch == authenticationEpoch else { return }
             guard response.statusCode == 200 else {

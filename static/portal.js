@@ -48,6 +48,7 @@
     byId('logout').hidden = true;
     byId('session-label').textContent = '';
     byId('password').value = '';
+    if (byId('otp')) byId('otp').value = ''; 
   }
 
   async function api(path, options = {}) {
@@ -135,7 +136,7 @@
 
   async function login() {
     if (state.authBusy) throw new Error('Wait for the current sign-in or sign-out request to finish.');
-    const credentials = { tenant: byId('tenant').value.trim(), username: byId('username').value.trim(), password: byId('password').value };
+    const credentials = { tenant: byId('tenant').value.trim(), username: byId('username').value.trim(), password: byId('password').value, otp: byId('otp')?.value || '' };
     clearSession();
     const epoch = state.sessionEpoch;
     state.authBusy = true;
@@ -145,6 +146,7 @@
     } finally {
       state.authBusy = false;
       byId('password').value = '';
+    if (byId('otp')) byId('otp').value = ''; 
     }
   }
 

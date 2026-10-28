@@ -19,7 +19,8 @@ sentence-transformers==6.2.0
 numpy==1.26.4
 pypdf==6.21.2
 
-# Auth (JWT)
+# Auth (JWT and encrypted TOTP enrollment)
+cryptography==50.0.2
 PyJWT[crypto]==2.15.1
 passlib[bcrypt]==1.7.4
 

@@ -1,6 +1,7 @@
 import XCTest
 
 final class RaphaelUITests: XCTestCase {
+    private let fixturePassword = "__CI_SYNTHETIC_PASSWORD__"
     override func tearDownWithError() throws {
         let app = XCUIApplication()
         if app.state != .notRunning {
@@ -14,7 +15,7 @@ final class RaphaelUITests: XCTestCase {
 
     func testAuthenticatedPatientAndClinicianUseActualHTTPSBackend() throws {
         continueAfterFailure = false
-        let password = "__CI_SYNTHETIC_PASSWORD__"
+        let password = fixturePassword
         guard !password.hasPrefix("__CI_") else {
             throw XCTSkip("Requires ephemeral authenticated_ci.py backend;no authenticated native success implied.")
         }
@@ -32,7 +33,7 @@ final class RaphaelUITests: XCTestCase {
             let reached = app.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 45)
             if !reached {
                 let problem = app.staticTexts["native-authentication-problem"]
-                XCTFail(problem.exists ? problem.label : "Authenticated web identity did not appear; no native authentication error is visible.")
+                XCTFail(problem.exists ? problem.label : "Authenticated web identity did not appear. Native status: " + app.otherElements["native-authentication-status"].label)
             }
             XCTAssertTrue(app.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))
         }
@@ -67,6 +68,64 @@ final class RaphaelUITests: XCTestCase {
         XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout: 30))
     }
 
+    func testActualHTTPSAuthenticationContractIndependentOfWebKit() async throws {
+        guard !fixturePassword.hasPrefix("__CI_") else { throw XCTSkip("Private actual-HTTPS CI fixture required.") }
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        configuration.urlCache = nil
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 20
+        let client = URLSession(configuration: configuration, delegate: ContractRedirectPolicy(), delegateQueue: nil)
+        defer { client.invalidateAndCancel() }
+        let origin = URL(string: "https://raphael-ci.test")!
+        func call(_ path: String, cookie: HTTPCookie? = nil, body: [String:String]? = nil) async throws -> (Data, HTTPURLResponse) {
+            var request = URLRequest(url: origin.appendingPathComponent(path))
+            request.setValue(origin.absoluteString, forHTTPHeaderField: "Origin")
+            if let cookie { for (key,value) in HTTPCookie.requestHeaderFields(with: [cookie]) { request.setValue(value, forHTTPHeaderField: key) } }
+            if let body {
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            }
+            let (data,response) = try await client.data(for: request)
+            return (data, try XCTUnwrap(response as? HTTPURLResponse))
+        }
+        do {
+            for username in ["native-patient", "native-clinician"] {
+            let (_,login) = try await call("api/dev/login", body: ["tenant":"native-ci","username":username,"password":fixturePassword])
+            XCTAssertEqual(login.statusCode, 200)
+            let headers = login.allHeaderFields.reduce(into: [String:String]()) { output,pair in
+                if let key = pair.key as? String, let value = pair.value as? String { output[key] = value }
+            }
+            let cookie = try XCTUnwrap(HTTPCookie.cookies(withResponseHeaderFields: headers, for: origin).first { $0.name == "raphael_dev_session" })
+            XCTAssertTrue(cookie.isSecure && cookie.isHTTPOnly)
+            let (sessionData,session) = try await call("api/dev/session", cookie:cookie)
+            XCTAssertEqual(session.statusCode,200)
+            let identity = try XCTUnwrap(JSONSerialization.jsonObject(with:sessionData) as? [String:Any])
+            XCTAssertEqual(identity["role"] as? String, username == "native-patient" ? "patient" : "clinician")
+            let (records,chart) = try await call("api/dev/patients", cookie:cookie)
+            XCTAssertEqual(chart.statusCode,200)
+            let patients = try XCTUnwrap(JSONSerialization.jsonObject(with: records) as? [[String:Any]])
+            let patient = try XCTUnwrap(patients.first { $0["name"] as? String == "Synthetic native patient" })
+            let id = try XCTUnwrap(patient["id"] as? Int)
+            let (_,otherChart) = try await call("api/dev/patients/\(id+1)", cookie:cookie)
+            XCTAssertEqual(otherChart.statusCode, username == "native-patient" ? 404 : 200)
+            let (notes,response) = try await call("api/dev/patients/\(id)/notes", cookie:cookie)
+            XCTAssertEqual(response.statusCode,200)
+            XCTAssertTrue(String(decoding:notes,as:UTF8.self).contains("Synthetic native approved note. No real clinical findings."))
+            let (_,forbidden) = try await call("api/dev/admin/users", cookie:cookie)
+            XCTAssertEqual(forbidden.statusCode,403)
+            let (_,logout) = try await call("api/dev/logout", cookie:cookie, body:[:])
+            XCTAssertEqual(logout.statusCode,200)
+            let (_,revoked) = try await call("api/dev/session", cookie:cookie)
+            XCTAssertEqual(revoked.statusCode,401)
+            }
+        } catch {
+            XCTFail("Independent native HTTPS contract failed (error code \((error as NSError).code)); no credential values logged.")
+        }
+    }
+
     func testNativeSignInControlsDoNotRequireRemoteWebKitAccessibility() throws {
         let app = XCUIApplication()
         app.launch()
@@ -90,5 +149,11 @@ final class RaphaelUITests: XCTestCase {
         screenshot.name = "Unconfigured development app"
         screenshot.lifetime = .keepAlways
         add(screenshot)
+    }
+}
+
+private final class ContractRedirectPolicy: NSObject, URLSessionTaskDelegate {
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
     }
 }

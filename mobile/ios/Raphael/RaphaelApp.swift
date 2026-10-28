@@ -42,20 +42,17 @@ struct PatientApplication: View {
 
     var body: some View {
         ZStack {
-            if session.identity == nil {
-                NativeSignInView(session: session)
-            } else {
             VStack(spacing: 0) {
                 // Sections replace the one shared WKWebView;there is no pushed
                 // view hierarchy. A stable native header avoids duplicate UIKit
                 // navigation-bar ownership during configured launch on iOS18.5.
                 HStack {
                     Menu {
-                        ForEach(PatientSection.allCases) { section in
+                        ForEach(session.identity?.role == "clinician" ? [.dashboard, .record, .intelligence, .messages, .appointments, .account] : PatientSection.allCases) { section in
                             Button(section.title, systemImage: section.symbol) { session.open(section) }
                         }
                     } label: { Label("Sections", systemImage: "line.3.horizontal") }
-                    .accessibilityLabel("Patient sections")
+                    .accessibilityLabel(session.identity?.role == "clinician" ? "Clinician sections" : "Patient sections")
                     Spacer()
                     Text(session.currentSection.title).font(.headline).accessibilityAddTraits(.isHeader)
                     Spacer()
@@ -84,8 +81,10 @@ struct PatientApplication: View {
                     .accessibilityIdentifier("patient-web-workspace")
             }
             .privacySensitive()
-            .accessibilityHidden(scenePhase != .active)
-            }
+            .accessibilityHidden(scenePhase != .active || session.identity == nil)
+            .opacity(session.identity == nil ? 0 : 1)
+            .allowsHitTesting(session.identity != nil)
+            if session.identity == nil { NativeSignInView(session: session).privacySensitive().accessibilityHidden(scenePhase != .active) }
             if scenePhase != .active {
                 Color(.systemBackground).ignoresSafeArea()
                 VStack(spacing: 12) {
@@ -180,7 +179,7 @@ struct NativeSignInView: View {
                         password = ""
                         Task { await session.signIn(tenant: tenant, username: username, password: submitted, otp: submittedOTP) }
                     }.disabled(session.authenticating || tenant.isEmpty || username.isEmpty || password.isEmpty)
-                    if session.authenticating { ProgressView("Connecting securely") }
+                    if session.authenticating { ProgressView(session.authenticationStatus).accessibilityIdentifier("native-authentication-status") }
                     if let problem = session.authenticationProblem { Text(problem).accessibilityAddTraits(.updatesFrequently).accessibilityIdentifier("native-authentication-problem") }
                 }
                 Section("Privacy") {

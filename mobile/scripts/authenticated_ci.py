@@ -7,7 +7,6 @@ import json
 import os
 from pathlib import Path
 import platform
-import re
 from collections import Counter
 import secrets
 import shutil
@@ -88,6 +87,7 @@ def prepare():
         record=client.post('/api/dev/patients',json={'name':'Synthetic native patient','patient_username':'native-patient','dob':'1994-01-01'});record.raise_for_status()
         note=client.post(f"/api/dev/patients/{record.json()['id']}/notes",json={'content':'Synthetic native approved note. No real clinical findings.'});note.raise_for_status()
         client.post(f"/api/dev/notes/{note.json()['id']}/approve",json={}).raise_for_status()
+        client.post('/api/dev/patients',json={'name':'Synthetic native unlinked record'}).raise_for_status()
         client.post('/api/dev/logout',json={}).raise_for_status()
     test=ROOT/'mobile/ios/RaphaelUITests/RaphaelUITests.swift'
     source=test.read_text()
@@ -109,8 +109,10 @@ def cleanup():
         remaining=connection.execute('SELECT count(*) FROM dev_sessions').fetchone()[0]
         events={event:count for event,count in connection.execute("SELECT event,count(*) FROM dev_audit WHERE event IN ('login','logout','read_patient','read_notes','list_patients') GROUP BY event")}
     routes=Counter()
-    for method,path,status in re.findall(r'"(GET|POST) (/api/dev/(?:login|session|logout|patients(?:/\d+/notes)?)) HTTP/[^" ]+" (\d{3})', (private/'backend.log').read_text(errors='replace')):
-        routes[method+' '+re.sub(r'/\d+', '/:id', path)+' '+status]+=1
+    for line in (private/'backend.log').read_text(errors='replace').splitlines():
+        if line.startswith('RAPHAEL_CI_HTTP '):
+            event=json.loads(line.split(' ',1)[1])
+            routes[event['method']+' '+event['path']+' '+str(event['status'])]+=1
     print('::notice title=Raphael native HTTP trace::'+json.dumps(dict(routes)),flush=True)
     print('::notice title=Raphael native backend verification::'+json.dumps({'synthetic_sessions_remaining':remaining,'provider_requests':0,'backend':'actual_main_app_https','audit_event_counts_including_provisioning':events}),flush=True)
     if remaining!=0:raise RuntimeError('Native workflow left an active synthetic server session;logout was not verified.')

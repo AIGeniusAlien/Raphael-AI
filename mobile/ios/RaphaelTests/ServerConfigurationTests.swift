@@ -29,6 +29,9 @@ final class ServerConfigurationTests: XCTestCase {
     func testNativeSessionCookieScopeAndExpiryAreStrict() throws {
         let origin = try XCTUnwrap(URL(string: "https://raphael.example.org"))
         let now = Date()
+        let parsed = HTTPCookie.cookies(withResponseHeaderFields: ["Set-Cookie":"raphael_dev_session=synthetic-parser-fixture; HttpOnly; Max-Age=28800; Path=/api/dev; SameSite=strict; Secure"], for: origin)
+        XCTAssertEqual(parsed.count,1)
+        XCTAssertTrue(NativeIdentity.accepts(try XCTUnwrap(parsed.first), origin:origin, now:now))
         let properties: [HTTPCookiePropertyKey: Any] = [
             .name: "raphael_dev_session", .value: "synthetic-token", .domain: "raphael.example.org",
             .path: "/api/dev", .secure: "TRUE", .expires: now.addingTimeInterval(600),

@@ -41,3 +41,7 @@ nav a:focus-visible,nav a:hover { text-decoration:underline;outline-offset:3px; 
 aside,#chart,#login-panel { box-shadow:0 8px 28px #12394b08;border-radius:1rem; }
 #login-panel { margin:2rem auto;padding:clamp(1.2rem,4vw,2.4rem); }
 input,textarea,button { border-radius:.5rem; }
+
+/* Private factor material must wrap without forcing narrow account pages wider. */
+#mfa-private { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: #fff3cc; border-radius: .5rem; }
+input[type="checkbox"], input[type="radio"] { width: auto; margin-inline-end: .5rem; }

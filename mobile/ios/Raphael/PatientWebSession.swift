@@ -8,6 +8,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     let webView: WKWebView
     @Published private(set) var identity: NativeIdentity?
     @Published private(set) var authenticating = false
+    @Published private(set) var authenticationStatus = "Ready to sign in"
     @Published var authenticationProblem: String?
     private var authenticationEpoch = 0
     private var nativeCookie: HTTPCookie?
@@ -39,7 +40,8 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         finishConfirmation(false)
         currentSection = section
         problem = nil
-        let request = URLRequest(url: configuration.url(for: section), cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30)
+        let destination = section == .intelligence && identity?.role == "clinician" ? configuration.origin.appendingPathComponent("static/intelligence.html") : configuration.url(for: section)
+        let request = URLRequest(url: destination, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30)
         webView.load(request)
     }
 
@@ -79,6 +81,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     func signIn(tenant: String, username: String, password: String, otp: String = "") async {
         guard !authenticating else { return }
         authenticating = true
+        authenticationStatus = "Connecting securely"
         authenticationProblem = nil
         authenticationEpoch += 1
         let epoch = authenticationEpoch
@@ -99,11 +102,13 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             let cookies = HTTPCookie.cookies(withResponseHeaderFields: headers, for: configuration.origin)
                 .filter { NativeIdentity.accepts($0, origin: configuration.origin) }
             guard cookies.count == 1 else { throw URLError(.badServerResponse) }
+            authenticationStatus = "Verifying your session"
             nativeCookie = cookies[0]
             let (sessionData, sessionResponse) = try await request("api/dev/session")
             guard sessionResponse.statusCode == 200,
                   try JSONDecoder().decode(NativeIdentity.self, from: sessionData) == user else { throw URLError(.userAuthenticationRequired) }
             guard epoch == authenticationEpoch else { await clearAuthentication(); return }
+            authenticationStatus = "Opening workspace"
             await webView.configuration.websiteDataStore.httpCookieStore.setCookie(cookies[0])
             guard epoch == authenticationEpoch else { await clearAuthentication(); return }
             identity = user

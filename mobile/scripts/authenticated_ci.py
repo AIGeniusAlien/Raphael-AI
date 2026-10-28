@@ -24,6 +24,8 @@ def prepare():
     identifier=destination.split('id=',1)[1]
     private=Path(tempfile.mkdtemp(prefix='raphael-native-ci-'))
     password=secrets.token_urlsafe(32)
+    (private/'password').write_text(password)
+    (private/'password').chmod(0o600)
     # No inherited provider credentials or database may reach this local backend.
     environment={key:value for key,value in os.environ.items() if key in ('PATH','HOME','TMPDIR','LANG')}
     database='sqlite:///'+str(private/'synthetic.db')

@@ -77,6 +77,7 @@ struct PatientApplication: View {
                     .padding().frame(maxWidth: .infinity).background(Color.orange.opacity(0.15))
                 }
                 PatientWebView(webView: session.webView)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .accessibilityIdentifier("patient-web-workspace")
             }
             .privacySensitive()

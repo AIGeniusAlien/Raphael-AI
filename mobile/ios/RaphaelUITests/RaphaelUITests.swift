@@ -1,7 +1,19 @@
 import XCTest
 
 final class RaphaelUITests: XCTestCase {
+    override func tearDownWithError() throws {
+        let app = XCUIApplication()
+        if app.state != .notRunning {
+            let finalState = XCTAttachment(screenshot: app.screenshot())
+            finalState.name = "Final synthetic native UI state;workflow result is separate"
+            finalState.lifetime = .keepAlways
+            add(finalState)
+        }
+        try super.tearDownWithError()
+    }
+
     func testAuthenticatedPatientAndClinicianUseActualHTTPSBackend() throws {
+        continueAfterFailure = false
         let password = "__CI_SYNTHETIC_PASSWORD__"
         guard !password.hasPrefix("__CI_") else {
             throw XCTSkip("Requires ephemeral authenticated_ci.py backend;no authenticated native success implied.")
@@ -9,21 +21,27 @@ final class RaphaelUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         let web = app.webViews.firstMatch
+        func scrollForm() {
+            web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+                .press(forDuration: 0.1, thenDragTo: web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)))
+        }
         func login(_ username: String, workspace: String) {
             let organization = web.textFields["Development organization"]
             XCTAssertTrue(organization.waitForExistence(timeout: 30))
+            let privacyCover = app.staticTexts["Private workspace hidden"].exists
+            print("NATIVE_UI_GEOMETRY web=\(web.frame) organization=\(organization.frame) field_hittable=\(organization.isHittable) privacy_cover=\(privacyCover)")
             // Scroll the real WKWebView before focusing controls. WebKit's
             // accessibility activation point can be invalid even when the
             // field frame is on screen;coordinate taps are actual UI gestures.
-            web.swipeUp()
+            scrollForm()
             organization.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             organization.typeText("native-ci")
             let user = web.textFields["Username"]
-            if !user.isHittable { web.swipeUp() }
+            if !user.isHittable { scrollForm() }
             user.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             user.typeText(username)
             let secure = web.secureTextFields["Password"]
-            if !secure.isHittable { web.swipeUp() }
+            if !secure.isHittable { scrollForm() }
             secure.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             secure.typeText(password)
             web.buttons["Sign in"].tap()

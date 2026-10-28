@@ -42,5 +42,11 @@ def main():
                 position=end
                 if isinstance(payload,dict) and ('termination' in payload or 'exception' in payload):
                     messages.append('Native crash '+crash.name+': '+json.dumps({key:payload.get(key) for key in ('procName','exception','termination','asi','faultingThread')})[:5000])
-    for message in messages:print('::error title=Raphael failure diagnostics::'+escape(redact(message)))
+    # The API truncates individual annotation messages at4096characters.
+    # Preserve the actual late XCTest failure instead of losing it behind
+    # routine simulator warnings. Redact before splitting or truncating.
+    for message in messages:
+        safe=redact(message)
+        for start in range(0,len(safe),3000):
+            print('::error title=Raphael failure diagnostics::'+escape(safe[start:start+3000]))
 if __name__=='__main__':main()

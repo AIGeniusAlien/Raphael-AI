@@ -96,7 +96,7 @@ jobs:
       - name: Compile and test native app
         run: |
           set -o pipefail
-          bash mobile/scripts/native_checks.sh 2>&1 | tee native-build.log
+          bash mobile/scripts/native_checks.sh 2>&1 | python3 .github/scripts/redact_native_log.py
       - name: Stop ephemeral synthetic backend
         if: always() && env.RAPHAEL_NATIVE_CI_PRIVATE != ''
         run: python3 mobile/scripts/authenticated_ci.py cleanup

@@ -48,7 +48,7 @@
     byId('logout').hidden = true;
     byId('session-label').textContent = '';
     byId('password').value = '';
-    if (byId('otp')) byId('otp').value = ''; 
+    if (byId('otp')) byId('otp').value = '';
   }
 
   async function api(path, options = {}) {
@@ -146,7 +146,7 @@
     } finally {
       state.authBusy = false;
       byId('password').value = '';
-    if (byId('otp')) byId('otp').value = ''; 
+    if (byId('otp')) byId('otp').value = '';
     }
   }
 

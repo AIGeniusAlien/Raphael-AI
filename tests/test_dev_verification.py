@@ -16,6 +16,13 @@ class VerificationTests(unittest.TestCase):
         with patch.dict(os.environ,source):
             env=runtime_environment('sqlite:///synthetic.db')
             self.assertEqual(env['DATABASE_URL'],'sqlite:///synthetic.db');self.assertEqual(env['RAPHAEL_DEV_PORTAL'],'1');self.assertNotIn('LLM_API_KEY',env)
+    def test_synthetic_launcher_preserves_explicit_mfa_key_without_enabling_providers(self):
+        with patch.dict(os.environ,{'RAPHAEL_MFA_ENCRYPTION_KEY':'synthetic-key-presence-test','LLM_API_KEY':'must-not-inherit'}):
+            env=runtime_environment('sqlite:///synthetic.db')
+            self.assertEqual(env['RAPHAEL_MFA_ENCRYPTION_KEY'],'synthetic-key-presence-test')
+            self.assertNotIn('LLM_API_KEY',env)
+            self.assertNotIn('RAPHAEL_MFA_ENCRYPTION_KEY',isolated_environment())
+
     def test_failures_timeouts_and_secret_redaction_are_recorded(self):
         with tempfile.TemporaryDirectory() as directory,patch.dict(os.environ,{'LLM_API_KEY':'Synthetic-redaction-fixture'}):
             path=Path(directory)

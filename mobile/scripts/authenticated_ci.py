@@ -103,9 +103,11 @@ def cleanup():
     try:os.killpg(groups['server_group'],signal.SIGTERM)
     except ProcessLookupError:pass
     import sqlite3
-    with sqlite3.connect('file:'+str(private/'synthetic.db')+'?mode=ro',uri=True) as connection:remaining=str(connection.execute('SELECT count(*) FROM dev_sessions').fetchone()[0])
-    if remaining!='0':raise RuntimeError('Native workflow left an active synthetic server session;logout was not verified.')
-    print('::notice title=Raphael native backend verification::'+json.dumps({'synthetic_sessions_remaining':0,'provider_requests':0,'backend':'actual_main_app_https'}))
+    with sqlite3.connect('file:'+str(private/'synthetic.db')+'?mode=ro',uri=True) as connection:
+        remaining=connection.execute('SELECT count(*) FROM dev_sessions').fetchone()[0]
+        events={event:count for event,count in connection.execute("SELECT event,count(*) FROM dev_audit WHERE event IN ('login','logout','read_patient','read_notes','list_patients') GROUP BY event")}
+    print('::notice title=Raphael native backend verification::'+json.dumps({'synthetic_sessions_remaining':remaining,'provider_requests':0,'backend':'actual_main_app_https','audit_event_counts_including_provisioning':events}),flush=True)
+    if remaining!=0:raise RuntimeError('Native workflow left an active synthetic server session;logout was not verified.')
     print('Ephemeral synthetic backend stopped. Runner destroys its private database and test certificate.')
 
 

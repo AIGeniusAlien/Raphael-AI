@@ -13,6 +13,8 @@ ROOT=Path(__file__).resolve().parent
 def runtime_environment(database,live=False):
     from dev_verify import isolated_environment
     env=dict(os.environ) if live else isolated_environment()
+    if os.environ.get('RAPHAEL_MFA_ENCRYPTION_KEY'):
+        env['RAPHAEL_MFA_ENCRYPTION_KEY']=os.environ['RAPHAEL_MFA_ENCRYPTION_KEY']
     env.update(DATABASE_URL=database,RAPHAEL_DEV_PORTAL='1',RAPHAEL_DEV_SYNTHETIC_ONLY='1')
     if live:env.update(RAPHAEL_EMBEDDING_BACKEND='openai',RAPHAEL_STREAM_EVIDENCE_BACKEND='qdrant',RAPHAEL_VERIFY_CLAIMS='1',EMBED_DIM='384')
     return env

@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
 from sqlalchemy import text
 
 from database import execute_sqlite_script
@@ -106,9 +106,16 @@ class Segment(Input):
     origin: Literal['browser_speech', 'manual_synthetic']
 
 
+class DocumentationField(Input):
+    text: str = Field(min_length=1, max_length=2000)
+    chart_entry_ids: list[StrictInt] = Field(default_factory=list, max_length=20)
+    transcript_segment_ids: list[StrictInt] = Field(default_factory=list, max_length=20)
+
+
 class NoteIn(Input):
     expected_version: int = Field(ge=0)
-    format: Literal['SOAP', 'progress', 'history_physical', 'consultation', 'discharge', 'referral', 'after_visit'] = 'SOAP'
+    format: Literal['SOAP', 'progress', 'history_physical', 'consultation', 'discharge', 'referral', 'after_visit', 'care_plan', 'medical_necessity', 'prior_authorization', 'insurance_appeal', 'structured_form', 'coding_review'] = 'SOAP'
+    fields: dict[str, DocumentationField] = Field(default_factory=dict, max_length=16)
     content: str | None = Field(default=None, min_length=1, max_length=50000)
 
 
@@ -446,6 +453,12 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             ctx.audit(c, user, 'append_transcript', 'active_session', identifier)
         return {'stored': True, 'origin': body.origin}
 
+    @router.get('/documentation/formats')
+    def documentation_formats(user=Depends(ctx.clinician)):
+        from clinical_documentation import SECTIONS, STRUCTURED_FORMATS
+        return {'formats': {**{key: [] for key in SECTIONS}, **STRUCTURED_FORMATS},
+                'automation': 'Clinician-authored preparation only; no clinical inference or external submission.'}
+
     @router.post('/sessions/{identifier}/notes')
     def note(identifier: int, body: NoteIn, user=Depends(ctx.clinician)):
         with engine.begin() as c:
@@ -460,20 +473,32 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             if body.content is None and previous and previous['origin'] == 'clinician_edit':
                 raise HTTPException(409, 'Preserve clinician edits. Explicitly edit or merge the newer transcript.')
             content = body.content
+            if content is not None and body.fields:raise HTTPException(400,'Submit structured fields or an explicit edit, not both.')
             snapshot=previous['source_snapshot'] if previous else None
             if content is None:
                 segments=[dict(row) for row in c.execute(text('SELECT id,content,origin,created_at FROM dev_transcript_segments WHERE session_id=:id ORDER BY id'),{'id':identifier}).mappings()]
-                if not segments:
+                from clinical_documentation import STRUCTURED_FORMATS
+                structured = body.format in STRUCTURED_FORMATS
+                if not segments and not structured:
                     raise HTTPException(400, 'A transcript is required.')
                 chart=[dict(row) for row in c.execute(text('SELECT id,kind,label,data,recorded_at,status FROM dev_chart_entries WHERE patient_id=:p ORDER BY id DESC LIMIT 21'),{'p':record['patient_id']}).mappings()]
                 if len(chart)>20:raise HTTPException(413,'Chart exceeds documentation snapshot limit;select a bounded encounter context before generating.')
                 source={'captured_at':now(),'patient_id':record['patient_id'],'encounter_id':record['encounter_id'],'transcript_segments':segments,'chart_entries':chart,'scope':'session_transcript_and_latest_chart_entries_not_complete_record'}
+                from clinical_documentation import render_document, render_structured_document
+                if structured:
+                    fields={key: value.model_dump() for key,value in body.fields.items()}
+                    try:content,missing=render_structured_document(body.format,source,fields)
+                    except ValueError as error:raise HTTPException(400,str(error)) from None
+                    source['clinician_fields']=fields
+                    source['missing_fields']=missing
+                    source['preparation_origin']='explicit_clinician_fields'
+                else:
+                    if body.fields:raise HTTPException(400,'Structured fields require a structured documentation format.')
+                    content=render_document(body.format,source)
                 snapshot=json.dumps(source)
-                from clinical_documentation import render_document
-                content=render_document(body.format,source)
             if len(content) > 50000:
                 raise HTTPException(413, 'Draft note is too long.')
-            c.execute(text("INSERT INTO dev_active_notes(session_id,version,content,format,origin,status,source_snapshot) VALUES (:id,:v,:c,:f,:o,'draft',:s)"), {'id': identifier, 'v': version + 1, 'c': content, 'f': body.format, 'o': 'clinician_edit' if body.content is not None else 'transcript_template','s':snapshot})
+            c.execute(text("INSERT INTO dev_active_notes(session_id,version,content,format,origin,status,source_snapshot) VALUES (:id,:v,:c,:f,:o,'draft',:s)"), {'id': identifier, 'v': version + 1, 'c': content, 'f': body.format, 'o': 'clinician_edit' if body.content is not None else ('clinician_structured' if body.fields else 'transcript_template'),'s':snapshot})
             ctx.audit(c, user, 'version_note_draft', 'active_session', identifier)
         return {'version': version + 1, 'content': content, 'status': 'draft'}
 

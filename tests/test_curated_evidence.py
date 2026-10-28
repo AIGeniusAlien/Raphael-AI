@@ -55,6 +55,48 @@ class CuratedEvidenceTests(unittest.TestCase):
                 self.assertGreater(after['vectors_after'],first['vectors_after']);self.assertEqual(after['active_documents'],1)
                 self.assertIsNone(ce.citation(hit['chunk_id']))
 
+    def test_withdrawal_preserves_vectors_excludes_search_and_requires_readmission_review(self):
+        with tempfile.TemporaryDirectory() as path:
+            with patch.object(ce,'client',side_effect=lambda:QdrantClient(path=path)),patch.object(ce,'encode',side_effect=lambda texts:np.ones((len(texts),384),dtype=np.float32)):
+                source=self.source();first=ce.ingest([source]);hit=ce.search('antibiotic fixture')[0]
+                result=ce.withdraw_source(source['url'],'Synthetic explicit safety review withdrawal')
+                self.assertEqual(result['vectors_preserved'],first['vectors_after'])
+                self.assertEqual(ce.search('antibiotic fixture'),[]);self.assertIsNone(ce.citation(hit['chunk_id']))
+                self.assertEqual(ce.withdraw_source(source['url'],'Synthetic repeat withdrawal')['writes'],0)
+                self.assertEqual(ce.refresh_status([source])['sources'][0]['status'],'withdrawn_requires_review')
+                with self.assertRaisesRegex(ValueError,'Withdrawn'):ce.ingest([source])
+
+    def test_failed_new_version_batch_leaves_old_active_and_retry_publishes_complete_version(self):
+        with tempfile.TemporaryDirectory() as path:
+            factory=lambda:QdrantClient(path=path)
+            with patch.object(ce,'client',side_effect=factory),patch.object(ce,'encode',side_effect=lambda texts:np.ones((len(texts),384),dtype=np.float32)):
+                old=self.source();ce.ingest([old]);old_hit=ce.search('antibiotic fixture')[0]
+                revised=self.source('Antibiotic revised synthetic fixture text. '*1800)
+                def failing_client():
+                    client=factory();original=client.upsert;calls=[]
+                    def upsert(*args,**kwargs):
+                        calls.append(1)
+                        if len(calls)==2:raise RuntimeError('Synthetic bounded provider failure')
+                        return original(*args,**kwargs)
+                    client.upsert=upsert;return client
+                with patch.object(ce,'client',side_effect=failing_client):
+                    with self.assertRaises(RuntimeError):ce.ingest([revised])
+                self.assertIsNotNone(ce.citation(old_hit['chunk_id']))
+                self.assertTrue(all(hit['content_sha256']==old['content_sha256'] for hit in ce.search('antibiotic fixture')))
+                recovered=ce.ingest([revised]);self.assertGreater(recovered['vectors_deduplicated'],0)
+                self.assertIsNone(ce.citation(old_hit['chunk_id']))
+                self.assertTrue(all(hit['content_sha256']==revised['content_sha256'] for hit in ce.search('antibiotic fixture')))
+
+    def test_refresh_is_read_only_and_older_source_date_cannot_replace_current(self):
+        with tempfile.TemporaryDirectory() as path:
+            with patch.object(ce,'client',side_effect=lambda:QdrantClient(path=path)),patch.object(ce,'encode',side_effect=lambda texts:np.ones((len(texts),384),dtype=np.float32)):
+                source=self.source();ce.ingest([source]);self.assertEqual(ce.refresh_status([source])['sources'][0]['status'],'unchanged')
+                changed=self.source('Antibiotic changed synthetic fixture. '*10)
+                self.assertEqual(ce.refresh_status([changed])['sources'][0]['status'],'update_available')
+                older=dict(changed,source_date='2023-01-01')
+                with self.assertRaisesRegex(ValueError,'older source date'):ce.ingest([older])
+                self.assertEqual(ce.search('antibiotic fixture')[0]['content_sha256'],source['content_sha256'])
+
     def test_hosted_adapter_rejects_wrong_model_dimensions_indices_and_zero_vectors(self):
         for model,data in [('another-model',[NS(index=0,embedding=[1.0]*384)]),(he.MODEL,[NS(index=0,embedding=[1.0]*8)]),(he.MODEL,[NS(index=1,embedding=[1.0]*384)]),(he.MODEL,[NS(index=0,embedding=[0.0]*384)])]:
             with patch.dict('os.environ',{'LLM_BASE_URL':'https://provider.invalid/v1','LLM_API_KEY':'synthetic-only'}),patch.object(he,'OpenAI') as sdk:

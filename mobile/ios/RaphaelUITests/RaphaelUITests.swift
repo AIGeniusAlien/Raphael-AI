@@ -63,6 +63,19 @@ final class RaphaelUITests: XCTestCase {
         XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout: 30))
     }
 
+    func testNativeSignInControlsDoNotRequireRemoteWebKitAccessibility() throws {
+        let app = XCUIApplication()
+        app.launch()
+        if app.staticTexts["configuration-required"].exists { throw XCTSkip("Configured synthetic HTTPS build required.") }
+        XCTAssertTrue(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout: 15))
+        let organization = app.textFields["Development organization"]
+        XCTAssertTrue(organization.exists)
+        organization.tap(); organization.typeText("synthetic-accessibility-check")
+        XCTAssertEqual(organization.value as? String, "synthetic-accessibility-check")
+        XCTAssertTrue(app.secureTextFields["Password"].exists)
+        XCTAssertFalse(app.webViews.firstMatch.exists)
+    }
+
     func testUnconfiguredBuildFailsSafelyWithoutConnecting() {
         let app = XCUIApplication()
         app.launchArguments = ["--uitest-unconfigured"]

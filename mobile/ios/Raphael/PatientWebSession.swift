@@ -99,6 +99,10 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             guard cookies.count == 1 else { throw URLError(.badServerResponse) }
             await webView.configuration.websiteDataStore.httpCookieStore.setCookie(cookies[0])
             guard epoch == authenticationEpoch else { await clearAuthentication(); return }
+            let (sessionData, sessionResponse) = try await request("api/dev/session")
+            guard sessionResponse.statusCode == 200,
+                  try JSONDecoder().decode(NativeIdentity.self, from: sessionData) == user else { throw URLError(.userAuthenticationRequired) }
+            guard epoch == authenticationEpoch else { await clearAuthentication(); return }
             identity = user
             open(.dashboard)
         } catch {

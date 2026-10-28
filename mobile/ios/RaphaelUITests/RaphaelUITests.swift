@@ -20,33 +20,32 @@ final class RaphaelUITests: XCTestCase {
         }
         let app = XCUIApplication()
         app.launch()
-        let web = app.webViews.firstMatch
         func scrollForm() {
-            web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
-                .press(forDuration: 0.1, thenDragTo: web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)))
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+                .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)))
         }
         func login(_ username: String, workspace: String) {
-            let organization = web.textFields["Development organization"]
+            let organization = app.textFields["Development organization"]
             XCTAssertTrue(organization.waitForExistence(timeout: 30))
-            let privacyCover = app.staticTexts["Private workspace hidden"].exists
-            print("NATIVE_UI_GEOMETRY web=\(web.frame) organization=\(organization.frame) field_hittable=\(organization.isHittable) privacy_cover=\(privacyCover)")
-            // Scroll the real WKWebView before focusing controls. WebKit's
+            // Query the labeled controls through the application tree:the first
+            // SwiftUI-hosted WebView remote subtree is not a stable AX scope.
+            // Scroll the real page before focusing controls. WebKit's
             // accessibility activation point can be invalid even when the
             // field frame is on screen;coordinate taps are actual UI gestures.
             scrollForm()
             organization.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             organization.typeText("native-ci")
-            let user = web.textFields["Username"]
+            let user = app.textFields["Username"]
             if !user.isHittable { scrollForm() }
             user.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             user.typeText(username)
-            let secure = web.secureTextFields["Password"]
+            let secure = app.secureTextFields["Password"]
             if !secure.isHittable { scrollForm() }
             secure.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             secure.typeText(password)
-            web.buttons["Sign in"].tap()
-            XCTAssertTrue(web.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 20))
-            XCTAssertTrue(web.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))
+            app.buttons["Sign in"].tap()
+            XCTAssertTrue(app.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 20))
+            XCTAssertTrue(app.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))
         }
         login("native-patient", workspace: "Patient workspace")
         let patient = XCTAttachment(screenshot: app.screenshot())
@@ -54,10 +53,10 @@ final class RaphaelUITests: XCTestCase {
         patient.lifetime = .keepAlways; add(patient)
         app.buttons["Patient sections"].tap()
         app.buttons["Medical record"].tap()
-        XCTAssertTrue(web.staticTexts["Synthetic native patient"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts["Synthetic native patient"].waitForExistence(timeout: 15))
         app.buttons["Patient sections"].tap()
         app.buttons["Dashboard"].tap()
-        XCTAssertTrue(web.buttons["Sign out"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Sign out"].waitForExistence(timeout: 15))
         app.buttons["Privacy and session settings"].tap()
         let readiness = app.buttons["Check backend connection"]
         XCTAssertTrue(readiness.waitForExistence(timeout: 10))
@@ -67,16 +66,16 @@ final class RaphaelUITests: XCTestCase {
         waitForExpectations(timeout: 15)
         app.buttons["Sign out and clear local session"].tap()
         app.buttons["Sign out"].tap()
-        XCTAssertTrue(web.textFields["Username"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout: 15))
         app.terminate(); app.launch()
         login("native-clinician", workspace: "Physician workspace")
         let clinician = XCTAttachment(screenshot: app.screenshot())
         clinician.name = "Authenticated synthetic clinician over trusted HTTPS"
         clinician.lifetime = .keepAlways; add(clinician)
-        web.buttons["Sign out"].tap()
-        XCTAssertTrue(web.textFields["Username"].waitForExistence(timeout: 15))
+        app.buttons["Sign out"].tap()
+        XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout: 15))
         app.terminate(); app.launch()
-        XCTAssertTrue(app.webViews.firstMatch.textFields["Username"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout: 30))
     }
 
     func testUnconfiguredBuildFailsSafelyWithoutConnecting() {

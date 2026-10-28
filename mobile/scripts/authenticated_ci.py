@@ -49,12 +49,12 @@ def prepare():
     subprocess.run(['xcrun','simctl','boot',identifier],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     subprocess.run(['xcrun','simctl','bootstatus',identifier,'-b'],check=True,timeout=240)
     subprocess.run(['xcrun','simctl','keychain',identifier,'add-root-cert',str(certificate)],check=True)
-    server_environment={**environment,'DATABASE_URL':database,'RAPHAEL_DEV_PORTAL':'1','RAPHAEL_DEV_SYNTHETIC_ONLY':'1','PYTHONDONTWRITEBYTECODE':'1'}
+    server_environment={**environment,'DATABASE_URL':database,'RAPHAEL_DEV_PORTAL':'1','RAPHAEL_DEV_SYNTHETIC_ONLY':'1','PYTHONDONTWRITEBYTECODE':'1','GITHUB_ACTIONS':'true'}
     forwarder=shutil.which('socat')
     if not forwarder:raise RuntimeError('Install socat for the isolated loopback443 TCP forwarder.')
     # Keep the actual application unprivileged. The forwarder carries encrypted
     # bytes only;TLS still terminates in uvicorn with the verified test certificate.
-    command=[sys.executable,'-m','uvicorn','main:app','--host','127.0.0.1','--port','8443','--ssl-keyfile',str(key),'--ssl-certfile',str(certificate),'--no-access-log']
+    command=[sys.executable,str(ROOT/'mobile/scripts/ci_backend.py'),'--key',str(key),'--cert',str(certificate)]
     with (private/'backend.log').open('w') as log:
         process=subprocess.Popen(command,cwd=ROOT,env=server_environment,stdout=log,stderr=log,start_new_session=True)
     with (private/'forwarder.log').open('w') as log:
@@ -71,13 +71,15 @@ def prepare():
             if process.poll() is not None or bridge.poll() is not None or time.monotonic()>deadline:
                 # This CI-only backend has no provider credentials or real PHI.
                 # Expose startup exceptions,not the private account password.
-                startup=((private/'backend.log').read_text(errors='replace')+'\nForwarder:\n'+(private/'forwarder.log').read_text(errors='replace'))[-10000:]
+                startup=(private/'backend.log').read_text(errors='replace')[-10000:]+'\nForwarder tail:\n'+(private/'forwarder.log').read_text(errors='replace')[-1000:]
                 Path('native-backend-startup.log').write_text(startup.replace(password,'[SYNTHETIC PASSWORD REDACTED]'))
                 print('Backend startup error: '+json.dumps({'process_exit_code':process.poll(),'forwarder_exit_code':bridge.poll(),'last_http_status':last_status,'last_transport_error_type':last_transport_error}),flush=True)
                 raise RuntimeError('Synthetic HTTPS backend failed readiness;bounded startup log published separately.')
             try:
                 last_status=client.get('/readyz').status_code
-                if last_status==200:break
+                if last_status==200:
+                    process.send_signal(signal.SIGUSR1)
+                    break
             except httpx.TransportError as error:last_transport_error=type(error).__name__
             time.sleep(.2)
         client.post('/api/dev/login',json={'tenant':'native-ci','username':'native-clinician','password':password}).raise_for_status()

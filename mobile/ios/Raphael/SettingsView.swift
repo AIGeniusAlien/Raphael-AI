@@ -28,7 +28,7 @@ struct SettingsView: View {
                     Button("Account, export and deletion review") { dismiss(); session.open(.account) }
                     Text("The server's account page owns profile, consent, sessions and data export. Requesting deletion review is not completed medical-record erasure; retention and identity review remain required.")
                         .font(.footnote)
-                    Button("Sign out and clear local session", role: .destructive) { confirmSignOut = true }
+                    Button("Sign out and clear local session", role: .destructive) { confirmSignOut = true }.disabled(session.authenticating)
                 }
                 Section("On-device protections") {
                     Label("Memory-only web session", systemImage: "lock")

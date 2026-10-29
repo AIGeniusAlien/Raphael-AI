@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import WebKit
 import SafariServices
 
@@ -174,8 +175,8 @@ struct NativeSignInView: View {
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                     TextField("Username", text: $username).textContentType(.username)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    SecureField("Password", text: $password).textContentType(.password).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    SecureField("Authenticator or recovery code (if enabled)", text: $otp).textContentType(.oneTimeCode).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    NativeSecretEntry(text: $password, title: "Password").frame(minHeight: 44)
+                    NativeSecretEntry(text: $otp, title: "Authenticator or recovery code (if enabled)", oneTimeCode: true).frame(minHeight: 44)
                     Button(session.authenticating ? "Signing in" : "Sign in") {
                         let submittedTenant = tenant
                         let submittedUsername = username
@@ -192,5 +193,46 @@ struct NativeSignInView: View {
                     Text("Credentials are sent only to the configured HTTPS Raphael service. Sessions are memory-only and end locally when the app process closes. Use your organization's recovery process if you cannot sign in.").font(.footnote)
                 }
         }
+    }
+}
+
+
+/// A stable UIKit secure field avoids SwiftUI secure-entry reconciliation while
+/// the sign-in form changes enabled state. Input reaches its binding synchronously.
+struct NativeSecretEntry: UIViewRepresentable {
+    @Binding var text: String
+    let title: String
+    var oneTimeCode = false
+    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
+    func makeInput(coordinator: Coordinator) -> UITextField {
+        let input = UITextField()
+        input.isSecureTextEntry = true
+        input.placeholder = title
+        input.accessibilityLabel = title
+        input.accessibilityIdentifier = oneTimeCode ? "native-otp" : "native-password"
+        input.textContentType = oneTimeCode ? .oneTimeCode : .password
+        input.autocapitalizationType = .none
+        input.autocorrectionType = .no
+        input.spellCheckingType = .no
+        input.smartDashesType = .no
+        input.smartQuotesType = .no
+        input.returnKeyType = .done
+        input.font = .preferredFont(forTextStyle: .body)
+        input.adjustsFontForContentSizeCategory = true
+        input.delegate = coordinator
+        input.addTarget(coordinator, action: #selector(Coordinator.changed(_:)), for: .editingChanged)
+        return input
+    }
+    func makeUIView(context: Context) -> UITextField { makeInput(coordinator: context.coordinator) }
+    func updateInput(_ input: UITextField, coordinator: Coordinator) {
+        coordinator.text = $text
+        if input.text != text { input.text = text }
+    }
+    func updateUIView(_ input: UITextField, context: Context) { updateInput(input, coordinator: context.coordinator) }
+    final class Coordinator: NSObject, UITextFieldDelegate {
+        var text: Binding<String>
+        init(text: Binding<String>) { self.text = text }
+        @objc func changed(_ input: UITextField) { text.wrappedValue = input.text ?? "" }
+        func textFieldShouldReturn(_ textField: UITextField) -> Bool { textField.resignFirstResponder(); return true }
     }
 }

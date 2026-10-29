@@ -1,4 +1,6 @@
 import XCTest
+import SwiftUI
+import UIKit
 import WebKit
 @testable import Raphael
 
@@ -49,6 +51,25 @@ final class ServerConfigurationTests: XCTestCase {
         XCTAssertFalse(NativeIdentity.accepts(try XCTUnwrap(HTTPCookie(properties: insecure)), origin: origin, now: now))
         var readable = properties; readable.removeValue(forKey: HTTPCookiePropertyKey("HttpOnly"))
         XCTAssertFalse(NativeIdentity.accepts(try XCTUnwrap(HTTPCookie(properties: readable)), origin: origin, now: now))
+    }
+
+    @MainActor
+    func testNativeSecureEntryPreservesExactBindingAndClearsWithoutKeyboardTransformations() {
+        var value = ""
+        let entry = NativeSecretEntry(text: Binding(get: { value }, set: { value = $0 }), title: "Password")
+        let coordinator = entry.makeCoordinator()
+        let input = entry.makeInput(coordinator: coordinator)
+        let exact = "Synthetic-Exact_Entry9!"
+        input.text = exact
+        input.sendActions(for: .editingChanged)
+        XCTAssertEqual(value, exact)
+        XCTAssertTrue(input.isSecureTextEntry)
+        XCTAssertEqual(input.autocapitalizationType, .none)
+        XCTAssertEqual(input.autocorrectionType, .no)
+        XCTAssertEqual(input.smartDashesType, .no)
+        value = ""
+        entry.updateInput(input, coordinator: coordinator)
+        XCTAssertEqual(input.text, "")
     }
 
     @MainActor

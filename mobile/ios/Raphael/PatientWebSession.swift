@@ -126,12 +126,13 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         let epoch = authenticationEpoch
         do {
             let (_, response) = try await request("api/dev/session")
-            guard epoch == authenticationEpoch else { return }
+            guard epoch == authenticationEpoch, !authenticating else { return }
             if response.statusCode == 401 {
                 await clearAuthentication()
                 authenticationProblem = "Your session ended. Sign in again."
             }
         } catch {
+            guard epoch == authenticationEpoch, !authenticating else { return }
             // A transient outage is not a successful logout or proof of expiry.
             problem = "Session verification unavailable. Check your connection and retry."
         }
@@ -139,17 +140,29 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
 
     private func clearAuthentication() async {
         authenticationEpoch += 1
+        let epoch = authenticationEpoch
+        let alreadyAuthenticating = authenticating
+        authenticating = true
+        authenticationStatus = "Clearing local session"
+        defer { if epoch == authenticationEpoch { authenticating = alreadyAuthenticating } }
         identity = nil
         nativeCookie = nil
         finishConfirmation(false)
         webView.stopLoading()
         await webView.configuration.websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
-        webView.loadHTMLString("<html><body></body></html>", baseURL: nil)
+        guard epoch == authenticationEpoch else { return }
+        webView.loadHTMLString("<html><body></body></html>", baseURL: configuration.origin)
     }
 
     func signOut() {
+        guard !authenticating else { return }
+        authenticationEpoch += 1
+        authenticating = true
+        authenticationStatus = "Signing out securely"
+        identity = nil // Hide records before awaiting potentially unavailable networking.
         Task { @MainActor [weak self] in
             guard let self else { return }
+            defer { self.authenticating = false }
             let confirmed: Bool
             do {
                 let (_, response) = try await self.request("api/dev/logout", body: Data("{}".utf8))

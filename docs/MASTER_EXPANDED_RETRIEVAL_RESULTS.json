@@ -1,0 +1,202 @@
+{
+  "status": "passed",
+  "uses_mock_services": false,
+  "read_only": true,
+  "collection": "raphael_evidence_v1",
+  "embedding_model": "text-embedding-3-small",
+  "actual_dimensions": 384,
+  "catalog_source_recall_at_6": 1.0,
+  "catalog_source_mrr": 1.0,
+  "clinical_accuracy_evaluated": false,
+  "coverage_limit": "Seven elementary source-routing questions plus one missing-evidence case;not comprehensive or expert clinical validation.",
+  "cases": [
+    {
+      "case_id": "antibiotics",
+      "query": "Do antibiotics work on viruses?",
+      "population": "adult",
+      "expected_source": "https://www.cdc.gov/antibiotic-use/about/index.html",
+      "expected_source_rank": 1,
+      "source_integrity": true,
+      "population_filter_passed": true,
+      "status": "passed",
+      "returned_chunk_ids": [
+        "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2",
+        "0262a7ecd9dc3d4b4d3f92c65b3e22e7f9904a824bbfb2f4704584ad2bdeebe7",
+        "a19e2c8d050340d56b520fd0e04a222e68b8ae556d5948277bf91e7b1d5e45ca",
+        "fac2a8597bce44d8675b5a01115b30ea3a4414030efc7648fbd5f75d5b2a9e00",
+        "ba26c47952ae63756396d2a8160a9895122af722c3e6abca92529a5161dfd66c",
+        "14d6bf581537f6895a85210d0ae2769de5eaf88b78fdb9e70b82e04e9553457c"
+      ],
+      "returned_urls": [
+        "https://www.cdc.gov/antibiotic-use/about/index.html",
+        "https://www.cdc.gov/sepsis/about/index.html",
+        "https://www.cdc.gov/antibiotic-use/about/index.html",
+        "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/adult-outpatient.html",
+        "https://www.cdc.gov/antibiotic-use/about/index.html",
+        "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/adult-outpatient.html"
+      ]
+    },
+    {
+      "case_id": "stroke",
+      "query": "What are signs and symptoms of stroke?",
+      "population": "adult",
+      "expected_source": "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+      "expected_source_rank": 1,
+      "source_integrity": true,
+      "population_filter_passed": true,
+      "status": "passed",
+      "returned_chunk_ids": [
+        "7a6d5608f6f478551d7b4b5800d119d448ab9564f09eeac74f9a6c61b00bbc6d",
+        "e536eb903449c3acc8cd232142507fe5e46063eba59594fec98d20e4031b6966",
+        "d58a0f040c5e6cca62677f3d153eef6c04e1bc53b5f6ef2bf30ac45252458b7b",
+        "1361d8ef566db63199339da1ed811cf87d3d1d6dfd4f82f527b3704725a4ddda",
+        "048400bb0d0256582413e3c9f3c4f3583e6f1b60c3366b667ddcf342d0fe6673",
+        "fbf205c649a42b0c72b08dde61df7c5e778ab1c98c52cf0e3482b47ff93f735f"
+      ],
+      "returned_urls": [
+        "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+        "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+        "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+        "https://www.cdc.gov/flu/signs-symptoms/index.html",
+        "https://www.cdc.gov/heart-disease/about/heart-attack.html",
+        "https://www.cdc.gov/heart-disease/about/heart-attack.html"
+      ]
+    },
+    {
+      "case_id": "diabetes",
+      "query": "What are signs and symptoms of diabetes?",
+      "population": "adult",
+      "expected_source": "https://www.cdc.gov/diabetes/signs-symptoms/index.html",
+      "expected_source_rank": 1,
+      "source_integrity": true,
+      "population_filter_passed": true,
+      "status": "passed",
+      "returned_chunk_ids": [
+        "2ed871eb5be524a89b4ec94691c4e45a4ccb1563d1e831cc3e95e43ad5b9705f",
+        "0471a787881a3ba9b29809783426a7bc2a1f38c311ff6321f3f68cad364292bb",
+        "1361d8ef566db63199339da1ed811cf87d3d1d6dfd4f82f527b3704725a4ddda",
+        "b7ce4dc0e49179fda6b15be775bf676218ac060dc77664db67b571ab3f27a427"
+      ],
+      "returned_urls": [
+        "https://www.cdc.gov/diabetes/signs-symptoms/index.html",
+        "https://www.cdc.gov/diabetes/signs-symptoms/index.html",
+        "https://www.cdc.gov/flu/signs-symptoms/index.html",
+        "https://www.cdc.gov/diabetes/signs-symptoms/index.html"
+      ]
+    },
+    {
+      "case_id": "asthma",
+      "query": "What are asthma symptoms?",
+      "population": "pediatric",
+      "expected_source": "https://www.cdc.gov/asthma/about/index.html",
+      "expected_source_rank": 1,
+      "source_integrity": true,
+      "population_filter_passed": true,
+      "status": "passed",
+      "returned_chunk_ids": [
+        "fa27f916b4fe3232e7ca627a4256b6b2035c93ad7692e1ae10813dc80caf8d6a",
+        "863c58a9ab6cada0ead98e6226cd77d6786e883ec50a94cd1cabd65340ca5898",
+        "82bf61fc87395a06d3c3fb458ec3b8d23d6053da69da7952cf81ead1bcc4bf69",
+        "8db585318351dd67a0e600d57556d595e1d563c70ba5dd085eee724f196e0a5b",
+        "1361d8ef566db63199339da1ed811cf87d3d1d6dfd4f82f527b3704725a4ddda",
+        "4141658c25b7b11f032c2d4a26785d476ee083cdf80041d39c54a13f99685f5f"
+      ],
+      "returned_urls": [
+        "https://www.cdc.gov/asthma/about/index.html",
+        "https://www.cdc.gov/asthma/about/index.html",
+        "https://www.cdc.gov/asthma/about/index.html",
+        "https://www.cdc.gov/asthma/about/index.html",
+        "https://www.cdc.gov/flu/signs-symptoms/index.html",
+        "https://www.cdc.gov/flu/signs-symptoms/index.html"
+      ]
+    },
+    {
+      "case_id": "heart_attack",
+      "query": "What are heart attack symptoms?",
+      "population": "adult",
+      "expected_source": "https://www.cdc.gov/heart-disease/about/heart-attack.html",
+      "expected_source_rank": 1,
+      "source_integrity": true,
+      "population_filter_passed": true,
+      "status": "passed",
+      "returned_chunk_ids": [
+        "048400bb0d0256582413e3c9f3c4f3583e6f1b60c3366b667ddcf342d0fe6673",
+        "fbf205c649a42b0c72b08dde61df7c5e778ab1c98c52cf0e3482b47ff93f735f",
+        "0753bd3f243f448796abdb68146fd66a71fe86122cbf8d0b17d8e4ccefb04e53",
+        "e536eb903449c3acc8cd232142507fe5e46063eba59594fec98d20e4031b6966",
+        "d58a0f040c5e6cca62677f3d153eef6c04e1bc53b5f6ef2bf30ac45252458b7b",
+        "f47c2a1a85a1affa27b63108cc806dead31e0122621e3c58d270ed8b19fc1e7d"
+      ],
+      "returned_urls": [
+        "https://www.cdc.gov/heart-disease/about/heart-attack.html",
+        "https://www.cdc.gov/heart-disease/about/heart-attack.html",
+        "https://www.cdc.gov/heart-disease/about/heart-attack.html",
+        "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+        "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+        "https://www.cdc.gov/heart-disease/about/heart-attack.html"
+      ]
+    },
+    {
+      "case_id": "sepsis",
+      "query": "What are signs and symptoms of sepsis?",
+      "population": "adult",
+      "expected_source": "https://www.cdc.gov/sepsis/about/index.html",
+      "expected_source_rank": 1,
+      "source_integrity": true,
+      "population_filter_passed": true,
+      "status": "passed",
+      "returned_chunk_ids": [
+        "f742d978fbbab7e29456cac18757fd4e98ee419355779848ab1b6df527548011",
+        "a307f452e0207ac4b5480f9e11b40cf1bcee02771f82ebe853769ad46674e86d",
+        "58027f697625f0cbcd0ca47bb94f24380406500dbf23861968d6fc7a5f49cbd7",
+        "307f8e1bb595d8232eae849be1d143caa3525d130b09a7df1cb69d7833599228",
+        "55488ed366674efb5eccf4ee2f1bef94ecd44e14ed4359ede6e3cd0ee7f9402c",
+        "1361d8ef566db63199339da1ed811cf87d3d1d6dfd4f82f527b3704725a4ddda"
+      ],
+      "returned_urls": [
+        "https://www.cdc.gov/sepsis/about/index.html",
+        "https://www.cdc.gov/sepsis/about/index.html",
+        "https://www.cdc.gov/sepsis/about/index.html",
+        "https://www.cdc.gov/sepsis/about/index.html",
+        "https://www.cdc.gov/sepsis/about/index.html",
+        "https://www.cdc.gov/flu/signs-symptoms/index.html"
+      ]
+    },
+    {
+      "case_id": "flu",
+      "query": "What are flu symptoms?",
+      "population": "pediatric",
+      "expected_source": "https://www.cdc.gov/flu/signs-symptoms/index.html",
+      "expected_source_rank": 1,
+      "source_integrity": true,
+      "population_filter_passed": true,
+      "status": "passed",
+      "returned_chunk_ids": [
+        "1361d8ef566db63199339da1ed811cf87d3d1d6dfd4f82f527b3704725a4ddda",
+        "e963fa769e9cefce3bbd90918a9d2ade4641c479f31b33cebd37d3a2862ec7f5",
+        "4141658c25b7b11f032c2d4a26785d476ee083cdf80041d39c54a13f99685f5f",
+        "423b154988e6dc6d42c0aded55d80a49116a4a70340ba8ecaf89acbd8dd648b8",
+        "14b698c694c370b73abd28a78d141d87ef55c8ad0c354b6302e146f4a70eebf3"
+      ],
+      "returned_urls": [
+        "https://www.cdc.gov/flu/signs-symptoms/index.html",
+        "https://www.cdc.gov/flu/signs-symptoms/index.html",
+        "https://www.cdc.gov/flu/signs-symptoms/index.html",
+        "https://www.cdc.gov/flu/signs-symptoms/index.html",
+        "https://www.cdc.gov/flu/signs-symptoms/index.html"
+      ]
+    },
+    {
+      "case_id": "missing",
+      "query": "violet gyroscopic calibrator xylophone",
+      "population": "adult",
+      "expected_source": null,
+      "expected_source_rank": null,
+      "source_integrity": true,
+      "population_filter_passed": true,
+      "status": "passed",
+      "returned_chunk_ids": [],
+      "returned_urls": []
+    }
+  ]
+}

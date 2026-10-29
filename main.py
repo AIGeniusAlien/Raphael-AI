@@ -1,29 +1,39 @@
+from __future__ import annotations
+
 import os, json, secrets, httpx, hashlib, io, re
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import TYPE_CHECKING, Optional, List, Dict, Any
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
+from starlette.responses import JSONResponse
+from pydantic import ValidationError
 from openai import OpenAI
 
 from sqlalchemy import create_engine, text
+from database import execute_sqlite_script
 
 from qdrant_client import QdrantClient
+from qdrant_config import connection_options
 from qdrant_client.http import models as qm
-from sentence_transformers import SentenceTransformer
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 import numpy as np
 from pypdf import PdfReader
 
 # New modules you added
 from corpus.fetch import fetch_url
-from corpus.indexer import build_payload, doc_id_for, sha256 as sha256_hex
+from corpus.indexer import build_payload, doc_id_for, point_id_for, sha256 as sha256_hex
 from corpus.registry import list_sources
 from pubmed.query_packs import QUERY_PACKS
 from pubmed.ingest import ingest_pubmed_query
 from feedback.store import ensure_feedback_table, insert_feedback, list_feedback
 from radiology.cant_miss import get_checklist
+from rag.assessment_schema import Assessment, Critique
 
 # ───────────────── CONFIG
 APP_NAME = os.getenv("APP_NAME", "Raphael")
@@ -50,15 +60,16 @@ MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "26000"))
 
 # Optional: protect corpus endpoints
 CORPUS_RUN_TOKEN = os.getenv("CORPUS_RUN_TOKEN", "").strip()
+DEV_PORTAL = os.getenv("RAPHAEL_DEV_PORTAL", "") == "1"
 
 # ───────────────── APP
 app = FastAPI(title=APP_NAME)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[] if DEV_PORTAL else ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_credentials=True,
+    allow_credentials=not DEV_PORTAL,
 )
 app.mount("/static", StaticFiles(directory=STATIC_PATH), name="static")
 engine = create_engine(DATABASE_URL, future=True)
@@ -122,10 +133,15 @@ _ST_MODEL: Optional[SentenceTransformer] = None
 def get_st_model() -> SentenceTransformer:
     global _ST_MODEL
     if _ST_MODEL is None:
+        # Load the numerical/model stack only when embeddings are requested.
+        from sentence_transformers import SentenceTransformer
         _ST_MODEL = SentenceTransformer(EMBED_MODEL)
     return _ST_MODEL
 
 def embed_texts(texts: List[str]) -> np.ndarray:
+    if os.getenv('RAPHAEL_EMBEDDING_BACKEND') == 'openai':
+        from rag.hosted_embeddings import encode
+        return encode(texts)
     model = get_st_model()
     vecs = model.encode(texts, normalize_embeddings=True)
     return np.array(vecs, dtype=np.float32)
@@ -134,12 +150,28 @@ def qdrant_client() -> QdrantClient:
     if not QDRANT_URL:
         raise HTTPException(500, "QDRANT_URL not set.")
     if QDRANT_API_KEY:
-        return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
-    return QdrantClient(url=QDRANT_URL)
+        return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, **connection_options(QDRANT_URL))
+    return QdrantClient(url=QDRANT_URL, **connection_options(QDRANT_URL))
 
 def ensure_qdrant_collection():
     client = qdrant_client()
     existing = [c.name for c in client.get_collections().collections]
+    if QDRANT_COLLECTION in existing:
+        vectors = client.get_collection(QDRANT_COLLECTION).config.params.vectors
+        if not hasattr(vectors, 'size') or vectors.size != EMBED_DIM or str(vectors.distance).lower() != 'cosine':
+            raise ValueError('Existing collection is incompatible with unnamed cosine embeddings.')
+        if os.getenv('RAPHAEL_EMBEDDING_BACKEND') != 'openai':
+            from qdrant_config import verify_legacy_encoder
+            verify_legacy_encoder(client,QDRANT_COLLECTION,EMBED_MODEL)
+    # Verify actual model output before any creation/upsert path. A configured
+    # dimension alone is not proof the selected encoder produces that shape.
+    probe = embed_texts(['Raphael nonclinical embedding compatibility probe.'])
+    if probe.shape != (1, EMBED_DIM) or not np.isfinite(probe).all():
+        raise ValueError('Actual embedding dimensions do not match configured collection dimensions.')
+    if os.getenv('RAPHAEL_EMBEDDING_BACKEND') == 'openai':
+        from curated_evidence import inventory
+        if QDRANT_COLLECTION in existing:
+            inventory(client)
     if QDRANT_COLLECTION in existing:
         return
     client.create_collection(
@@ -174,6 +206,8 @@ def ingest_evidence_text(*,
     evidence_strength: Optional[str],  # high/moderate/low/very_low
     text_body: str
 ) -> int:
+    if os.getenv('RAPHAEL_EMBEDDING_BACKEND') == 'openai':
+        raise HTTPException(409, 'Use the reviewed curated ingestion CLI for the hosted embedding collection; legacy untagged ingestion requires a separate collection.')
     ensure_qdrant_collection()
     client = qdrant_client()
 
@@ -200,7 +234,8 @@ def ingest_evidence_text(*,
             evidence_strength=evidence_strength,
             text=txt,
         )
-        points.append({"id": chunk_id, "vector": v.tolist(), "payload": payload})
+        payload.update(embedding_model=EMBED_MODEL,embedding_dimensions=EMBED_DIM)
+        points.append(qm.PointStruct(id=point_id_for(chunk_id), vector=v.tolist(), payload=payload))
 
     client.upsert(collection_name=QDRANT_COLLECTION, points=points)
     return len(points)
@@ -218,6 +253,9 @@ def rerank(chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return sorted(chunks, key=score, reverse=True)
 
 def retrieve_evidence(query: str, top_k: int = TOP_K) -> List[Dict[str, Any]]:
+    if os.getenv('RAPHAEL_EMBEDDING_BACKEND') == 'openai':
+        from curated_evidence import search
+        return search(query, min(top_k, 12))
     ensure_qdrant_collection()
     client = qdrant_client()
     qv = embed_texts([query])[0].tolist()
@@ -232,6 +270,10 @@ def retrieve_evidence(query: str, top_k: int = TOP_K) -> List[Dict[str, Any]]:
     out = []
     for h in hits:
         p = h.payload or {}
+        # Bibliographic summaries are discovery records,not clinical claim
+        # support. Preserve old records but exclude them and explicit retractions.
+        if p.get('retracted') or p.get('is_current') is False or p.get('knowledge_scope')=='bibliographic_metadata_not_full_text_or_claim_support' or (p.get('org')=='PubMed' and p.get('section')=='summary'):
+            continue
         out.append({
             "chunk_id": p.get("chunk_id", ""),
             "doc_id": p.get("doc_id", ""),
@@ -252,8 +294,9 @@ def retrieve_evidence(query: str, top_k: int = TOP_K) -> List[Dict[str, Any]]:
 
 def safety_check(chunks: List[Dict[str, Any]]) -> (bool, List[str]):
     notes: List[str] = []
-    if len(chunks) < MIN_SOURCES:
-        notes.append(f"Insufficient sources retrieved: {len(chunks)} < {MIN_SOURCES}.")
+    sources = {c.get("doc_id") or c.get("url") or c["chunk_id"] for c in chunks}
+    if len(sources) < MIN_SOURCES:
+        notes.append(f"Insufficient distinct sources retrieved: {len(sources)} < {MIN_SOURCES}.")
         return False, notes
     avg = sum(float(c["score"]) for c in chunks) / max(1, len(chunks))
     if avg < MIN_AVG_SIM:
@@ -278,11 +321,14 @@ def format_evidence(chunks: List[Dict[str, Any]], max_chars: int = MAX_CONTEXT_C
         total += len(block)
     return "\n---\n".join(blocks)
 
-def enforce_citations(output_dict: dict):
+def enforce_citations(output_dict: dict, chunks: Optional[List[dict]] = None):
+    allowed = {chunk["chunk_id"] for chunk in chunks} if chunks is not None else None
     # Require citations for each differential item
     for item in output_dict.get("ranked_differential", []):
         if not item.get("citations"):
             raise HTTPException(500, "Safety violation: differential item missing citations.")
+        if allowed is not None and any(citation not in allowed for citation in item["citations"]):
+            raise HTTPException(502, "Safety violation: citation is not in retrieved evidence.")
     # If working diagnosis exists, require at least one cited evidence
     if output_dict.get("working_diagnosis"):
         any_cited = any(i.get("citations") for i in output_dict.get("ranked_differential", []))
@@ -331,9 +377,12 @@ def call_llm_json(system: str, user: str) -> dict:
     )
     raw = resp.choices[0].message.content
     try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        raise HTTPException(500, "Model did not return valid JSON.")
+        result = json.loads(raw)
+        if not isinstance(result, dict):
+            raise ValueError("Expected JSON object")
+        return result
+    except (ValueError, TypeError):
+        raise HTTPException(502, "Model did not return a valid JSON object.")
 
 def build_user_prompt(mode: str, case_context: str, question: str, evidence_block: str) -> str:
     return f"""MODE: {mode}
@@ -360,8 +409,8 @@ EVIDENCE:
 Return JSON only.
 """
 
-def raphael_generate(case_context: str, question: str, mode: str = "radiology") -> dict:
-    chunks = retrieve_evidence(question, top_k=TOP_K)
+def raphael_generate(case_context: str, question: str, mode: str = "radiology", evidence_chunks: Optional[List[dict]] = None) -> dict:
+    chunks = retrieve_evidence(question, top_k=TOP_K) if evidence_chunks is None else evidence_chunks
     ok, safety_notes = safety_check(chunks)
 
     if not ok:
@@ -388,17 +437,31 @@ def raphael_generate(case_context: str, question: str, mode: str = "radiology") 
     draft = call_llm_json(SYSTEM_PROMPT_RAPHAEL, build_user_prompt(mode, case_context, question, evidence_block))
 
     # Critic pass
-    critique = call_llm_json(CRITIC_SYSTEM, build_critic_prompt(json.dumps(draft), evidence_block))
+    def critique_draft(candidate):
+        result = call_llm_json(CRITIC_SYSTEM, build_critic_prompt(json.dumps(candidate), evidence_block))
+        try:
+            return Critique.model_validate(result).model_dump()
+        except ValidationError:
+            raise HTTPException(502, "Model critic output does not match the safety schema.")
+
+    critique = critique_draft(draft)
     if not critique.get("ok", False):
         fixes = "\n".join(f"- {x}" for x in critique.get("required_fixes", []))
         regen_q = question + "\n\nSAFETY_FIXES_REQUIRED:\n" + fixes
         draft = call_llm_json(SYSTEM_PROMPT_RAPHAEL, build_user_prompt(mode, case_context, regen_q, evidence_block))
+        critique = critique_draft(draft)
+        if not critique["ok"]:
+            raise HTTPException(502, "Model critic did not approve the revised assessment.")
 
     for k in OUTPUT_KEYS:
         if k not in draft:
             raise HTTPException(500, f"Model output missing required key: {k}")
 
-    enforce_citations(draft)
+    try:
+        draft = Assessment.model_validate(draft).model_dump()
+    except ValidationError:
+        raise HTTPException(502, "Model output does not match the assessment schema.")
+    enforce_citations(draft, chunks)
     draft["evidence_used"] = chunks
     draft["safety_notes"] = list(dict.fromkeys((draft.get("safety_notes") or []) + safety_notes + (critique.get("issues") or [])))
 
@@ -419,28 +482,42 @@ def raphael_generate(case_context: str, question: str, mode: str = "radiology") 
 @app.on_event("startup")
 def startup():
     with engine.begin() as c:
-        for stmt in DDL.strip().split(";\n\n"):
-            if stmt.strip():
-                c.execute(text(stmt))
-        for stmt in TRIGGERS.strip().split(";\n"):
-            s = stmt.strip().rstrip(";")
-            if s:
-                c.execute(text(s))
+        execute_sqlite_script(c, DDL)
+        execute_sqlite_script(c, TRIGGERS)
     ensure_feedback_table(engine)
+    if DEV_PORTAL:
+        from dev_runtime import migrate
+        migrate(engine)
     try:
         if QDRANT_URL:
             ensure_qdrant_collection()
     except Exception as e:
-        print("QDRANT_STARTUP_WARNING", str(e))
+        # SDK/proxy exception messages can reflect URLs, headers or credentials.
+        print("QDRANT_STARTUP_WARNING", type(e).__name__)
 
 # ───────────────── Base routes
 @app.get("/")
 def root():
-    return RedirectResponse("/static/Raphael.html")
+    return RedirectResponse("/static/portal.html" if DEV_PORTAL else "/static/Raphael.html")
 
 @app.get("/healthz")
 def healthz():
     return {"status": "ok", "ts": datetime.utcnow().isoformat()}
+
+
+@app.get("/readyz")
+def readiness():
+    try:
+        with engine.connect() as c:
+            c.execute(text("SELECT 1"))
+        if DEV_PORTAL:
+            from dev_runtime import schema_status
+            if not schema_status(engine)["ready"]:
+                return JSONResponse({"status": "not_ready", "detail": "Development schema migration required."}, status_code=503)
+        return {"status": "ready", "scope": "synthetic-development" if DEV_PORTAL else "legacy-development",
+                "clinical_validation": "not_established"}
+    except Exception:
+        return JSONResponse({"status": "not_ready", "detail": "Database readiness check failed."}, status_code=503)
 
 # ───────────────── Patients/Conversations/Messages (unchanged functionality)
 @app.get("/api/patients")
@@ -683,3 +760,79 @@ def search_docs(q: str = Query(..., min_length=2)):
             "WHERE doc_fts MATCH :q LIMIT 10"
         ), {"q": q}).mappings().all()
     return list(rows)
+
+
+if DEV_PORTAL:
+    from dev_portal import install_dev_portal
+
+    @app.exception_handler(RequestValidationError)
+    async def safe_portal_validation(request, exc):
+        if request.url.path.startswith("/api/dev/"):
+            # FastAPI's default validation body includes submitted input values,
+            # which could echo a mistyped password. Keep portal errors generic.
+            return JSONResponse({"detail": "Invalid portal request. Check required fields and lengths."}, status_code=422)
+        return await request_validation_exception_handler(request, exc)
+
+    @app.middleware("http")
+    async def isolate_development_portal(request, call_next):
+        # Legacy APIs have no role/tenant boundaries. Preserve them in legacy
+        # mode, but never expose them alongside authenticated portal sessions.
+        if request.url.path.startswith("/api/") and not request.url.path.startswith("/api/dev/"):
+            response = JSONResponse({"detail": "Legacy APIs are disabled in development portal mode."}, status_code=403)
+        else:
+            response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Permissions-Policy"] = "camera=(), geolocation=(), microphone=(self)"
+        if request.url.scheme=="https":response.headers["Strict-Transport-Security"]="max-age=31536000"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+        return response
+
+    def development_assessment(**kwargs):
+        tenant = kwargs.pop("tenant", None)
+        backend = os.getenv("RAPHAEL_EVIDENCE_BACKEND", "qdrant")
+        if backend not in ("sqlite", "qdrant"):
+            raise HTTPException(503, "Unsupported development evidence backend.")
+        if not (LLM_BASE_URL and LLM_API_KEY and LLM_API_KEY != "EMPTY") or (backend == "qdrant" and not QDRANT_URL):
+            raise HTTPException(503, "Configure dedicated development LLM and evidence services before requesting assessments.")
+        try:
+            if backend == "sqlite":
+                from dev_knowledge import search_evidence
+                if not tenant:
+                    raise HTTPException(403, "Authorized evidence scope is required.")
+                kwargs["evidence_chunks"] = search_evidence(engine, tenant, kwargs["question"][:1000], top_k=TOP_K)
+            return raphael_generate(**kwargs)
+        except HTTPException:
+            raise
+        except Exception:
+            # Never reflect provider errors, URLs or credentials to the portal.
+            raise HTTPException(503, "Development assessment services are unavailable.")
+
+    portal_context = install_dev_portal(app, engine, assessment_generator=development_assessment)
+    from dev_chart import install_chart
+    from dev_imaging import install_imaging
+    from dev_messaging import install_messaging
+    from dev_knowledge import install_knowledge
+    from dev_intelligence import install_intelligence
+    from dev_care import install_care
+    install_chart(app, portal_context)
+    install_imaging(app, portal_context)
+    install_messaging(app, portal_context)
+    install_knowledge(app, portal_context)
+    install_intelligence(app, portal_context, assessment_generator=development_assessment)
+    install_care(app, portal_context)
+    from dev_patient_ai import install_patient_ai,export_patient_ai
+    from dev_account import install_account
+    install_patient_ai(app,portal_context)
+    install_account(app,portal_context,patient_ai_exporter=export_patient_ai)
+
+    @app.get("/api/dev/status")
+    def portal_status(user=Depends(portal_context.user)):
+        from dev_runtime import schema_status
+        return {"scope": "synthetic-development-only", "database": schema_status(engine),
+                "evidence_backend": os.getenv("RAPHAEL_EVIDENCE_BACKEND", "qdrant"),
+                "llm": "configured_not_validated" if LLM_BASE_URL and LLM_API_KEY and LLM_API_KEY != "EMPTY" else "not_configured",
+                "external_messaging": "disabled", "live_billing": "disabled",
+                "clinical_validation": "not_established"}

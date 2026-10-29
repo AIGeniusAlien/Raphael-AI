@@ -1,8 +1,9 @@
 from qdrant_client import QdrantClient
+from qdrant_config import connection_options
 from qdrant_client.http import models as qm
 
 def get_client(qdrant_url: str) -> QdrantClient:
-    return QdrantClient(url=qdrant_url)
+    return QdrantClient(url=qdrant_url, **connection_options(qdrant_url))
 
 def ensure_collection(client: QdrantClient, collection: str, embed_dim: int):
     existing = [c.name for c in client.get_collections().collections]

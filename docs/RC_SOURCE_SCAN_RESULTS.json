@@ -1,0 +1,19 @@
+{
+  "scope": "Application plus mobile/scripts and .github/scripts; Bandit -lll -iii (high severity and high confidence only)",
+  "findings": [],
+  "errors": [],
+  "metrics": {
+    "CONFIDENCE.HIGH": 34,
+    "CONFIDENCE.LOW": 10,
+    "CONFIDENCE.MEDIUM": 4,
+    "CONFIDENCE.UNDEFINED": 0,
+    "SEVERITY.HIGH": 0,
+    "SEVERITY.LOW": 37,
+    "SEVERITY.MEDIUM": 11,
+    "SEVERITY.UNDEFINED": 0,
+    "loc": 5018,
+    "nosec": 0,
+    "skipped_tests": 0
+  },
+  "limitation": "Filtered static scan, not independent security certification; lower severity findings remain."
+}

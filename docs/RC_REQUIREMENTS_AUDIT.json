@@ -1,0 +1,12 @@
+{
+  "baseline_sha": "9feeab359223e06ebb5f448a86529096ac082f4b",
+  "baseline_ids_and_descriptions_preserved": 1128,
+  "current_requirement_count": 1136,
+  "states": {
+    "PARTIAL": 864,
+    "NOT_IMPLEMENTED": 194,
+    "VERIFIED": 56,
+    "IMPLEMENTED_UNVERIFIED": 22
+  },
+  "verification_scope": "Launch-critical and stale live-service/native/compliance rows reconciled;remaining implementation states preserved. Presence is not full feature acceptance."
+}

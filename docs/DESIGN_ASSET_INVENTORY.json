@@ -1,0 +1,28 @@
+{
+  "canonical_approval": "Owner approval metadata is not present;do not claim App Store logo approval.",
+  "assets": [
+    {
+      "path": "static/logo.png.PNG",
+      "sha256": "c47ae6f2bc68764b56294af76aed981a823fa4d92c724e41d8edf5c1a226b6e3"
+    },
+    {
+      "path": "static/styles.css",
+      "sha256": "036bcb24d9fb3e2121f6923ac1d0d6bcfae2862048b8f87dd256409c4228ec76"
+    },
+    {
+      "path": "static/portal.css",
+      "sha256": "8c2621846fbaa6d14df9bbe2e583d3b648a96924a096b4ef29644abdbae4ed80"
+    },
+    {
+      "path": "mobile/ios/Raphael/Assets.xcassets/BrandMark.imageset/BrandMark.png",
+      "sha256": "c270ee57721cbc14269d7dc4b64a3f4c7d6674b2a3d547aa8468d5afc81c5e5f"
+    },
+    {
+      "path": "mobile/ios/Raphael/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
+      "sha256": "108d48ffc5bef294a6104d49f16a9f5268b08f2b3a8aa7514afadd0578788fd0"
+    }
+  ],
+  "web_identity": "static/Raphael.html references static/logo.png.PNG;legacy dark palette in static/styles.css;portal light palette in static/portal.css. Preserve both existing layouts.",
+  "ios_identity": "Prior geometric R assets differ from the web logo;preserved as provisional pending owner decision. No replacement icon invented.",
+  "dark_mode": "Legacy web dark theme exists;portal uses existing light theme. A new unified dark redesign is not claimed."
+}

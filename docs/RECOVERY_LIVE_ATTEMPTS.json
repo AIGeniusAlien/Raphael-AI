@@ -1,0 +1,68 @@
+[
+  {
+    "artifact_name": "recovered-live-medical",
+    "status": "failed",
+    "failed_stage": "browser_live_conversation",
+    "error_type": "AssertionError",
+    "physician_status": null,
+    "physician_screen": null,
+    "patient_status": null,
+    "patient_screen": null,
+    "note": "Synthetic real-provider run;not clinical validation. Earlier failures were retained;code changes addressed exact quote/schema/coverage handling."
+  },
+  {
+    "artifact_name": "recovered-live-education",
+    "status": "failed",
+    "failed_stage": "patient_live_conversation",
+    "error_type": "AssertionError",
+    "physician_status": null,
+    "physician_screen": "passed",
+    "patient_status": "failed",
+    "patient_screen": null,
+    "note": "Synthetic real-provider run;not clinical validation. Earlier failures were retained;code changes addressed exact quote/schema/coverage handling."
+  },
+  {
+    "artifact_name": "recovered-live-final",
+    "status": "failed",
+    "failed_stage": "patient_live_conversation",
+    "error_type": "AssertionError",
+    "physician_status": null,
+    "physician_screen": "passed",
+    "patient_status": "blocked",
+    "patient_screen": "blocked",
+    "note": "Synthetic real-provider run;not clinical validation. Earlier failures were retained;code changes addressed exact quote/schema/coverage handling."
+  },
+  {
+    "artifact_name": "recovered-live-verified",
+    "status": "failed",
+    "failed_stage": "browser_live_conversation",
+    "error_type": "AssertionError",
+    "physician_status": null,
+    "physician_screen": null,
+    "patient_status": null,
+    "patient_screen": null,
+    "note": "Synthetic real-provider run;not clinical validation. Earlier failures were retained;code changes addressed exact quote/schema/coverage handling."
+  },
+  {
+    "artifact_name": "recovered-live-structured",
+    "status": "failed",
+    "failed_stage": "evidence_display",
+    "error_type": "AssertionError",
+    "physician_status": null,
+    "physician_screen": null,
+    "patient_status": null,
+    "patient_screen": null,
+    "note": "Synthetic real-provider run;not clinical validation. Earlier failures were retained;code changes addressed exact quote/schema/coverage handling."
+  },
+  {
+    "artifact_name": "recovered-live-release",
+    "status": "passed",
+    "failed_stage": null,
+    "error_type": null,
+    "physician_status": "complete",
+    "physician_screen": "passed",
+    "patient_status": "complete",
+    "patient_screen": "passed",
+    "note": "Synthetic real-provider run;not clinical validation. Earlier failures were retained;code changes addressed exact quote/schema/coverage handling."
+  }
+]

@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-26",
+  "branch": "fix/sqlite-startup-recovery",
+  "draft_pr": "https://github.com/AIGeniusAlien/Raphael-AI/pull/1",
+  "checkpoint_commit": "b98ce2e98e846a500e61fc293b5bc3f204ade7d7",
+  "final_commit": "See Git HEAD and PR head;this report belongs to that commit.",
+  "prior_requirement_ids_and_descriptions_preserved": 1112,
+  "requirements_total": 1117,
+  "tests": {
+    "python": {
+      "passed": 181,
+      "failed": 0
+    },
+    "frontend": {
+      "passed": 26,
+      "failed": 0
+    },
+    "chromium": {
+      "passed": 6,
+      "failed": 0,
+      "provider": "labeled local fixtures"
+    },
+    "live_chromium": {
+      "physician": "complete",
+      "patient": "complete",
+      "uses_mock_services": false
+    },
+    "mobile_linux": {
+      "passed": 5,
+      "structural_audit": "passed",
+      "swift_compilation": "NOT_RUN"
+    },
+    "dependency_compatibility": {
+      "packages": 86,
+      "status": "passed"
+    },
+    "fresh_vulnerability_scan": "NOT_RUN"
+  },
+  "live": {
+    "authentication": "OpenAI and Qdrant succeeded with existing secure bindings",
+    "embedding_model": "text-embedding-3-small",
+    "dimensions": 384,
+    "collection": "raphael_evidence_v1",
+    "documents": 6,
+    "vectors": 31,
+    "new_vectors": 11,
+    "repeat_vectors_written": 0,
+    "physician_support_screen": "passed",
+    "patient_support_screen": "passed",
+    "physician_citation_ids": [
+      "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2"
+    ],
+    "patient_source_ids": [
+      "14d6bf581537f6895a85210d0ae2769de5eaf88b78fdb9e70b82e04e9553457c",
+      "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2",
+      "1f4ddc645c6d7be2354c011c2fcf06b2bf5fe1f897ddec3370fb0c7ae5903ac7",
+      "8332b64148ed525658b40ff6e8cf0ee2874608fbde02cc32e68d913c76111a02",
+      "a19e2c8d050340d56b520fd0e04a222e68b8ae556d5948277bf91e7b1d5e45ca",
+      "2890bba1744b0e7ed5d36ba9db4e3fd9a6d9570e4c4c325ed07e31ad9d5d3214"
+    ],
+    "original_source_checks": true,
+    "missing_evidence_results": 0,
+    "clinical_validation": false,
+    "clinician_approved": false,
+    "details": "RECOVERY_LIVE_RESULTS.json",
+    "earlier_attempts": "RECOVERY_LIVE_ATTEMPTS.json"
+  },
+  "ios": "Actual source/project;Linux checks passed;Xcode/device/signing unverified",
+  "android": "NOT_IMPLEMENTED",
+  "local_synthetic_development": "ready with listed limitations",
+  "staging": "NOT_DEPLOYED;HTTPS/identity/security/privacy/operations review required",
+  "app_store": "NOT_READY;native build/device/signing/legal/privacy/account deletion gates remain",
+  "production_data_used": false,
+  "merge_or_deploy_performed": false,
+  "remaining_work": [
+    "Independent clinical and citation-entailment evaluation",
+    "Guardian/legal proxy and real identity/security hardening",
+    "Policy-backed account erasure;review-only currently",
+    "macOS/Xcode compile and physical-device/accessibility validation",
+    "Authorized HTTPS staging;no existing public preview",
+    "Android and full specialty/multimodal/voice/EHR/enterprise backlog"
+  ],
+  "operator_instructions": "RECOVERY_IMPLEMENTATION_REPORT.md",
+  "next_three_actions": [
+    "Clinician-adjudicated support/population/contradiction evaluation",
+    "macOS Xcode simulator then authorized synthetic HTTPS device tests",
+    "Retention/deletion/privacy policy and security/clinical review before staging/TestFlight"
+  ]
+}

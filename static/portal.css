@@ -1,0 +1,47 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #142c35; background: #f4f8fa; }
+* { box-sizing: border-box; }
+body { margin: 0 auto; max-width: 1320px; padding: 1.25rem; line-height: 1.5; }
+header, footer { padding-bottom: 1rem; }
+h1 { margin-bottom: .5rem; }
+h2, h3 { margin-top: .5rem; }
+h1, h2, h3, h4, button, #session-label { overflow-wrap: anywhere; }
+.notice { padding: .8rem; background: #fff3cc; border-left: 4px solid #735400; }
+#status { min-height: 1.8rem; font-weight: 600; white-space: pre-wrap; }
+#status[data-error="true"] { color: #8b1828; }
+#workspace { display: grid; grid-template-columns: minmax(230px, 1fr) minmax(0, 3fr); gap: 1.5rem; align-items: start; }
+aside, #chart, #login-panel { min-width: 0; background: #fff; border: 1px solid #cbd8df; border-radius: .5rem; padding: 1.25rem; }
+#login-panel { max-width: 36rem; }
+section > section { border-top: 1px solid #cbd8df; margin-top: 1.5rem; padding-top: 1rem; }
+form { margin: 1rem 0; }
+label { display: block; font-weight: 600; margin-top: .8rem; }
+input, textarea, button { font: inherit; }
+input, textarea { width: 100%; padding: .65rem; border: 1px solid #647d88; border-radius: .3rem; }
+textarea { resize: vertical; }
+button { max-width: 100%; min-width: 0; padding: .65rem .9rem; margin: .5rem .35rem .3rem 0; border: 1px solid #075e68; border-radius: .3rem; color: white; background: #075e68; cursor: pointer; min-height: 44px; }
+button:disabled { opacity: .6; cursor: wait; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #aa5c00; outline-offset: 3px; }
+.choices { display: flex; flex-wrap: wrap; gap: .25rem; }
+.choices button[aria-pressed="true"] { background: #112c35; border-color: #112c35; }
+#messages { padding-left: 1.5rem; }
+#messages li, .note, .assessment-section { border: 1px solid #cbd8df; border-radius: .3rem; padding: .8rem; margin: .6rem 0; overflow-wrap: anywhere; }
+.message-content, .note-content, .assessment-content { white-space: pre-wrap; overflow-wrap: anywhere; }
+.meta, .hint, footer { font-size: .9rem; color: #405c68; }
+[hidden] { display: none !important; }
+@media (max-width: 760px) { body { padding: .7rem; } #workspace { grid-template-columns: 1fr; } }
+
+/* Shared clinical workspace hierarchy; controls remain native and accessible. */
+body { background: linear-gradient(145deg,#eef5f8,#f8fafc); }
+header { border-bottom: 1px solid #d7e2ea; margin-bottom: 1.4rem; }
+h1 { letter-spacing:-.035em; font-size:clamp(1.7rem,4vw,2.5rem); color:#12394b; }
+h2 { color:#164d61; }
+nav { display:flex;flex-wrap:wrap;gap:.7rem;padding:.85rem 0; }
+nav a { color:#075e68;background:#e8f3f5;padding:.55rem .8rem;border-radius:.5rem;font-weight:600;text-decoration:none; }
+nav a:focus-visible,nav a:hover { text-decoration:underline;outline-offset:3px; }
+#workspace > nav { grid-column:1/-1; }
+aside,#chart,#login-panel { box-shadow:0 8px 28px #12394b08;border-radius:1rem; }
+#login-panel { margin:2rem auto;padding:clamp(1.2rem,4vw,2.4rem); }
+input,textarea,button { border-radius:.5rem; }
+
+/* Private factor material must wrap without forcing narrow account pages wider. */
+#mfa-private { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: #fff3cc; border-radius: .5rem; }
+input[type="checkbox"], input[type="radio"] { width: auto; margin-inline-end: .5rem; }

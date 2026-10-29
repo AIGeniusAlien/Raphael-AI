@@ -1,0 +1,9 @@
+// Copy to Local.xcconfig locally. Use the actual authorized synthetic HTTPS staging origin.
+// The $() separator prevents // from starting an xcconfig comment.
+RAPHAEL_SERVER_URL = https:/$()/your-authorized-host.invalid
+RAPHAEL_SERVER_HOST = your-authorized-host.invalid
+RAPHAEL_SUPPORT_EMAIL = support-address-to-be-configured
+RAPHAEL_BUNDLE_IDENTIFIER = owner.registered.identifier
+RAPHAEL_DEVELOPMENT_TEAM =
+// Standard Apple TLS only;owner must confirm export-compliance classification before upload.
+// Never enter OpenAI/Qdrant credentials here. This file is bundled build configuration,not secret storage.

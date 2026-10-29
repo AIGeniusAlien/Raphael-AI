@@ -1,0 +1,29 @@
+// Operator values belong in the ignored Local.xcconfig,never in source with secrets.
+RAPHAEL_SERVER_URL =
+RAPHAEL_SERVER_HOST =
+RAPHAEL_SUPPORT_EMAIL =
+RAPHAEL_BUNDLE_IDENTIFIER = org.example.raphael.development
+RAPHAEL_DEVELOPMENT_TEAM =
+#include? "Local.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = $(RAPHAEL_BUNDLE_IDENTIFIER)
+DEVELOPMENT_TEAM = $(RAPHAEL_DEVELOPMENT_TEAM)
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+SWIFT_VERSION = 5.0
+SWIFT_STRICT_CONCURRENCY = targeted
+TARGETED_DEVICE_FAMILY = 1,2
+CODE_SIGN_STYLE = Automatic
+GENERATE_INFOPLIST_FILE = NO
+INFOPLIST_FILE = Raphael/Info.plist
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
+ENABLE_USER_SCRIPT_SANDBOXING = YES
+
+// App/test bundles and Xcode's debug dylib must resolve from their own signed
+// bundle locations. Never search a writable global directory or remote path.
+LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks @loader_path/Frameworks @executable_path
+
+// The public Objective-C bridge avoids the absent optional Swift WebKit overlay.
+// Drop unreferenced overlay dylibs rather than trying to link a missing stub.
+OTHER_LDFLAGS = $(inherited) -Wl,-dead_strip_dylibs

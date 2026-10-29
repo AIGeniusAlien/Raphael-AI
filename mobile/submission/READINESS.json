@@ -1,0 +1,64 @@
+{
+  "ios_source": "PARTIAL;compiled;authenticated native acceptance FAILED",
+  "linux_structural_audit": "VERIFIED",
+  "linux_project_tests": {
+    "passed": 5
+  },
+  "xcode_compile": "VERIFIED_REMOTE_CI",
+  "simulator_and_device_tests": "6unit and unconfigured UI passed;authenticated UI FAILED;physical device NOT_RUN",
+  "apple_signing": "BLOCKED_EXTERNAL",
+  "privacy_legal_clinical_review": "REQUIRES_CLINICAL_VALIDATION",
+  "account_erasure": "NOT_IMPLEMENTED",
+  "native_download_export": "NOT_IMPLEMENTED",
+  "android_native": "NOT_IMPLEMENTED",
+  "staging_deployed": false,
+  "app_store_ready": false,
+  "testflight_uploaded": false,
+  "owner_actions": [
+    "Publish saved native-artifact hostname addition",
+    "Provide authorized synthetic HTTPS staging and physical-device access",
+    "Provide owner Apple team,registered bundle,approved icon and real privacy/support URLs",
+    "Approve applicable retention,intended-use and distribution policies"
+  ],
+  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40782065504",
+  "simulator_unit_ui_tests": "FAILED_AUTHENTICATED_ACCEPTANCE",
+  "simulator_tests": {
+    "passed": 7,
+    "failed": 1,
+    "skipped": 0,
+    "total": 8,
+    "source": "xcresulttool"
+  },
+  "historical_simulator_tests": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "source": "xcresulttool"
+  },
+  "audit_report": "docs/RC_RELEASE_AUDIT.md",
+  "audit_date": "2026-10-28",
+  "authenticated_native_workflow": "FAIL;WebKit remote accessibility snapshot unavailable before login",
+  "native_source_commit": "5710cb65f8708257504994485a25b6c384418d5f",
+  "remaining_engineering": [
+    "Resolve native authenticated acceptance failure",
+    "Implement policy-backed erasure,production identity/MFA/guardian and PHI controls",
+    "Complete promised protected native export and independent clinical/security evaluation"
+  ],
+  "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
+  "product_completion_native_followup": {
+    "source": "0e9570645749c00ccf44cdb5174b03d6578acda2",
+    "run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40793424632",
+    "result": "PENDING_ACTUAL_CI;not_a_pass",
+    "implemented": "Native controls,independent real-HTTPS contract,private ephemeral cookie sharing,stable hidden WebView lifecycle"
+  },
+  "last_completed_native_acceptance": {
+    "source": "f5a7d9fa7f64237884646119d09be09101f5aa53",
+    "run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40792127330",
+    "passed": 9,
+    "failed": 2,
+    "skipped": 0,
+    "status": "FAIL",
+    "cause": "GUI login401;preauth WebView accessibility exposure. Navigation startup crash fixed;7unit cases run.",
+    "independent_https_runner_contract": "PASS,both roles and protected API operations;not app UI proof"
+  }
+}

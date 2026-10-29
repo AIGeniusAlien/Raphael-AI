@@ -1,0 +1,66 @@
+{
+  "audit_date": "2026-10-28",
+  "canonical_report": "docs/RC_RELEASE_AUDIT.md",
+  "outdated_reports": [
+    {
+      "path": "docs/MASTER_ENGINEERING_REPORT.md",
+      "reason": "Pending full-suite/native statements are superseded by the audit;retained as checkpoint history.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "docs/MASTER_VERIFICATION_RESULTS.json",
+      "reason": "Pre-audit208-test source bbe17f2;not evidence for later changes.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "docs/PRODUCTION_ENGINEERING_REPORT.md",
+      "reason": "Earlier193-test/seven-native/six-source checkpoint.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "docs/PRODUCTION_CI_RESULTS.json",
+      "reason": "CI evidence belongs to an earlier source;not current PR status.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "docs/RECOVERY_LIVE_RESULTS.json",
+      "reason": "Historical six-document/31-vector live workflow.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "docs/TEST_RESULTS.md",
+      "reason": "Repeated final/current sections describe older sources and counts.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "docs/INFRASTRUCTURE_STATUS.md",
+      "reason": "Contains outdated three-document/20-vector and historical credential/network failures.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "docs/RELEASE_READINESS.md",
+      "reason": "Older final/native/readiness statements require source-scoped interpretation.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "docs/FEATURE_INVENTORY.md",
+      "reason": "Historical narrative and counts;matrix and audit are authoritative for current scope.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "reason": "Historical milestone/checkpoint statements are not current release approval.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "mobile/submission/READINESS.json",
+      "reason": "Seven-native result omitted the later failing authenticated eighth case.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    },
+    {
+      "path": "mobile/submission/REVIEW_AND_TESTFLIGHT.md",
+      "reason": "Source-only and pending-verification prose needs current audit pointer.",
+      "disposition": "Historical evidence retained;current status is RC_RELEASE_AUDIT.md"
+    }
+  ]
+}

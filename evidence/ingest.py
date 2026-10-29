@@ -1,7 +1,10 @@
 from qdrant_client import QdrantClient
+from qdrant_config import connection_options
 from rag.chunking import simple_chunk
 from rag.embedder import embed_texts
 import hashlib
+from corpus.indexer import point_id_for
+from qdrant_client.http import models as qm
 
 def _sha(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
@@ -10,7 +13,7 @@ def ingest_text(*, qdrant_url: str, collection: str, embed_model: str, embed_dim
                 title: str, tier: str, source_date: str | None, url: str | None, section: str | None,
                 text: str) -> int:
 
-    client = QdrantClient(url=qdrant_url)
+    client = QdrantClient(url=qdrant_url, **connection_options(qdrant_url))
 
     # create collection if missing
     existing = [c.name for c in client.get_collections().collections]
@@ -39,7 +42,7 @@ def ingest_text(*, qdrant_url: str, collection: str, embed_model: str, embed_dim
             "section": section,
             "text": txt
         }
-        points.append({"id": chunk_id, "vector": v.tolist(), "payload": payload})
+        points.append(qm.PointStruct(id=point_id_for(chunk_id), vector=v.tolist(), payload=payload))
 
     client.upsert(collection_name=collection, points=points)
     return len(points)

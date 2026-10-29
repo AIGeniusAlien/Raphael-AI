@@ -1,0 +1,125 @@
+name: Synthetic development and native checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verification-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: python -m pip install torch==2.6.0+cpu --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install --no-deps -r requirements.lock
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip check
+      - run: python -m playwright install --with-deps chromium
+      - name: All isolated checks
+        run: |
+          export CHROMIUM_EXECUTABLE="$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')"
+          python -m dev_verify --all --require-browser --output verification-results
+      - name: Publish regression failure diagnostics
+        if: failure()
+        run: python .github/scripts/publish_diagnostics.py verification-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-verification
+          path: verification-results/
+          retention-days: 14
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install torch==2.6.0+cpu --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install --no-deps -r requirements.lock
+      - run: python -m pip install pip-audit bandit
+      - run: pip-audit --local --format json --output advisory-audit.json
+      - name: High severity and confidence source scan
+        run: bandit -r main.py dev_*.py auth/ rag/ pubmed/ clinical_documentation.py curated_evidence.py qdrant_config.py scripts/ mobile/scripts/ .github/scripts/ -lll -iii -f json -o source-scan.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scans
+          path: |
+            advisory-audit.json
+            source-scan.json
+          retention-days: 14
+  ios-simulator:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Select installed iPhone simulator
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available --json > /tmp/raphael-simulators.json
+          python3 - <<'PY'
+          import json,os
+          data=json.load(open('/tmp/raphael-simulators.json'))
+          phones=[d for ds in data['devices'].values() for d in ds if d.get('isAvailable') and 'iPhone' in d['name']]
+          if not phones:raise SystemExit('No installed available iPhone simulator;native job cannot pass.')
+          with open(os.environ['GITHUB_ENV'],'a') as output:output.write('RAPHAEL_SIMULATOR_DESTINATION=platform=iOS Simulator,id='+phones[0]['udid']+'\n')
+          PY
+      - name: Install actual synthetic backend runtime without optional ML downloads
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from dev_start import runtime_requirements
+          Path('/tmp/raphael-native-runtime.txt').write_text(runtime_requirements())
+          PY
+          python -m pip install -r /tmp/raphael-native-runtime.txt
+      - name: Prepare simulator-trusted actual HTTPS backend
+        run: |
+          set -o pipefail
+          command -v socat >/dev/null || brew install socat
+          python3 mobile/scripts/authenticated_ci.py 2>&1 | tee native-setup.log
+      - name: Compile and test native app
+        run: |
+          set -o pipefail
+          bash mobile/scripts/native_checks.sh 2>&1 | python3 .github/scripts/redact_native_log.py
+      - name: Stop ephemeral synthetic backend
+        if: always() && env.RAPHAEL_NATIVE_CI_PRIVATE != ''
+        run: python3 mobile/scripts/authenticated_ci.py cleanup
+      - name: Publish native test counts
+        if: always()
+        run: python3 .github/scripts/native_test_summary.py
+      - name: Export actual simulator screenshots
+        if: always()
+        run: python3 .github/scripts/native_screenshots.py
+      - name: Publish native failure diagnostics
+        if: failure()
+        run: |
+          python3 .github/scripts/publish_diagnostics.py native-setup.log
+          if [ -f native-backend-startup.log ]; then python3 .github/scripts/publish_diagnostics.py native-backend-startup.log; fi
+          python3 .github/scripts/publish_diagnostics.py native-build.log --native-crashes
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-test-results
+          path: |
+            mobile/artifacts/NativeRun.*/NativeTests.xcresult
+            mobile/artifacts/NativeRun.*/NativeAttachments/
+            native-build.log
+            native-setup.log
+            native-backend-startup.log
+          retention-days: 14

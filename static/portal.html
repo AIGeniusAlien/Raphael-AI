@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="manifest" href="/static/manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><title>Raphael — Synthetic development portal</title>
+  <link rel="stylesheet" href="/static/portal.css">
+  <script defer src="/static/portal.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Raphael development portal</h1>
+    <p class="notice">Synthetic data only. This test portal is not a clinical service. No real patient accounts, clinical decisions, or external message delivery.</p>
+    <p id="session-label"></p>
+    <button id="logout" type="button" hidden>Sign out</button>
+  </header>
+  <p id="status" role="status" aria-live="polite" tabindex="-1"></p>
+  <section id="login-panel" aria-labelledby="login-title">
+    <h2 id="login-title">Development sign in</h2>
+    <p>Use a synthetic account provisioned by your development administrator. Public registration, identity verification, and self-service recovery are not available in this test release.</p>
+    <p class="hint">Synthetic account recovery requires your development operator. No email or SMS password-reset service is active.</p>
+    <form id="login-form">
+      <label for="tenant">Development organization</label><input id="tenant" name="tenant" required autocomplete="organization">
+      <label for="username">Username</label><input id="username" name="username" required autocomplete="username">
+      <label for="password">Password</label><input id="password" name="password" type="password" required autocomplete="current-password">
+      <label for="otp">Authenticator or recovery code (if enabled)</label><input id="otp" name="otp" type="password" maxlength="100" autocomplete="one-time-code">
+      <button type="submit">Sign in</button>
+    </form>
+  </section>
+  <main id="workspace" hidden>
+    <nav aria-label="Development workspaces">
+      <a href="/static/care.html">Connected intake and emergency information</a>
+      <a href="/static/inbox.html">Internal inbox and reviewed replies</a>
+      <a href="/static/account.html">Account,privacy and sessions</a>
+      <a id="patient-ai-link" href="/static/patient-ai.html" hidden>Patient health education</a>
+      <a id="chart-access-link" href="/static/chart-access.html" hidden>Manage full-chart sharing</a>
+      <a id="knowledge-link" href="/static/knowledge.html" hidden>Reviewed evidence workspace</a>
+      <a id="intelligence-link" href="/static/intelligence.html" hidden>Clinical conversations and active notes</a>
+    </nav>
+    <aside aria-labelledby="patients-heading">
+      <h2 id="patients-heading">Authorized synthetic records</h2>
+      <div id="patients" class="choices"></div>
+      <form id="patient-form" hidden>
+        <h3>Add a synthetic patient</h3>
+        <label for="patient-name">Synthetic name</label><input id="patient-name" required>
+        <label for="patient-account">Patient account username (optional)</label><input id="patient-account">
+        <p class="hint">The account must already exist in this development organization.</p>
+        <button type="submit">Create synthetic record</button>
+      </form>
+    </aside>
+    <section id="chart" hidden aria-labelledby="chart-heading">
+      <h2 id="chart-heading">Select a record</h2>
+      <p id="chart-summary"></p>
+      <nav aria-label="Selected patient workspaces">
+        <a id="structured-chart-link" href="/static/chart.html">Structured chart and documents</a>
+        <a id="imaging-link" href="/static/imaging.html">DICOM images and sandbox FHIR</a>
+      </nav>
+      <section aria-labelledby="threads-heading">
+        <h3 id="threads-heading">Internal portal conversations</h3>
+        <p>Messages remain inside this test portal. This is not an urgent or emergency channel; notifications and external delivery are not available.</p>
+        <div id="conversations" class="choices"></div>
+        <form id="conversation-form">
+          <label for="conversation-title">New conversation title</label><input id="conversation-title" required>
+          <button type="submit">Create internal conversation</button>
+        </form>
+        <section id="thread" hidden aria-labelledby="thread-heading">
+          <h4 id="thread-heading">Messages</h4>
+          <ol id="messages" aria-live="polite"></ol>
+          <form id="message-form">
+            <label for="message-content">Your internal portal message</label><textarea id="message-content" required rows="3"></textarea>
+            <button type="submit">Send to internal conversation</button>
+          </form>
+        </section>
+      </section>
+      <section aria-labelledby="notes-heading">
+        <h3 id="notes-heading">Clinical notes</h3>
+        <p id="notes-explanation"></p>
+        <div id="notes"></div>
+        <form id="note-form" hidden>
+          <label for="note-content">Draft note (synthetic data only)</label><textarea id="note-content" required rows="5"></textarea>
+          <button type="submit">Save draft for review</button>
+        </form>
+        <button id="draft-note" type="button" hidden>Draft note from selected conversation</button>
+      </section>
+      <section id="assessment-panel" hidden aria-labelledby="assessment-heading">
+        <h3 id="assessment-heading">Clinician assessment workspace</h3>
+        <p>AI output is general decision-support information awaiting clinician review. It is not an approved patient instruction or an order. A configured development inference service and evidence corpus are required.</p>
+        <form id="assessment-form">
+          <label for="assessment-question">Clinical assessment question about this synthetic record</label><textarea id="assessment-question" required rows="3"></textarea>
+          <button type="submit">Request draft assessment</button>
+        </form>
+        <div id="assessment-output" aria-live="polite"></div>
+      </section>
+    </section>
+  </main>
+  <footer>
+    <p>This is a synthetic development build. Full clinical charts, live-service validation, medication safety, caregiver access, external notifications, account recovery, validated image interpretation and regulated clinical workflows remain incomplete. Internal storage is not external delivery.</p>
+  </footer>
+</body>
+</html>

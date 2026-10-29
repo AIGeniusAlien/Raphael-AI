@@ -1,8 +1,10 @@
 import XCTest
+import UIKit
 
 final class RaphaelUITests: XCTestCase {
     private let fixturePassword = "__CI_SYNTHETIC_PASSWORD__"
     override func tearDownWithError() throws {
+        if !fixturePassword.hasPrefix("__CI_") { UIPasteboard.general.items = [] }
         let app = XCUIApplication()
         if app.state != .notRunning {
             let finalState = XCTAttachment(screenshot: app.screenshot())
@@ -14,6 +16,12 @@ final class RaphaelUITests: XCTestCase {
     }
 
     func testAuthenticatedPatientAndClinicianUseActualHTTPSBackend() throws {
+        try actualJourney(paste: false)
+    }
+    func testPasswordManagerPasteUsesActualAuthenticationAndProtectedWorkspace() throws {
+        try actualJourney(paste: true)
+    }
+    private func actualJourney(paste: Bool) throws {
         continueAfterFailure = false
         let password = fixturePassword
         guard !password.hasPrefix("__CI_") else {
@@ -32,7 +40,19 @@ final class RaphaelUITests: XCTestCase {
             let secure = app.secureTextFields["native-password"]
             secure.tap()
             XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10), "Actual software keyboard required for secure typing.")
-            secure.typeText(password)
+            if paste {
+                // Exercise a real password-manager-style paste into the native
+                // secure control;no JS,token injection or API-login shortcut.
+                UIPasteboard.general.string = password
+                secure.press(forDuration: 1.1)
+                let menu = app.menuItems["Paste"]
+                let button = app.buttons["Paste"]
+                if menu.waitForExistence(timeout: 3) { menu.tap() }
+                else { XCTAssertTrue(button.waitForExistence(timeout: 5)); button.tap() }
+                let allow = app.alerts.buttons["Allow Paste"]
+                if allow.exists { allow.tap() }
+                UIPasteboard.general.items = []
+            } else { secure.typeText(password) }
             app.buttons["Sign in"].tap()
             let reached = app.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 45)
             if !reached {

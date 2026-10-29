@@ -73,6 +73,15 @@ final class ServerConfigurationTests: XCTestCase {
         XCTAssertEqual(input.text, "")
         let sent = try XCTUnwrap(JSONSerialization.jsonObject(with: captured) as? [String:String])
         XCTAssertEqual(sent["password"],exact)
+        var otp = ""
+        let reused = NativeSecretEntry(text: Binding(get: { otp }, set: { otp = $0 }), title: "Authenticator", oneTimeCode: true)
+        reused.updateInput(input, coordinator: coordinator)
+        XCTAssertEqual(input.accessibilityIdentifier,"native-otp")
+        XCTAssertEqual(input.textContentType,.oneTimeCode)
+        input.text = "123456"
+        input.sendActions(for:.editingChanged)
+        XCTAssertEqual(otp,"123456")
+        XCTAssertEqual(value,"")
     }
 
     @MainActor

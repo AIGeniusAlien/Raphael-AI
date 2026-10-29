@@ -175,9 +175,10 @@ struct NativeSignInView: View {
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                     TextField("Username", text: $username).textContentType(.username)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    NativeSecretEntry(text: $password, title: "Password").frame(minHeight: 44)
-                    NativeSecretEntry(text: $otp, title: "Authenticator or recovery code (if enabled)", oneTimeCode: true).frame(minHeight: 44)
+                    NativeSecretEntry(text: $password, title: "Password").id("password-entry").frame(minHeight: 44)
+                    NativeSecretEntry(text: $otp, title: "Authenticator or recovery code (if enabled)", oneTimeCode: true).id("otp-entry").frame(minHeight: 44)
                     Button(session.authenticating ? "Signing in" : "Sign in") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         guard let captured = try? JSONEncoder().encode(NativeCredentials(tenant: tenant, username: username, password: password, otp: otp)) else {
                             session.authenticationProblem = "Sign-in could not be prepared. Check the entered fields."
                             return
@@ -221,11 +222,17 @@ struct NativeSecretEntry: UIViewRepresentable {
         input.font = .preferredFont(forTextStyle: .body)
         input.adjustsFontForContentSizeCategory = true
         input.delegate = coordinator
-        input.addTarget(coordinator, action: #selector(Coordinator.changed(_:)), for: .editingChanged)
+        input.addTarget(coordinator, action: #selector(Coordinator.changed(_:)), for: [.editingChanged, .editingDidEnd])
         return input
     }
     func makeUIView(context: Context) -> UITextField { makeInput(coordinator: context.coordinator) }
     func updateInput(_ input: UITextField, coordinator: Coordinator) {
+        // Form rows may be reused:refresh both the binding and its semantic identity.
+        input.placeholder = title
+        input.accessibilityLabel = title
+        input.accessibilityIdentifier = oneTimeCode ? "native-otp" : "native-password"
+        let kind: UITextContentType = oneTimeCode ? .oneTimeCode : .password
+        if input.textContentType != kind { input.textContentType = kind }
         coordinator.text = $text
         if input.text != text { input.text = text }
     }

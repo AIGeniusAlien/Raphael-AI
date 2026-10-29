@@ -163,6 +163,7 @@ struct NativeSignInView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var otp = ""
+    @State private var showFactor = false
     var body: some View {
         Form {
                 Section {
@@ -176,10 +177,17 @@ struct NativeSignInView: View {
                     TextField("Username", text: $username).textContentType(.username)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                     NativeSecretEntry(text: $password, title: "Password").id("password-entry").frame(minHeight: 44)
-                    NativeSecretEntry(text: $otp, title: "Authenticator or recovery code (if enabled)", oneTimeCode: true).id("otp-entry").frame(minHeight: 44)
+                    Button(showFactor ? "Hide second-factor entry" : "Use an authenticator or recovery code") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        showFactor.toggle()
+                        if !showFactor { otp = "" }
+                    }.font(.callout)
+                    if showFactor {
+                        NativeSecretEntry(text: $otp, title: "Authenticator or recovery code", oneTimeCode: true).id("otp-entry").frame(minHeight: 44)
+                    }
                     Button(session.authenticating ? "Signing in" : "Sign in") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                        guard let captured = try? JSONEncoder().encode(NativeCredentials(tenant: tenant, username: username, password: password, otp: otp)) else {
+                        guard let captured = try? JSONEncoder().encode(NativeCredentials(tenant: tenant, username: username, password: password, otp: showFactor ? otp : "")) else {
                             session.authenticationProblem = "Sign-in could not be prepared. Check the entered fields."
                             return
                         }

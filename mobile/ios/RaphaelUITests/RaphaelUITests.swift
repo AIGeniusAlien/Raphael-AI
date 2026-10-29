@@ -29,6 +29,13 @@ final class RaphaelUITests: XCTestCase {
         }
         let app = XCUIApplication()
         app.launch()
+        func tapNativeHeader(_ element: XCUIElement) {
+            XCTAssertTrue(element.waitForExistence(timeout: 10))
+            XCTAssertTrue(!element.frame.isEmpty && app.frame.intersects(element.frame))
+            // The actual visible native header has no scroll container. Avoid
+            // XCTest's failing AXScrollToVisible action;send the real screen tap.
+            element.coordinate(withNormalizedOffset: CGVector(dx:0.5,dy:0.5)).tap()
+        }
         func login(_ username: String, workspace: String) {
             let organization = app.textFields["Development organization"]
             XCTAssertTrue(organization.waitForExistence(timeout: 30))
@@ -50,7 +57,10 @@ final class RaphaelUITests: XCTestCase {
                 if menu.waitForExistence(timeout: 3) { menu.tap() }
                 else { XCTAssertTrue(button.waitForExistence(timeout: 5)); button.tap() }
                 let allow = app.alerts.buttons["Allow Paste"]
-                if allow.exists { allow.tap() }
+                if allow.waitForExistence(timeout: 2) { allow.tap() }
+                let ready = NSPredicate(format: "enabled == true")
+                let entered = expectation(for: ready, evaluatedWith: app.buttons["Sign in"])
+                wait(for: [entered], timeout: 10)
                 UIPasteboard.general.items = []
             } else { secure.typeText(password) }
             app.buttons["Sign in"].tap()
@@ -66,13 +76,13 @@ final class RaphaelUITests: XCTestCase {
         let patient = XCTAttachment(screenshot: app.screenshot())
         patient.name = "Authenticated synthetic patient over trusted HTTPS"
         patient.lifetime = .keepAlways; add(patient)
-        app.buttons["Patient sections"].tap()
+        tapNativeHeader(app.buttons["Patient sections"])
         app.buttons["Medical record"].tap()
         XCTAssertTrue(app.staticTexts["Synthetic native patient"].waitForExistence(timeout: 15))
-        app.buttons["Patient sections"].tap()
+        tapNativeHeader(app.buttons["Patient sections"])
         app.buttons["Dashboard"].tap()
         XCTAssertTrue(app.buttons["Sign out"].waitForExistence(timeout: 15))
-        app.buttons["Privacy and session settings"].tap()
+        tapNativeHeader(app.buttons["Privacy and session settings"])
         let readiness = app.buttons["Check backend connection"]
         XCTAssertTrue(readiness.waitForExistence(timeout: 10))
         readiness.tap()

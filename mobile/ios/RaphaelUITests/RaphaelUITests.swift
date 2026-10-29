@@ -25,15 +25,18 @@ final class RaphaelUITests: XCTestCase {
             let organization = app.textFields["Development organization"]
             XCTAssertTrue(organization.waitForExistence(timeout: 30))
             organization.tap(); organization.typeText("native-ci")
+            XCTAssertTrue(organization.value as? String == "native-ci", "Organization must retain the exact synthetic input.")
             let user = app.textFields["Username"]
             user.tap(); user.typeText(username)
+            XCTAssertTrue(user.value as? String == username, "Username must retain the exact synthetic input.")
             let secure = app.secureTextFields["Password"]
             secure.tap(); secure.typeText(password)
             app.buttons["Sign in"].tap()
             let reached = app.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 45)
             if !reached {
                 let problem = app.staticTexts["native-authentication-problem"]
-                XCTFail(problem.exists ? problem.label : "Authenticated web identity did not appear. Native status: " + app.otherElements["native-authentication-status"].label)
+                let progress = app.staticTexts["native-authentication-status"]
+                XCTFail(problem.exists ? problem.label : "Authenticated web identity did not appear. Native status: " + (progress.exists ? progress.label : "No in-flight request"))
             }
             XCTAssertTrue(app.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))
         }

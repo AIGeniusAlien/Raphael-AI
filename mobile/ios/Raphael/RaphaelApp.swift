@@ -42,6 +42,9 @@ struct PatientApplication: View {
 
     var body: some View {
         ZStack {
+            if session.identity == nil {
+                NativeSignInView(session: session).privacySensitive().accessibilityHidden(scenePhase != .active)
+            } else {
             VStack(spacing: 0) {
                 // Sections replace the one shared WKWebView;there is no pushed
                 // view hierarchy. A stable native header avoids duplicate UIKit
@@ -66,6 +69,9 @@ struct PatientApplication: View {
                     .font(.footnote).padding(8).frame(maxWidth: .infinity)
                     .background(Color.yellow.opacity(0.18))
                     .accessibilityIdentifier("synthetic-notice")
+                if session.authenticating {
+                    HStack { ProgressView(); Text(session.authenticationStatus).accessibilityIdentifier("native-authentication-status") }.padding(8)
+                }
                 if session.loading {
                     ProgressView("Loading secure workspace").padding(8)
                 }
@@ -78,13 +84,12 @@ struct PatientApplication: View {
                 }
                 PatientWebView(webView: session.webView)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityHidden(session.authenticating)
                     .accessibilityIdentifier("patient-web-workspace")
             }
             .privacySensitive()
-            .accessibilityHidden(scenePhase != .active || session.identity == nil)
-            .opacity(session.identity == nil ? 0 : 1)
-            .allowsHitTesting(session.identity != nil)
-            if session.identity == nil { NativeSignInView(session: session).privacySensitive().accessibilityHidden(scenePhase != .active) }
+            .accessibilityHidden(scenePhase != .active)
+            }
             if scenePhase != .active {
                 Color(.systemBackground).ignoresSafeArea()
                 VStack(spacing: 12) {
@@ -169,16 +174,18 @@ struct NativeSignInView: View {
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                     TextField("Username", text: $username).textContentType(.username)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    SecureField("Password", text: $password).textContentType(.password)
-                    SecureField("Authenticator or recovery code (if enabled)", text: $otp).textContentType(.oneTimeCode)
+                    SecureField("Password", text: $password).textContentType(.password).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    SecureField("Authenticator or recovery code (if enabled)", text: $otp).textContentType(.oneTimeCode).textInputAutocapitalization(.never).autocorrectionDisabled()
                     Button(session.authenticating ? "Signing in" : "Sign in") {
+                        let submittedTenant = tenant
+                        let submittedUsername = username
                         let submitted = password
                         let submittedOTP = otp
                         otp = ""
                         password = ""
-                        Task { await session.signIn(tenant: tenant, username: username, password: submitted, otp: submittedOTP) }
+                        Task { await session.signIn(tenant: submittedTenant, username: submittedUsername, password: submitted, otp: submittedOTP) }
                     }.disabled(session.authenticating || tenant.isEmpty || username.isEmpty || password.isEmpty)
-                    if session.authenticating { ProgressView(session.authenticationStatus).accessibilityIdentifier("native-authentication-status") }
+                    if session.authenticating { HStack { ProgressView(); Text(session.authenticationStatus).accessibilityIdentifier("native-authentication-status") } }
                     if let problem = session.authenticationProblem { Text(problem).accessibilityAddTraits(.updatesFrequently).accessibilityIdentifier("native-authentication-problem") }
                 }
                 Section("Privacy") {

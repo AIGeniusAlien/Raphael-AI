@@ -108,10 +108,12 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             guard sessionResponse.statusCode == 200,
                   try JSONDecoder().decode(NativeIdentity.self, from: sessionData) == user else { throw URLError(.userAuthenticationRequired) }
             guard epoch == authenticationEpoch else { await clearAuthentication(); return }
+            // The native server session is already verified. Mount the single
+            // workspace now so WebKit can complete its cookie-process handoff.
+            identity = user
             authenticationStatus = "Opening workspace"
             await webView.configuration.websiteDataStore.httpCookieStore.setCookie(cookies[0])
             guard epoch == authenticationEpoch else { await clearAuthentication(); return }
-            identity = user
             open(.dashboard)
         } catch {
             let code = (error as NSError).code

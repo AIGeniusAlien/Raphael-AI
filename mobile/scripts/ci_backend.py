@@ -3,6 +3,7 @@ import argparse
 import faulthandler
 import os
 import json
+import hmac
 import re
 from pathlib import Path
 import signal
@@ -22,6 +23,11 @@ def main():
     from main import app
     @app.middleware('http')
     async def trace_authentication(request, call_next):
+        if request.url.path=='/api/dev/login' and int(request.headers.get('content-length','0'))<=4096:
+            body=await request.json()
+            expected=(Path(args.key).parent/'password').read_text()
+            # Only match booleans for ephemeral CI inputs,never credential values.
+            print('RAPHAEL_CI_INPUT '+json.dumps({'tenant_matches_fixture':body.get('tenant')=='native-ci','username_matches_fixture':body.get('username') in ('native-patient','native-clinician'),'password_matches_fixture':hmac.compare_digest(str(body.get('password','')).encode(),expected.encode())}),flush=True)
         response=await call_next(request)
         if re.fullmatch(r'/api/dev/(?:login|session|logout|patients(?:/\d+(?:/notes)?)?)',request.url.path):
             # Fixed route/status metadata only: no queries,headers,cookies or bodies.

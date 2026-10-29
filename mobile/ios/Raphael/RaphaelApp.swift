@@ -178,13 +178,14 @@ struct NativeSignInView: View {
                     NativeSecretEntry(text: $password, title: "Password").frame(minHeight: 44)
                     NativeSecretEntry(text: $otp, title: "Authenticator or recovery code (if enabled)", oneTimeCode: true).frame(minHeight: 44)
                     Button(session.authenticating ? "Signing in" : "Sign in") {
-                        let submittedTenant = tenant
-                        let submittedUsername = username
-                        let submitted = password
-                        let submittedOTP = otp
+                        guard let captured = try? JSONEncoder().encode(NativeCredentials(tenant: tenant, username: username, password: password, otp: otp)) else {
+                            session.authenticationProblem = "Sign-in could not be prepared. Check the entered fields."
+                            return
+                        }
+                        // Own the complete request bytes BEFORE clearing any UI binding.
                         otp = ""
                         password = ""
-                        Task { await session.signIn(tenant: submittedTenant, username: submittedUsername, password: submitted, otp: submittedOTP) }
+                        Task { await session.signIn(credentials: captured) }
                     }.disabled(session.authenticating || tenant.isEmpty || username.isEmpty || password.isEmpty)
                     if session.authenticating { HStack { ProgressView(); Text(session.authenticationStatus).accessibilityIdentifier("native-authentication-status") } }
                     if let problem = session.authenticationProblem { Text(problem).accessibilityAddTraits(.updatesFrequently).accessibilityIdentifier("native-authentication-problem") }

@@ -54,7 +54,7 @@ final class ServerConfigurationTests: XCTestCase {
     }
 
     @MainActor
-    func testNativeSecureEntryPreservesExactBindingAndClearsWithoutKeyboardTransformations() {
+    func testNativeSecureEntryPreservesExactBindingAndClearsWithoutKeyboardTransformations() throws {
         var value = ""
         let entry = NativeSecretEntry(text: Binding(get: { value }, set: { value = $0 }), title: "Password")
         let coordinator = entry.makeCoordinator()
@@ -67,9 +67,12 @@ final class ServerConfigurationTests: XCTestCase {
         XCTAssertEqual(input.autocapitalizationType, .none)
         XCTAssertEqual(input.autocorrectionType, .no)
         XCTAssertEqual(input.smartDashesType, .no)
+        let captured = try JSONEncoder().encode(NativeCredentials(tenant: "synthetic", username: "synthetic", password: value, otp: ""))
         value = ""
         entry.updateInput(input, coordinator: coordinator)
         XCTAssertEqual(input.text, "")
+        let sent = try XCTUnwrap(JSONSerialization.jsonObject(with: captured) as? [String:String])
+        XCTAssertEqual(sent["password"],exact)
     }
 
     @MainActor

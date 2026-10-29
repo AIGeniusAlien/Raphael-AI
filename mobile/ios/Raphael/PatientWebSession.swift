@@ -78,7 +78,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         return (data, http)
     }
 
-    func signIn(tenant: String, username: String, password: String, otp: String = "") async {
+    func signIn(credentials: Data) async {
         guard !authenticating else { return }
         authenticating = true
         authenticationStatus = "Connecting securely"
@@ -87,8 +87,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         let epoch = authenticationEpoch
         defer { authenticating = false }
         do {
-            let body = try JSONSerialization.data(withJSONObject: ["tenant": tenant, "username": username, "password": password, "otp": otp])
-            let (data, response) = try await request("api/dev/login", body: body)
+            let (data, response) = try await request("api/dev/login", body: credentials)
             guard epoch == authenticationEpoch else { return }
             guard response.statusCode == 200 else {
                 authenticationProblem = response.statusCode == 429 ? "Too many sign-in attempts. Wait before trying again." : "Sign-in was not accepted (HTTP \(response.statusCode)). Check your organization and credentials."
@@ -284,4 +283,11 @@ struct NativeIdentity: Decodable, Equatable {
             && cookie.path == "/api/dev" && cookie.isSecure && cookie.isHTTPOnly
             && (cookie.expiresDate.map { $0 > now } ?? false)
     }
+}
+
+struct NativeCredentials: Encodable {
+    let tenant: String
+    let username: String
+    let password: String
+    let otp: String
 }

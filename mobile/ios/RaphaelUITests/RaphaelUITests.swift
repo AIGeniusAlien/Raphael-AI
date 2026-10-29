@@ -29,8 +29,10 @@ final class RaphaelUITests: XCTestCase {
             let user = app.textFields["Username"]
             user.tap(); user.typeText(username)
             XCTAssertTrue(user.value as? String == username, "Username must retain the exact synthetic input.")
-            let secure = app.secureTextFields["Password"]
-            secure.tap(); secure.typeText(password)
+            let secure = app.secureTextFields["native-password"]
+            secure.tap()
+            XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10), "Actual software keyboard required for secure typing.")
+            secure.typeText(password)
             app.buttons["Sign in"].tap()
             let reached = app.staticTexts[username + " · " + workspace + " · native-ci"].waitForExistence(timeout: 45)
             if !reached {

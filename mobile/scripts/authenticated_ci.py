@@ -47,6 +47,7 @@ def prepare():
     subprocess.run(['openssl','req','-x509','-newkey','rsa:2048','-nodes','-sha256','-days','2','-config',str(config),'-keyout',str(key),'-out',str(certificate)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     key.chmod(0o600)
     subprocess.run(['sudo','sh','-c','echo "127.0.0.1 raphael-ci.test" >> /etc/hosts'],check=True)
+    subprocess.run(['defaults','write','com.apple.iphonesimulator','ConnectHardwareKeyboard','-bool','NO'],check=True,timeout=15)
     subprocess.run(['xcrun','simctl','boot',identifier],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     subprocess.run(['xcrun','simctl','bootstatus',identifier,'-b'],check=True,timeout=240)
     subprocess.run(['xcrun','simctl','keychain',identifier,'add-root-cert',str(certificate)],check=True)

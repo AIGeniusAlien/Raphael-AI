@@ -1,3 +1,5 @@
+> Current native implementation and actual acceptance evidence: [Final launch readiness](../docs/RAPHAEL_FINAL_LAUNCH_READINESS.md). Historical simulator success below does not prove current authenticated UI acceptance.
+
 Current remote verification:GitHub Actions run40421429685 compiled this project and passed native unit/UI tests on Xcode16.4/iOS18.5. WebKitScriptBridge uses the public Objective-C promise API;unused overlay dylibs are stripped because the simulator lacks libswiftWebKit. Promise success/rejection and unconfigured launch are tested. Physical-device,authenticated HTTPS journey,signing and App Store acceptance remain unverified. This Linux host still has no Xcode.
 
 # Raphael native iOS development client
@@ -9,7 +11,7 @@ This is an actual SwiftUI/WebKit Xcode source project over the existing Raphael 
 ## Project and actual feature boundary
 
 - `ios/Raphael.xcodeproj`: real project with Debug/Release, Swift sources, privacy manifest, launch configuration, opaque app icons, test targets and shared scheme.
-- `PatientWebSession`: one shared `WKWebView` using `WKWebsiteDataStore.nonPersistent()`. The existing backend owns authentication, HttpOnly HTTPS cookies, authorization, consent, AI and persistence. No session cookie is read into native storage; no Keychain token is needed because the client deliberately does not persist credentials across process restarts.
+- `PatientWebSession`: one shared `WKWebView` using `WKWebsiteDataStore.nonPersistent()`. The existing backend owns authentication, HttpOnly HTTPS cookies, authorization, consent, AI and persistence. Accessible SwiftUI sign-in uses the existing JSON authentication/session API. A private memory-only HttpOnly cookie authenticates native requests and is copied into the ephemeral WebKit cookie store after server validation. No password or token is stored in UserDefaults, Keychain or an app file; process restart requires sign-in. Native and web logout remain server-controlled; unconfirmed revocation is not success.
 - Native navigation opens existing patient dashboard, record/appointments, emergency/intake, AI education, inbox and account pages on the **same fixed configured HTTPS origin**. The backend version must implement those routes; missing routes display a useful unavailable state. This source project does not independently establish those server features.
 - Native settings opens the real account page for profile/export/session/deletion review. A deletion-review request is **not completed medical-record erasure**. App Store account-deletion acceptance remains blocked pending retention/legal policy and full backend implementation.
 - Native sign-out attempts same-origin server revocation and clears the ephemeral store even if offline. A failed remote revocation produces an explicit warning; clearing local cookies alone is not presented as server revocation.

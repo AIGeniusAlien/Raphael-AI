@@ -43,5 +43,22 @@
     "Resolve native authenticated acceptance failure",
     "Implement policy-backed erasure,production identity/MFA/guardian and PHI controls",
     "Complete promised protected native export and independent clinical/security evaluation"
-  ]
+  ],
+  "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
+  "product_completion_native_followup": {
+    "source": "0e9570645749c00ccf44cdb5174b03d6578acda2",
+    "run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40793424632",
+    "result": "PENDING_ACTUAL_CI;not_a_pass",
+    "implemented": "Native controls,independent real-HTTPS contract,private ephemeral cookie sharing,stable hidden WebView lifecycle"
+  },
+  "last_completed_native_acceptance": {
+    "source": "f5a7d9fa7f64237884646119d09be09101f5aa53",
+    "run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40792127330",
+    "passed": 9,
+    "failed": 2,
+    "skipped": 0,
+    "status": "FAIL",
+    "cause": "GUI login401;preauth WebView accessibility exposure. Navigation startup crash fixed;7unit cases run.",
+    "independent_https_runner_contract": "PASS,both roles and protected API operations;not app UI proof"
+  }
 }

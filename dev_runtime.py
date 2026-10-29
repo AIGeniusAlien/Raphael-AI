@@ -17,6 +17,7 @@ from database import execute_sqlite_script
 
 COMPONENTS = (
     ("portal", "dev_portal", "init_portal_schema"),
+    ("mfa", "dev_mfa", "init_mfa_schema"),
     ("chart", "dev_chart", "init_chart_schema"),
     ("messaging", "dev_messaging", "init_messaging_schema"),
     ("imaging", "dev_imaging", "init_imaging_schema"),

@@ -84,9 +84,8 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          excluded=('sentence-transformers==','transformers==','filelock==','setuptools==')
-          lines=[line for line in Path('requirements.txt').read_text().splitlines() if not line.startswith(excluded)]
-          Path('/tmp/raphael-native-runtime.txt').write_text('\n'.join(lines)+'\n')
+          from dev_start import runtime_requirements
+          Path('/tmp/raphael-native-runtime.txt').write_text(runtime_requirements())
           PY
           python -m pip install -r /tmp/raphael-native-runtime.txt
       - name: Prepare simulator-trusted actual HTTPS backend

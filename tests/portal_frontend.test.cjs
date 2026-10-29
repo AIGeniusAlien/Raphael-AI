@@ -20,14 +20,19 @@ function element(tag = 'div') {
   return item;
 }
 
-async function controller(routes, waitForBoot = true) {
+async function controller(routes, waitForBoot = true, storageState = {}) {
   const elements = new Map();
   for (const match of fs.readFileSync('static/portal.html', 'utf8').matchAll(/id="([^"]+)"/g)) {
     elements.set(match[1], element());
   }
   const calls = [];
   const context = vm.createContext({
-    window: {},
+    AbortController, setTimeout, clearTimeout,
+    window: { sessionStorage: {
+      getItem: key => storageState[key] || null,
+      setItem: (key,value) => { storageState[key] = value; },
+      removeItem: key => { delete storageState[key]; },
+    } },
     document: {
       getElementById(id) {
         if (!elements.has(id)) elements.set(id, element());
@@ -315,4 +320,46 @@ test('switching conversations clears assessment context and ignores an older ass
   pending.resolve({ data: { problem_representation: 'Stale first-thread assessment' } });
   await assessment;
   assert.equal(elements.get('assessment-output').children.length, 0);
+});
+
+
+test('delayed logout hides records immediately but confirms remote revocation separately', async () => {
+  let complete;
+  const delayed = new Promise(resolve => { complete = resolve; });
+  const { api, elements } = await controller({ ...recordRoutes(), 'POST /api/dev/logout': () => delayed });
+  const pending = api.logout();
+  assert.equal(elements.get('workspace').hidden,true);
+  assert.equal(api.state.authBusy,true);
+  assert.equal(api.state.logoutUnconfirmed,true);
+  complete({ data:{status:'logged_out'} });
+  await pending;
+  assert.equal(api.state.logoutUnconfirmed,false);
+  assert.equal(elements.get('status').textContent,'Signed out.');
+});
+
+test('offline logout exposes retry and blocks account changes until server confirms invalidation', async () => {
+  let offline = true;
+  const storage = {};
+  const { api, elements } = await controller({ ...recordRoutes(), 'POST /api/dev/logout': () => {
+    if (offline) throw new Error('Synthetic offline');
+    return {status:401,data:{detail:'Session no longer valid.'}};
+  } },true,storage);
+  await api.logout();
+  assert.equal(api.state.user,null);
+  assert.equal(elements.get('logout').hidden,false);
+  assert.equal(storage['raphael-signout-pending'],'1');
+  await assert.rejects(api.login(), /Complete server sign-out/);
+  offline=false;
+  await api.logout();
+  assert.equal(api.state.logoutUnconfirmed,false);
+  assert.equal(storage['raphael-signout-pending'],undefined);
+});
+
+test('reload with pending sign-out retries invalidation before restoring any patient workspace', async () => {
+  const storage={'raphael-signout-pending':'1'};
+  const { calls,api,elements } = await controller({'POST /api/dev/logout':{status:401,data:{detail:'Already invalid.'}}},true,storage);
+  assert.deepEqual(calls.map(call=>call.path),['/api/dev/logout']);
+  assert.equal(api.state.user,null);
+  assert.equal(elements.get('workspace').hidden,true);
+  assert.equal(storage['raphael-signout-pending'],undefined);
 });

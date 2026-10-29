@@ -49,6 +49,14 @@ class MFATests(unittest.TestCase):
   for key in ['',Fernet.generate_key().decode()]:
    with patch.dict(os.environ,{'RAPHAEL_MFA_ENCRYPTION_KEY':key}):self.assertEqual(self.sign_in(codes[0]).status_code,503)
   self.sign_in(codes[0]).raise_for_status()
+ def test_schema_stamp_refuses_pre_mfa_runtime_downgrade_without_erasing_factor(self):
+  self.enroll()
+  import dev_runtime
+  old_components=tuple(row for row in dev_runtime.COMPONENTS if row[0]!='mfa')
+  with patch.object(dev_runtime,'COMPONENTS',old_components):
+   with self.assertRaisesRegex(RuntimeError,'Unsupported development schema version'):migrate(self.engine)
+  self.assertTrue(self.client.get('/api/dev/account/mfa').json()['enabled'])
+  self.assertEqual(self.sign_in().status_code,401)
  def test_management_requires_password_and_factor_and_has_persistent_budget(self):
   codes=self.enroll()
   for _ in range(3):self.assertEqual(self.client.post('/api/dev/account/mfa/disable',json={'password':'incorrect','code':codes[0]}).status_code,403)

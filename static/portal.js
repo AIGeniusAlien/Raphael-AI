@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const state = { user: null, patients: [], patient: null, conversations: [], conversation: null, version: 0, threadVersion: 0, sessionEpoch: 0, patientsRequest: 0, authBusy: false };
+  const state = { user: null, patients: [], patient: null, conversations: [], conversation: null, version: 0, threadVersion: 0, sessionEpoch: 0, patientsRequest: 0, authBusy: false, logoutUnconfirmed: false };
   const byId = id => document.getElementById(id);
   const clinician = () => state.user?.role === 'clinician';
   const snapshot = () => ({ epoch: state.sessionEpoch, version: state.version,
@@ -63,6 +63,7 @@
       const data = await response.json();
       if (!response.ok) {
         const error = new Error(typeof data.detail === 'string' ? data.detail : `Request failed (${response.status}).`);
+        error.status = response.status;
         if (response.status === 401 && path !== '/login' && epoch === state.sessionEpoch) {
           clearSession();
           error.sessionCleared = true;
@@ -135,6 +136,7 @@
   }
 
   async function login() {
+    if (state.logoutUnconfirmed) throw new Error('Complete server sign-out before changing accounts.');
     if (state.authBusy) throw new Error('Wait for the current sign-in or sign-out request to finish.');
     const credentials = { tenant: byId('tenant').value.trim(), username: byId('username').value.trim(), password: byId('password').value, otp: byId('otp')?.value || '' };
     clearSession();
@@ -150,19 +152,39 @@
     }
   }
 
+  function signOutIntent(pending) {
+    state.logoutUnconfirmed = pending;
+    try {
+      if (pending) window.sessionStorage.setItem('raphael-signout-pending', '1');
+      else window.sessionStorage.removeItem('raphael-signout-pending');
+    } catch (_) { /* The in-memory gate still applies when tab storage is unavailable. */ }
+  }
   async function logout() {
     if (state.authBusy) throw new Error('Wait for the current sign-in or sign-out request to finish.');
     state.authBusy = true;
-    const pending = post('/logout');
+    signOutIntent(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const pending = api('/logout', {method:'POST',body:'{}',signal:controller.signal});
     clearSession(); // Hide data immediately, even if revocation is delayed.
     const epoch = state.sessionEpoch;
     try {
       await pending;
+      signOutIntent(false);
       if (state.sessionEpoch === epoch) status('Signed out.');
     } catch (error) {
-      if (state.sessionEpoch === epoch) status('Local records cleared; server sign-out could not be confirmed. Try signing out again before changing accounts.', true);
+      if (error.status === 401) {
+        signOutIntent(false);
+        status('Signed out. The server session is no longer valid.');
+      } else if (state.sessionEpoch === epoch) {
+        byId('logout').hidden = false;
+        byId('logout').textContent = 'Retry server sign-out';
+        status('Local records cleared; server sign-out could not be confirmed. Retry before changing accounts.', true);
+      }
     } finally {
+      clearTimeout(timeout);
       state.authBusy = false;
+      if (!state.logoutUnconfirmed) { byId('logout').hidden = true; byId('logout').textContent = 'Sign out'; }
     }
   }
 
@@ -359,6 +381,9 @@
       status('Transcript draft saved. This deterministic draft is not AI-generated and requires review.');
     }));
     byId('logout').addEventListener('click', () => action(logout));
+    let pendingSignOut = false;
+    try { pendingSignOut = window.sessionStorage.getItem('raphael-signout-pending') === '1'; } catch (_) {}
+    if (pendingSignOut) { await logout(); return; }
     const epoch = state.sessionEpoch;
     try { await enter(await api('/session'), epoch); }
     catch (error) {

@@ -158,8 +158,7 @@ struct NativeSignInView: View {
     @State private var password = ""
     @State private var otp = ""
     var body: some View {
-        NavigationStack {
-            Form {
+        Form {
                 Section {
                     Image("BrandMark").resizable().scaledToFit().frame(height: 64).accessibilityHidden(true)
                     Text("Welcome to Raphael").font(.title.bold())
@@ -185,7 +184,6 @@ struct NativeSignInView: View {
                 Section("Privacy") {
                     Text("Credentials are sent only to the configured HTTPS Raphael service. Sessions are memory-only and end locally when the app process closes. Use your organization's recovery process if you cannot sign in.").font(.footnote)
                 }
-            }.navigationTitle("Raphael")
         }
     }
 }

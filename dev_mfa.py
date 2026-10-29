@@ -25,6 +25,13 @@ CREATE TABLE IF NOT EXISTS dev_mfa_recovery (
 );
 '''
 
+def init_mfa_schema(engine):
+    from database import execute_sqlite_script
+    from dev_portal import _require_synthetic
+    _require_synthetic(engine)
+    with engine.begin() as connection:execute_sqlite_script(connection,SCHEMA)
+
+
 def cipher():
     try:
         key=os.environ.get('RAPHAEL_MFA_ENCRYPTION_KEY','')

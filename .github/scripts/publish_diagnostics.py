@@ -6,7 +6,7 @@ import sys
 
 def escape(value):return value.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
 def redact(value):
-    for key in ('LLM_API_KEY','QDRANT_API_KEY','OPENAI_API_KEY','GITHUB_TOKEN'):
+    for key in ('LLM_API_KEY','QDRANT_API_KEY','OPENAI_API_KEY','GITHUB_TOKEN','RAPHAEL_MFA_ENCRYPTION_KEY','RAPHAEL_BACKUP_ENCRYPTION_KEY'):
         secret=os.getenv(key,'')
         if len(secret)>8:value=value.replace(secret,'[REDACTED]')
     return value

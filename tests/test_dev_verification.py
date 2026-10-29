@@ -23,6 +23,14 @@ class VerificationTests(unittest.TestCase):
             self.assertNotIn('LLM_API_KEY',env)
             self.assertNotIn('RAPHAEL_MFA_ENCRYPTION_KEY',isolated_environment())
 
+    def test_lightweight_runtime_preserves_api_crypto_and_data_dependencies_without_optional_ml(self):
+        from dev_start import runtime_requirements
+        requirements=runtime_requirements()
+        for required in ('fastapi==','uvicorn==','SQLAlchemy==','cryptography==','qdrant-client==','numpy==','pydicom==','pypdf=='):
+            self.assertIn(required,requirements)
+        for unavailable in ('sentence-transformers==','transformers==','torch=='):
+            self.assertNotIn(unavailable,requirements)
+
     def test_failures_timeouts_and_secret_redaction_are_recorded(self):
         with tempfile.TemporaryDirectory() as directory,patch.dict(os.environ,{'LLM_API_KEY':'Synthetic-redaction-fixture'}):
             path=Path(directory)
@@ -36,10 +44,10 @@ class VerificationTests(unittest.TestCase):
     def test_ci_failure_annotation_redacts_secrets_and_escapes_untrusted_commands(self):
         import subprocess
         with tempfile.TemporaryDirectory() as directory:
-            log=Path(directory)/'native.log';log.write_text('error: Synthetic-CI-secret\n::notice::untrusted injected line\n')
-            env=isolated_environment();env['LLM_API_KEY']='Synthetic-CI-secret'
+            log=Path(directory)/'native.log';log.write_text('error: Synthetic-CI-secret MFA-fixture-redaction Backup-fixture-redaction\n::notice::untrusted injected line\n')
+            env=isolated_environment();env['LLM_API_KEY']='Synthetic-CI-secret';env['RAPHAEL_MFA_ENCRYPTION_KEY']='MFA-fixture-redaction';env['RAPHAEL_BACKUP_ENCRYPTION_KEY']='Backup-fixture-redaction'
             result=subprocess.run([sys.executable,'.github/scripts/publish_diagnostics.py',str(log)],env=env,text=True,capture_output=True,check=True)
-            self.assertNotIn('Synthetic-CI-secret',result.stdout)
+            self.assertNotIn('Synthetic-CI-secret',result.stdout);self.assertNotIn('MFA-fixture-redaction',result.stdout);self.assertNotIn('Backup-fixture-redaction',result.stdout)
             self.assertEqual(len(result.stdout.splitlines()),1)
             self.assertTrue(result.stdout.startswith('::error title=Raphael failure diagnostics::'))
             self.assertIn('[REDACTED]',result.stdout)

@@ -36,6 +36,12 @@ final class RaphaelUITests: XCTestCase {
             // XCTest's failing AXScrollToVisible action;send the real screen tap.
             element.coordinate(withNormalizedOffset: CGVector(dx:0.5,dy:0.5)).tap()
         }
+        func waitForNativeSessionClear(confirmedLogout: Bool) {
+            XCTAssertTrue(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout: 30))
+            let idle = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: app.staticTexts["native-authentication-status"])
+            wait(for: [idle], timeout: 20)
+            if confirmedLogout { XCTAssertFalse(app.staticTexts["native-authentication-problem"].exists) }
+        }
         func login(_ username: String, workspace: String) {
             let organization = app.textFields["Development organization"]
             XCTAssertTrue(organization.waitForExistence(timeout: 30))
@@ -91,14 +97,16 @@ final class RaphaelUITests: XCTestCase {
         waitForExpectations(timeout: 15)
         app.buttons["Sign out and clear local session"].tap()
         app.buttons["Sign out"].tap()
-        XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout: 15))
+        waitForNativeSessionClear(confirmedLogout: true)
         app.terminate(); app.launch()
         login("native-clinician", workspace: "Physician workspace")
         let clinician = XCTAttachment(screenshot: app.screenshot())
         clinician.name = "Authenticated synthetic clinician over trusted HTTPS"
         clinician.lifetime = .keepAlways; add(clinician)
         app.buttons["Sign out"].tap()
-        XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout: 15))
+        // Native welcome appears only after the model independently observes
+        // the revoked web session and clears its private cookie/workspace.
+        waitForNativeSessionClear(confirmedLogout: false)
         app.terminate(); app.launch()
         XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout: 30))
     }

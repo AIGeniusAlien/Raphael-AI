@@ -20,6 +20,11 @@ final class ServerConfigurationTests: XCTestCase {
         }
         XCTAssertEqual(PatientSection.intelligence.path, "static/patient-ai.html")
         XCTAssertEqual(PatientSection.account.path, "static/account.html")
+        for section in [PatientSection.record, .appointments] {
+            let url = configuration.url(for:section,patientID:7)
+            XCTAssertEqual(url.host,"raphael.example.org")
+            XCTAssertEqual(URLComponents(url:url,resolvingAgainstBaseURL:false)?.queryItems,[URLQueryItem(name:"patient_id",value:"7")])
+        }
     }
     func testReadinessRejectsLegacyMissingAndMalformedServiceResponses() {
         XCTAssertTrue(ReadinessPayload.isSyntheticReady(Data(#"{"status":"ready","scope":"synthetic-development"}"#.utf8)))

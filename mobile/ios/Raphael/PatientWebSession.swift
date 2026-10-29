@@ -10,6 +10,10 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     @Published private(set) var authenticating = false
     @Published private(set) var authenticationStatus = "Ready to sign in"
     @Published var authenticationProblem: String?
+    @Published private(set) var recordChoices: [NativeRecordChoice] = []
+    @Published private(set) var pendingRecordSection: PatientSection?
+    private var navigationEpoch = 0
+    private var recordAuthenticationEpoch = 0
     private var authenticationEpoch = 0
     private var nativeCookie: HTTPCookie?
     @Published private(set) var loading = false
@@ -37,12 +41,51 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     }
 
     func open(_ section: PatientSection) {
+        guard identity != nil else { return }
         finishConfirmation(false)
+        cancelRecordSelection()
         currentSection = section
         problem = nil
-        let destination = section == .intelligence && identity?.role == "clinician" ? configuration.origin.appendingPathComponent("static/intelligence.html") : configuration.url(for: section)
-        let request = URLRequest(url: destination, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30)
-        webView.load(request)
+        if section.requiresPatient {
+            let navigation = navigationEpoch
+            let authentication = authenticationEpoch
+            Task { await resolveRecord(section, navigation: navigation, authentication: authentication) }
+        } else { loadSection(section) }
+    }
+    private func loadSection(_ section: PatientSection, patientID: Int? = nil) {
+        let destination = section == .intelligence && identity?.role == "clinician" ? configuration.origin.appendingPathComponent("static/intelligence.html") : configuration.url(for: section, patientID: patientID)
+        webView.load(URLRequest(url: destination, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30))
+    }
+    private func resolveRecord(_ section: PatientSection, navigation: Int, authentication: Int) async {
+        do {
+            let (data, response) = try await request("api/dev/patients")
+            guard navigation == navigationEpoch, authentication == authenticationEpoch, identity != nil else { return }
+            if response.statusCode == 401 { await clearAuthentication(); authenticationProblem = "Your session ended. Sign in again."; return }
+            guard response.statusCode == 200 else { throw URLError(.badServerResponse) }
+            let records = try JSONDecoder().decode([NativeRecordChoice].self, from: data)
+            guard records.count <= 100, records.allSatisfy({ $0.id > 0 }), Set(records.map(\.id)).count == records.count else { throw URLError(.badServerResponse) }
+            if records.count == 1 { loadSection(section, patientID: records[0].id) }
+            else if records.isEmpty { problem = "No authorized patient record is linked to this account." }
+            else {
+                recordChoices = records
+                recordAuthenticationEpoch = authentication
+                pendingRecordSection = section
+            }
+        } catch {
+            guard navigation == navigationEpoch, authentication == authenticationEpoch else { return }
+            problem = "Authorized records could not load. Retry or select a record through the dashboard."
+        }
+    }
+    func chooseRecord(_ record: NativeRecordChoice) {
+        guard let section = pendingRecordSection, recordAuthenticationEpoch == authenticationEpoch,
+              recordChoices.contains(where: { $0.id == record.id }), identity != nil else { return }
+        cancelRecordSelection()
+        loadSection(section, patientID: record.id)
+    }
+    func cancelRecordSelection() {
+        navigationEpoch += 1
+        recordChoices = []
+        pendingRecordSection = nil
     }
 
     func retry() { open(currentSection) }
@@ -122,6 +165,12 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
 
     func checkAuthentication() async {
         guard identity != nil, !authenticating else { return }
+        // Enforce local expiry even when the network cannot confirm it.
+        guard let cookie = nativeCookie, NativeIdentity.accepts(cookie, origin: configuration.origin) else {
+            await clearAuthentication()
+            authenticationProblem = "Your session ended. Sign in again."
+            return
+        }
         let epoch = authenticationEpoch
         do {
             let (_, response) = try await request("api/dev/session")
@@ -145,6 +194,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         authenticationStatus = "Clearing local session"
         defer { if epoch == authenticationEpoch { authenticating = alreadyAuthenticating } }
         identity = nil
+        cancelRecordSelection()
         nativeCookie = nil
         finishConfirmation(false)
         webView.stopLoading()
@@ -158,6 +208,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         authenticationEpoch += 1
         authenticating = true
         authenticationStatus = "Signing out securely"
+        cancelRecordSelection()
         identity = nil // Hide records before awaiting potentially unavailable networking.
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -290,4 +341,9 @@ struct NativeCredentials: Encodable {
     let username: String
     let password: String
     let otp: String
+}
+
+struct NativeRecordChoice: Decodable, Identifiable {
+    let id: Int
+    let name: String
 }

@@ -34,14 +34,19 @@ struct ServerConfiguration: Equatable {
         )
     }
 
-    func url(for section: PatientSection) -> URL {
-        origin.appendingPathComponent(section.path)
+    func url(for section: PatientSection, patientID: Int? = nil) -> URL {
+        let base = origin.appendingPathComponent(section.path)
+        guard section.requiresPatient, let patientID, patientID > 0,
+              var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else { return base }
+        components.queryItems = [URLQueryItem(name: "patient_id", value: String(patientID))]
+        return components.url ?? base
     }
 }
 
 enum PatientSection: String, CaseIterable, Identifiable {
     case dashboard, record, emergency, intake, intelligence, messages, appointments, account
     var id: String { rawValue }
+    var requiresPatient: Bool { self == .record || self == .appointments }
     var title: String {
         switch self {
         case .dashboard: "Dashboard"

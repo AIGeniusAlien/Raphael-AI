@@ -65,6 +65,15 @@ struct PatientApplication: View {
                         .accessibilityLabel("Privacy and session settings")
                 }
                 .padding(.horizontal).padding(.vertical, 8)
+        .confirmationDialog("Choose an authorized record", isPresented: Binding(
+            get: { session.pendingRecordSection != nil },
+            set: { if !$0 { session.cancelRecordSelection() } }
+        ), titleVisibility: .visible) {
+            ForEach(session.recordChoices) { record in
+                Button(record.name) { session.chooseRecord(record) }
+            }
+            Button("Cancel", role: .cancel) { session.cancelRecordSelection() }
+        }
                 Divider()
                 Text("Synthetic development • Not an emergency channel")
                     .font(.footnote).padding(8).frame(maxWidth: .infinity)
@@ -109,7 +118,7 @@ struct PatientApplication: View {
             }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase != .active { session.finishConfirmation(false) }
+            if phase != .active { session.finishConfirmation(false); session.cancelRecordSelection() }
             else { Task { await session.checkAuthentication() } }
         }
         .sheet(isPresented: $settings) {

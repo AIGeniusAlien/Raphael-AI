@@ -1,3 +1,5 @@
+> Product-completion update,2026-11-01 UTC: [Authoritative implementation and release gates](RAPHAEL_FINAL_LAUNCH_READINESS.md). Fresh live workflow FAILED CLOSED;historical successful runs below are not current acceptance. Native follow-up and exact-source results are recorded in the authoritative report. Reports below retain their historical source scope.
+
 > Release audit,2026-10-28: [Current source-scoped readiness audit](RC_RELEASE_AUDIT.md). Sections below are historical checkpoints;older "current" or "final" wording is not a release approval.
 
 ## Current master engineering increment

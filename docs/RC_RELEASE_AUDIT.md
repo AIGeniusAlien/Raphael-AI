@@ -1,3 +1,5 @@
+> Product-completion update,2026-11-01 UTC: [Authoritative implementation and release gates](RAPHAEL_FINAL_LAUNCH_READINESS.md). Fresh live workflow FAILED CLOSED;historical successful runs below are not current acceptance. Native follow-up and exact-source results are recorded in the authoritative report. Reports below retain their historical source scope.
+
 # Release-candidate audit — 2026-10-28
 
 This is the canonical readiness report. Historical reports remain preserved and are indexed in RC_EVIDENCE_INDEX.json. PASS means the bounded behavior named in a row has evidence; it is not clinical or regulatory approval. No merge, deployment, Apple submission, production patient access or clinical communication occurred.

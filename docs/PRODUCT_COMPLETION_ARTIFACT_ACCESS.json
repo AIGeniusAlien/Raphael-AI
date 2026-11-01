@@ -1,0 +1,10 @@
+{
+  "source_commit": "165e883486a712f4ab0cd6a261b903659b935229",
+  "artifact_id": 12862121611,
+  "artifact_name": "native-test-results",
+  "download": "blocked",
+  "observed_host": "productionresultssa31.blob.core.windows.net",
+  "error": "Forbidden from environment egress",
+  "signed_urls_recorded": false,
+  "native_images_visually_inspected": false
+}

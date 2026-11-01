@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-01T01:19:52.339469+00:00",
+  "platform": "Linux",
+  "python": "3.12.14",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "python",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 65.824,
+      "counts": {
+        "tests": 237
+      },
+      "log": "/workspace/.raphael/patched-product-verification/python.log"
+    },
+    {
+      "name": "frontend",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.217,
+      "counts": {
+        "tests": 29,
+        "pass": 29,
+        "fail": 0,
+        "skipped": 0
+      },
+      "log": "/workspace/.raphael/patched-product-verification/frontend.log"
+    },
+    {
+      "name": "chromium",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 31.58,
+      "counts": {
+        "tests": 7
+      },
+      "log": "/workspace/.raphael/patched-product-verification/chromium.log"
+    },
+    {
+      "name": "mobile-structure",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.064,
+      "counts": {},
+      "log": "/workspace/.raphael/patched-product-verification/mobile-structure.log"
+    },
+    {
+      "name": "mobile-tests",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.115,
+      "counts": {
+        "tests": 5
+      },
+      "log": "/workspace/.raphael/patched-product-verification/mobile-tests.log"
+    },
+    {
+      "name": "traceability",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.064,
+      "counts": {},
+      "log": "/workspace/.raphael/patched-product-verification/traceability.log"
+    },
+    {
+      "name": "safety-evaluation",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.616,
+      "counts": {},
+      "log": "/workspace/.raphael/patched-product-verification/safety-evaluation.log"
+    },
+    {
+      "name": "ios-native",
+      "status": "skipped",
+      "reason": "macOS,Xcode and RAPHAEL_SIMULATOR_DESTINATION required;no native build ran."
+    },
+    {
+      "name": "live-services",
+      "status": "skipped",
+      "reason": "Requires explicit --live;no provider credentials transmitted. Historical live evidence is not rerun evidence."
+    },
+    {
+      "name": "dependency-advisory-audit",
+      "status": "skipped",
+      "reason": "Separate CI pip-audit gate queries advisory databases;no fresh audit implied by local tests."
+    }
+  ],
+  "clinical_validation": false,
+  "production_data_used": false,
+  "source_commit": "0ccc49be8be5942b084ee71718c4d4c0c26e2bde",
+  "scope": "Actual full local verification with patched dependencies and checker diagnostic regression. Native skipped on Linux;actual Xcode CI separate. Live failure and bounded replay separate."
+}

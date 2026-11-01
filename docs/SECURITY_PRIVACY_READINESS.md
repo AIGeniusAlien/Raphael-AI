@@ -1,3 +1,5 @@
+> Product-completion update,2026-11-01 UTC: [Authoritative implementation and release gates](RAPHAEL_FINAL_LAUNCH_READINESS.md). Fresh live workflow FAILED CLOSED;historical successful runs below are not current acceptance. Native follow-up and exact-source results are recorded in the authoritative report. Reports below retain their historical source scope.
+
 > Current release disposition and owner/engineering gates:[RC_RELEASE_AUDIT.md](RC_RELEASE_AUDIT.md). Earlier dated evidence below is historical and is not compliance certification.
 
 # Technical security and HIPAA readiness evidence
@@ -16,7 +18,7 @@ Raphael is synthetic-development-only. This matrix supports qualified assessment
 | 164.312(a)(2)(iv),encryption/decryption | iOS ephemeral session,no embedded keys;SQLite currently not encrypted by app | NOT SAFE FOR RELEASE | Operator:at-rest encryption/KMS,device/disk/backup controls and documented key lifecycle |
 | 164.312(b),audit controls | Local audit events for mutations/access workflows;not comprehensive immutable audit storage | PARTIALLY IMPLEMENTED | Operator:tamper-evident centralized retention,access monitoring and review without PHI overcollection |
 | 164.312(c),integrity | Additive migrations,trigger transaction tests,immutable approved note versions,source hashes | PARTIALLY IMPLEMENTED | Clinical/security owner:production integrity validation,signing policies and longitudinal correction procedures |
-| 164.312(d),authentication | scrypt passwords,opaque HttpOnly sessions,login/request budgets;local identity only | PARTIALLY IMPLEMENTED | Owner:verified enrollment,recovery/SSO/MFA,distributed abuse prevention and penetration test |
+| 164.312(d),authentication | scrypt passwords,opaque HttpOnly sessions,login/request budgets;encrypted TOTP and one-use recovery with replay/downgrade protection;local identity only | PARTIALLY IMPLEMENTED | Engineering:production identity proofing,recovery/SSO,mandatory MFA policy and distributed abuse prevention;owner:approved enrollment policy and independent penetration test |
 | 164.312(e),transmission security | HTTPS provider/origin guards,HTTPS cookies/HSTS,CSRF fetch-metadata/origin+JSON checks,no-referrer/CSP | PARTIALLY IMPLEMENTED | Operator:authorized HTTPS deployment,trusted-proxy/host configuration,TLS lifecycle and transport review |
 | 164.316,policies/documentation | Engineering ledger,technical reports and retained source history | PARTIALLY IMPLEMENTED | Compliance officer:approved policies,revision governance and required retention |
 | Privacy164.502/504/506,permitted use/disclosure/minimum necessary | Patient-scoped reads,selected approved AI context,separate scoped snapshot consent | PARTIALLY IMPLEMENTED | Privacy officer:legal authority,per-purpose permissions,vendor terms and minimum-necessary assessment |

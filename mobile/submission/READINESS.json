@@ -5,7 +5,7 @@
     "passed": 5
   },
   "xcode_compile": "VERIFIED_REMOTE_CI",
-  "simulator_and_device_tests": "6unit and unconfigured UI passed;authenticated UI FAILED;physical device NOT_RUN",
+  "simulator_and_device_tests": "8unit and3UI passed;2authenticated journeys fail on clinician note without required record selection;physical device NOT_RUN",
   "apple_signing": "BLOCKED_EXTERNAL",
   "privacy_legal_clinical_review": "REQUIRES_CLINICAL_VALIDATION",
   "account_erasure": "NOT_IMPLEMENTED",
@@ -20,13 +20,13 @@
     "Provide owner Apple team,registered bundle,approved icon and real privacy/support URLs",
     "Approve applicable retention,intended-use and distribution policies"
   ],
-  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40782065504",
+  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41260526848",
   "simulator_unit_ui_tests": "FAILED_AUTHENTICATED_ACCEPTANCE",
   "simulator_tests": {
-    "passed": 7,
-    "failed": 1,
+    "passed": 11,
+    "failed": 2,
     "skipped": 0,
-    "total": 8,
+    "total": 13,
     "source": "xcresulttool"
   },
   "historical_simulator_tests": {
@@ -35,14 +35,14 @@
     "skipped": 0,
     "source": "xcresulttool"
   },
-  "audit_report": "docs/RC_RELEASE_AUDIT.md",
-  "audit_date": "2026-10-28",
-  "authenticated_native_workflow": "FAIL;WebKit remote accessibility snapshot unavailable before login",
-  "native_source_commit": "5710cb65f8708257504994485a25b6c384418d5f",
+  "audit_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
+  "audit_date": "2026-11-01",
+  "authenticated_native_workflow": "FAIL:patient chart/native logout/relaunch and clinician authentication pass;test omitted required clinician record selection;9539c07 actual follow-up pending.",
+  "native_source_commit": "0ccc49be8be5942b084ee71718c4d4c0c26e2bde",
   "remaining_engineering": [
-    "Resolve native authenticated acceptance failure",
-    "Implement policy-backed erasure,production identity/MFA/guardian and PHI controls",
-    "Complete promised protected native export and independent clinical/security evaluation"
+    "Complete actual native acceptance,expiry/outage/accessibility and protected export",
+    "Implement policy-backed erasure,production identity/guardian and live PHI controls",
+    "Complete independent clinical/security evaluation and broader rights-reviewed knowledge"
   ],
   "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
   "product_completion_native_followup": {

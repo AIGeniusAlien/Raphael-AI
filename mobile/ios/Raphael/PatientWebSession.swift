@@ -15,6 +15,10 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     private var navigationEpoch = 0
     private var recordAuthenticationEpoch = 0
     private var authenticationEpoch = 0
+    private var foregroundProbeEpoch = 0
+    private var workspaceNeedsRecovery = false
+    private var recoveringWorkspace = false
+    private static let recoveryProblem = "The secure web session stopped. Retry replaces this private workspace; unsaved changes may be lost."
     private var nativeCookie: HTTPCookie?
     @Published private(set) var loading = false
     @Published var problem: String?
@@ -51,6 +55,11 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     /// Discard the private browsing context without awaiting an unmounted
     /// WebKit process. Server revocation is handled separately by signOut.
     func discardLocalWorkspace() {
+        foregroundProbeEpoch += 1
+        navigationEpoch += 1
+        cancelRecordSelection()
+        workspaceNeedsRecovery = false
+        recoveringWorkspace = false
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
         webView.stopLoading()
@@ -68,6 +77,10 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         navigationEpoch += 1
         cancelRecordSelection()
         currentSection = section
+        if workspaceNeedsRecovery || recoveringWorkspace {
+            if !recoveringWorkspace { problem = Self.recoveryProblem }
+            return
+        }
         problem = nil
         if section.requiresPatient {
             let navigation = navigationEpoch
@@ -112,7 +125,115 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         pendingRecordSection = nil
     }
 
-    func retry() { open(currentSection) }
+    func retry() {
+        if workspaceNeedsRecovery { Task { await recoverWorkspace() } }
+        else { open(currentSection) }
+    }
+
+    func suspendWorkspaceProbe() {
+        foregroundProbeEpoch += 1
+        if recoveringWorkspace {
+            recoveringWorkspace = false
+            workspaceNeedsRecovery = true
+            problem = Self.recoveryProblem
+        }
+    }
+
+    /// Probe only after a foreground HTTP session check succeeded. JavaScript
+    /// returns a boolean only;it reads no credential or patient text into native
+    /// state and never changes the document. Do not await an unresponsive WK
+    /// callback:the independent deadline always makes recovery visible.
+    private func probeForegroundWorkspace() {
+        guard identity != nil, !authenticating, !recoveringWorkspace else { return }
+        foregroundProbeEpoch += 1
+        let probe = foregroundProbeEpoch
+        let auth = authenticationEpoch
+        let navigation = navigationEpoch
+        let view = webView
+        let expression = "Boolean(document.body && document.body.childElementCount > 0 && document.body.innerText.trim().length > 0 && document.location.protocol === 'https:' && document.visibilityState === 'visible')"
+        view.evaluateJavaScript(expression) { [weak self, weak view] value, error in
+            Task { @MainActor in
+                guard let self, let view, self.webView === view,
+                      auth == self.authenticationEpoch, navigation == self.navigationEpoch,
+                      probe == self.foregroundProbeEpoch, self.identity != nil else { return }
+                if error == nil, (value as? Bool) == true {
+                    self.foregroundProbeEpoch += 1
+                    if self.problem == Self.recoveryProblem { self.workspaceNeedsRecovery = false; self.problem = nil }
+                } else { self.markWorkspaceStopped() }
+            }
+        }
+        Task { @MainActor [weak self, weak view] in
+            do { try await Task.sleep(for:.seconds(8)) } catch { return }
+            guard let self, let view, self.webView === view,
+                  auth == self.authenticationEpoch, navigation == self.navigationEpoch,
+                  probe == self.foregroundProbeEpoch, self.identity != nil else { return }
+            self.markWorkspaceStopped()
+        }
+    }
+
+    private func markWorkspaceStopped() {
+        foregroundProbeEpoch += 1
+        recoveringWorkspace = false
+        workspaceNeedsRecovery = true
+        loading = false
+        problem = Self.recoveryProblem
+    }
+
+    /// The user explicitly chooses replacement after the visible lost-edits
+    /// warning. Revalidate the same identity with the actual server first;then
+    /// mount ONE fresh private WK context and restore its scoped HttpOnly cookie.
+    /// A late callback cannot revive a revoked/changed/discarded session.
+    private func recoverWorkspace() async {
+        guard !recoveringWorkspace, !authenticating, let expected = identity else { return }
+        foregroundProbeEpoch += 1
+        let attempt = foregroundProbeEpoch
+        recoveringWorkspace = true
+        let auth = authenticationEpoch
+        do {
+            let (data, response) = try await request("api/dev/session")
+            guard auth == authenticationEpoch, identity == expected,
+                  attempt == foregroundProbeEpoch, recoveringWorkspace else { return }
+            if response.statusCode == 401 { recoveringWorkspace = false; await clearAuthentication(); authenticationProblem = "Your session ended. Sign in again."; return }
+            guard response.statusCode == 200 else { throw URLError(.cannotConnectToHost) }
+            guard (try? JSONDecoder().decode(NativeIdentity.self,from:data)) == expected else {
+                recoveringWorkspace = false; await clearAuthentication(); authenticationProblem = "Your session changed. Sign in again."; return
+            }
+            guard let cookie = nativeCookie, NativeIdentity.accepts(cookie,origin:configuration.origin) else {
+                recoveringWorkspace = false; await clearAuthentication(); authenticationProblem = "Your session ended. Sign in again."; return
+            }
+            let section = currentSection
+            discardLocalWorkspace()
+            currentSection = section
+            recoveringWorkspace = true
+            problem = "Restoring the private workspace. Unsaved changes from the stopped view may be lost."
+            let view = webView
+            let probe = foregroundProbeEpoch
+            view.configuration.websiteDataStore.httpCookieStore.setCookie(cookie) { [weak self, weak view] in
+                Task { @MainActor in
+                    guard let self, let view, self.webView === view,
+                          self.authenticationEpoch == auth, self.identity == expected,
+                          self.foregroundProbeEpoch == probe, self.recoveringWorkspace else { return }
+                    self.recoveringWorkspace = false
+                    self.problem = nil
+                    self.open(self.currentSection)
+                }
+            }
+            Task { @MainActor [weak self, weak view] in
+                do { try await Task.sleep(for:.seconds(8)) } catch { return }
+                guard let self, let view, self.webView === view,
+                      self.authenticationEpoch == auth, self.foregroundProbeEpoch == probe,
+                      self.recoveringWorkspace else { return }
+                self.recoveringWorkspace = false
+                self.markWorkspaceStopped()
+            }
+        } catch {
+            guard auth == authenticationEpoch, identity == expected,
+                  attempt == foregroundProbeEpoch, recoveringWorkspace else { return }
+            recoveringWorkspace = false
+            workspaceNeedsRecovery = true
+            problem = "The secure web session stopped. Server verification is unavailable; retry when connected. Unsaved changes may be lost."
+        }
+    }
 
     // One memory-only cookie store is shared explicitly by native HTTP and WebKit.
     // No password/token is evaluated as JavaScript or written to UserDefaults/disk.
@@ -191,7 +312,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         }
     }
 
-    func checkAuthentication() async {
+    func checkAuthentication(restoringWorkspace: Bool = false) async {
         guard identity != nil, !authenticating else { return }
         // Enforce local expiry even when the network cannot confirm it.
         guard let cookie = nativeCookie, NativeIdentity.accepts(cookie, origin: configuration.origin) else {
@@ -201,15 +322,19 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         }
         let epoch = authenticationEpoch
         do {
-            let (_, response) = try await request("api/dev/session")
+            let (data, response) = try await request("api/dev/session")
             guard epoch == authenticationEpoch, !authenticating else { return }
             if response.statusCode == 401 {
                 await clearAuthentication()
                 authenticationProblem = "Your session ended. Sign in again."
             } else if response.statusCode != 200 {
                 problem = "Session verification unavailable. Check your connection and retry."
-            } else if problem == "Session verification unavailable. Check your connection and retry." {
-                problem = nil
+            } else {
+                guard (try? JSONDecoder().decode(NativeIdentity.self,from:data)) == identity else {
+                    await clearAuthentication(); authenticationProblem = "Your session changed. Sign in again."; return
+                }
+                if problem == "Session verification unavailable. Check your connection and retry." { problem = nil }
+                if restoringWorkspace { probeForegroundWorkspace() }
             }
         } catch {
             guard !Task.isCancelled, epoch == authenticationEpoch, !authenticating else { return }
@@ -252,10 +377,22 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         }
     }
 
-    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) { loading = true; problem = nil }
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { loading = false; Task { await checkAuthentication() } }
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { failed(error) }
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { failed(error) }
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        guard webView === self.webView else { return }
+        loading = true
+        if !workspaceNeedsRecovery && !recoveringWorkspace { problem = nil }
+    }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        guard webView === self.webView else { return }
+        loading = false
+        Task { await checkAuthentication(restoringWorkspace:workspaceNeedsRecovery) }
+    }
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        guard webView === self.webView else { return }; failed(error)
+    }
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        guard webView === self.webView else { return }; failed(error)
+    }
     private func failed(_ error: Error) {
         loading = false
         if (error as NSError).code == NSURLErrorCancelled { return }
@@ -263,8 +400,9 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         problem = "This section could not load. Check your connection and try again. No records are available offline."
     }
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        guard webView === self.webView else { return }
         loading = false
-        problem = "The secure web session stopped. Retry and sign in again if needed. Unsaved changes may have been lost."
+        markWorkspaceStopped()
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {

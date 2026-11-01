@@ -92,7 +92,7 @@ struct PatientApplication: View {
                     }
                     .padding().frame(maxWidth: .infinity).background(Color.orange.opacity(0.15))
                 }
-                PatientWebView(webView: session.webView, accessible: scenePhase == .active && !session.authenticating)
+                PatientWebView(webView: session.webView)
                     .id(ObjectIdentifier(session.webView))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .accessibilityHidden(session.authenticating)
@@ -114,13 +114,15 @@ struct PatientApplication: View {
         .onAppear { if session.identity != nil && session.webView.url == nil { session.open(.dashboard) } }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
+            var restoringWorkspace = true
             while !Task.isCancelled {
-                await session.checkAuthentication()
+                await session.checkAuthentication(restoringWorkspace:restoringWorkspace)
+                restoringWorkspace = false
                 do { try await Task.sleep(for: .seconds(15)) } catch { break }
             }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase != .active { session.finishConfirmation(false); session.cancelRecordSelection() }
+            if phase != .active { session.suspendWorkspaceProbe(); session.finishConfirmation(false); session.cancelRecordSelection() }
         }
         .sheet(isPresented: $settings) {
             SettingsView(session: session) { settings = false }
@@ -157,25 +159,8 @@ struct PatientApplication: View {
 
 struct PatientWebView: UIViewRepresentable {
     let webView: WKWebView
-    let accessible: Bool
-    final class Coordinator { var wasAccessible = false }
-    func makeCoordinator() -> Coordinator { Coordinator() }
     func makeUIView(context: Context) -> WKWebView { webView }
-    func updateUIView(_ uiView: WKWebView, context: Context) {
-        let restored = accessible && !context.coordinator.wasAccessible
-        context.coordinator.wasAccessible = accessible
-        // Keep the existing browsing context and unsaved fields. SwiftUI's
-        // ancestor privacy mask alone can leave WebKit's remote AX tree hidden
-        // after foregrounding;restore the UIKit container and announce it only
-        // after it is attached. No navigation,cookie replacement or JS injection.
-        uiView.accessibilityElementsHidden = !accessible
-        if restored {
-            DispatchQueue.main.async {
-                guard uiView.window != nil, !uiView.accessibilityElementsHidden else { return }
-                UIAccessibility.post(notification: .screenChanged, argument: uiView)
-            }
-        }
-    }
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
 }
 
 struct PublicSourceBrowser: UIViewControllerRepresentable {

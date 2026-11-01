@@ -5,7 +5,7 @@ import Combine
 @MainActor
 final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate, WKUIDelegate {
     let configuration: ServerConfiguration
-    let webView: WKWebView
+    @Published private(set) var webView: WKWebView
     @Published private(set) var identity: NativeIdentity?
     @Published private(set) var authenticating = false
     @Published private(set) var authenticationStatus = "Ready to sign in"
@@ -23,13 +23,21 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
 
     init(configuration: ServerConfiguration) {
         self.configuration = configuration
+        self.webView = Self.makeWebView()
+        super.init()
+        configureWebView()
+    }
+
+    private static func makeWebView() -> WKWebView {
         let preferences = WKWebViewConfiguration()
         preferences.websiteDataStore = .nonPersistent()
         preferences.limitsNavigationsToAppBoundDomains = true
         preferences.allowsInlineMediaPlayback = false
         preferences.mediaTypesRequiringUserActionForPlayback = .all
-        self.webView = WKWebView(frame: .zero, configuration: preferences)
-        super.init()
+        return WKWebView(frame: .zero, configuration: preferences)
+    }
+
+    private func configureWebView() {
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true
@@ -38,6 +46,20 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         #if DEBUG
         webView.isInspectable = false
         #endif
+    }
+
+    /// Discard the private browsing context without awaiting an unmounted
+    /// WebKit process. Server revocation is handled separately by signOut.
+    func discardLocalWorkspace() {
+        webView.navigationDelegate = nil
+        webView.uiDelegate = nil
+        webView.stopLoading()
+        webView = Self.makeWebView()
+        configureWebView()
+        loading = false
+        problem = nil
+        externalSource = nil
+        currentSection = .dashboard
     }
 
     func open(_ section: PatientSection) {
@@ -182,7 +204,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
                 authenticationProblem = "Your session ended. Sign in again."
             }
         } catch {
-            guard epoch == authenticationEpoch, !authenticating else { return }
+            guard !Task.isCancelled, epoch == authenticationEpoch, !authenticating else { return }
             // A transient outage is not a successful logout or proof of expiry.
             problem = "Session verification unavailable. Check your connection and retry."
         }
@@ -199,10 +221,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         cancelRecordSelection()
         nativeCookie = nil
         finishConfirmation(false)
-        webView.stopLoading()
-        await webView.configuration.websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
-        guard epoch == authenticationEpoch else { return }
-        webView.loadHTMLString("<html><body></body></html>", baseURL: configuration.origin)
+        discardLocalWorkspace()
     }
 
     func signOut() {

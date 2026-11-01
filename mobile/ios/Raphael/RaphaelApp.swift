@@ -93,6 +93,7 @@ struct PatientApplication: View {
                     .padding().frame(maxWidth: .infinity).background(Color.orange.opacity(0.15))
                 }
                 PatientWebView(webView: session.webView)
+                    .id(ObjectIdentifier(session.webView))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .accessibilityHidden(session.authenticating)
                     .accessibilityIdentifier("patient-web-workspace")
@@ -111,15 +112,15 @@ struct PatientApplication: View {
             }
         }
         .onAppear { if session.identity != nil && session.webView.url == nil { session.open(.dashboard) } }
-        .task {
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
             while !Task.isCancelled {
-                if scenePhase == .active { await session.checkAuthentication() }
+                await session.checkAuthentication()
                 do { try await Task.sleep(for: .seconds(15)) } catch { break }
             }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { session.finishConfirmation(false); session.cancelRecordSelection() }
-            else { Task { await session.checkAuthentication() } }
         }
         .sheet(isPresented: $settings) {
             SettingsView(session: session) { settings = false }

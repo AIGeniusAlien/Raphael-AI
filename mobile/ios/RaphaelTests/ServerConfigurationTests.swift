@@ -5,6 +5,21 @@ import WebKit
 @testable import Raphael
 
 final class ServerConfigurationTests: XCTestCase {
+    @MainActor
+    func testDiscardedWorkspaceGetsFreshEphemeralStoreWithoutWebKitCallback() throws {
+        let configuration = try XCTUnwrap(ServerConfiguration(urlString: "https://raphael.example.org", boundHost: "raphael.example.org"))
+        let session = PatientWebSession(configuration: configuration)
+        let previous = session.webView
+        let previousStore = previous.configuration.websiteDataStore
+        session.discardLocalWorkspace()
+        XCTAssertFalse(session.webView === previous)
+        XCTAssertFalse(session.webView.configuration.websiteDataStore === previousStore)
+        XCTAssertFalse(session.webView.configuration.websiteDataStore.isPersistent)
+        XCTAssertNil(previous.navigationDelegate)
+        XCTAssertNil(previous.uiDelegate)
+        XCTAssertNil(session.webView.url)
+        XCTAssertTrue(session.webView.navigationDelegate === session)
+    }
     func testHTTPSOriginAndMatchingBoundHostAreRequired() {
         XCTAssertNotNil(ServerConfiguration(urlString: "https://raphael.example.org", boundHost: "raphael.example.org"))
         for value in ["http://raphael.example.org", "https://user:password@raphael.example.org", "https://raphael.example.org/private", "https://raphael.example.org?token=synthetic", "https://raphael.example.org#section", "https://raphael.example.org:8443", "https://your-authorized-host.invalid", "https://localhost"] {

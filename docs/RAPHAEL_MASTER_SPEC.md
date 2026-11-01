@@ -6976,3 +6976,8 @@ Begin immediately from the verified latest repository state. Implement, test, de
 # Definitive full-platform directive — additive 2026-11-01
 
 The complete owner directive in [FULL_PLATFORM_COMPLETION_2026-11-01.md](directives/FULL_PLATFORM_COMPLETION_2026-11-01.md) is incorporated by reference without retiring or weakening any earlier requirement or identifier. It is an implementation target,not evidence of completion. The dependency-aware active queue is [PLATFORM_COMPLETION_QUEUE.md](PLATFORM_COMPLETION_QUEUE.md);external release/clinical approvals remain separate from independently achievable engineering.
+
+
+# Ultimate master platform directive — additive steering 2026-11-01
+
+The complete [ULTIMATE_MASTER_PLATFORM_2026-11-01.md](directives/ULTIMATE_MASTER_PLATFORM_2026-11-01.md) extends the active full-platform program,including specialty/procedure coverage,ambient assistance and owner-directed feedback. Preserve current native MFA and encrypted conversation-attachment work. No registry,automated protocol result or model output establishes clinical competence or approval. Existing requirement IDs/descriptions remain unchanged.

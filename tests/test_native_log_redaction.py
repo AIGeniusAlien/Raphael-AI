@@ -8,6 +8,15 @@ import unittest
 
 
 class NativeLogRedactionTests(unittest.TestCase):
+    def test_abbreviated_xctest_typed_arguments_are_never_printed(self):
+        script=Path(__file__).resolve().parents[1]/'.github/scripts/redact_native_log.py'
+        with tempfile.TemporaryDirectory() as folder:
+            private=Path(folder);password='SYNTHETIC-UNIQUE-PASSWORD-LONG-ENOUGH'
+            (private/'password').write_text(password);(private/'redactions.json').write_text(json.dumps([password]))
+            result=subprocess.run([sys.executable,str(script)],cwd=folder,env={'RAPHAEL_NATIVE_CI_PRIVATE':folder},input="Type '"+password[:17]+"...' into native-mfa-password SecureTextField\n",text=True,capture_output=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stderr)
+            for output in (result.stdout,(private/'native-build.log').read_text()):
+                self.assertNotIn(password[:12],output);self.assertIn('native-mfa-password',output);self.assertIn('[PRIVATE INPUT WITHHELD]',output)
     def test_late_enrollment_and_unregistered_totp_are_withheld_during_stream(self):
         script=Path(__file__).resolve().parents[1]/'.github/scripts/redact_native_log.py'
         with tempfile.TemporaryDirectory() as folder:

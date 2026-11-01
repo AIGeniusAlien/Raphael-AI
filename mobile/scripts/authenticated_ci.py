@@ -133,13 +133,15 @@ def cleanup():
         from datetime import datetime,timezone
         total=connection.execute('SELECT count(*) FROM dev_sessions').fetchone()[0]
         remaining=connection.execute('SELECT count(*) FROM dev_sessions WHERE expires_at>?',(datetime.now(timezone.utc).isoformat(),)).fetchone()[0]
-        events={event:count for event,count in connection.execute("SELECT event,count(*) FROM dev_audit WHERE event IN ('login','logout','read_patient','read_notes','list_patients','export_own_patient_records') GROUP BY event")}
+        events={event:count for event,count in connection.execute("SELECT event,count(*) FROM dev_audit WHERE event IN ('login','logout','read_patient','read_notes','list_patients','export_own_patient_records','mfa_enrollment_started','mfa_enabled','mfa_disabled') GROUP BY event")}
     routes=Counter()
     for line in (private/'backend.log').read_text(errors='replace').splitlines():
         if line.startswith('RAPHAEL_CI_HTTP '):
             event=json.loads(line.split(' ',1)[1])
             routes[event['method']+' '+event['path']+' '+str(event['status'])]+=1
     print('::notice title=Raphael native HTTP trace::'+json.dumps(dict(routes)),flush=True)
+    factors=[json.loads(line.split(' ',1)[1]) for line in (private/'backend.log').read_text(errors='replace').splitlines() if line.startswith('RAPHAEL_CI_FACTOR_HTTP ')]
+    print('::notice title=Raphael native MFA HTTP::'+json.dumps(factors),flush=True)
     navigation=[json.loads(line.split(' ',1)[1]) for line in (private/'backend.log').read_text(errors='replace').splitlines() if line.startswith('RAPHAEL_CI_NAVIGATION ')]
     print('::notice title=Raphael chart navigation::'+json.dumps(navigation),flush=True)
     matches=[json.loads(line.split(' ',1)[1]) for line in (private/'backend.log').read_text(errors='replace').splitlines() if line.startswith('RAPHAEL_CI_INPUT ')]

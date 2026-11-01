@@ -18,6 +18,9 @@ def main():
         return values
     values=bindings()
     def redact(raw):
+        # XCTest abbreviates long typed strings,so matching only the complete
+        # registered password is insufficient. Withhold every typed argument.
+        raw=re.sub(r'''\bType (?:'[^\n]*?'|"[^\n]*?")(?= into )''','Type [PRIVATE INPUT WITHHELD]',raw)
         for value in sorted(bindings(),key=len,reverse=True):raw=raw.replace(value,'[PRIVATE CI INPUT REDACTED]')
         # TOTP is generated on-device before it reaches the server. Withhold
         # standalone six-digit values even before a server registry update.

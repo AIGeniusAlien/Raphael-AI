@@ -430,8 +430,20 @@ final class RaphaelUITests: XCTestCase {
         let factor=app.secureTextFields["native-mfa-code"]
         factor.tap();factor.typeText(try authenticatorCode(secret,step:enrolledStep)+"\n")
         try tapHeader(visibleExportAction(app,"native-mfa-confirm"))
-        let privateCodes=app.staticTexts["native-mfa-recovery-codes"]
-        try requireUI(privateCodes.waitForExistence(timeout:20),"Actual one-time recovery codes must be shown once.")
+        let privateCodes=app.descendants(matching:.any).matching(identifier:"native-mfa-recovery-codes").firstMatch
+        var disclosureScrolls=0
+        _ = privateCodes.waitForExistence(timeout:5)
+        for upward in [true,false] {
+            for _ in 0..<7 {
+                if privateCodes.exists && !privateCodes.frame.isEmpty && app.frame.intersects(privateCodes.frame) { break }
+                if upward {app.swipeUp()} else {app.swipeDown()};disclosureScrolls+=1
+            }
+            if privateCodes.exists && !privateCodes.frame.isEmpty && app.frame.intersects(privateCodes.frame) {break}
+        }
+        let disclosureVisible=privateCodes.exists && !privateCodes.frame.isEmpty && app.frame.intersects(privateCodes.frame)
+        let nativeStatus=app.staticTexts["native-mfa-status"]
+        try requireUI(disclosureVisible,"Actual recovery disclosure must be visible. Native status: "+(nativeStatus.exists ? nativeStatus.label : "Not in current viewport"))
+        print("Native recovery disclosure reached after \(disclosureScrolls) scrolls;accessibility type \(privateCodes.elementType.rawValue). No private value logged.")
         let codes=privateCodes.label.split(separator:"\n").map(String.init)
         try requireUI(codes.count==10,"All ten private recovery codes must be available.")
         try tapHeader(visibleExportAction(app,"native-mfa-clear"))

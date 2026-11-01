@@ -148,8 +148,8 @@
       "section": 20,
       "title": "iOS/Android/web/desktop",
       "status": "IN PROGRESS",
-      "implemented": "Actual browser workflows and earlier26case nativepass preserved;latest4069057native25/26fails credentialediting;stableUIKitpair remediation added.",
-      "remaining": "Actual27case stableeditor acceptance plusphysicaldevice/VoiceOver/staging/signing;Androidnative/desktop distribution incomplete."
+      "implemented": "Actualbrowserworkflows and stableeditor27actualXcodecases15unit+12UIpass onb6ab21c,includingfullrealTOTP/recovery workflow;original26preserved.",
+      "remaining": "Physicaldevice/VoiceOver/staging/signing;Androidnative/desktop and complete distribution acceptance incomplete."
     },
     {
       "section": 21,
@@ -211,7 +211,7 @@
       "section": 29,
       "title": "Complete end-to-end acceptance",
       "status": "IN PROGRESS",
-      "implemented": "311Python/29frontend/7Chromium/5project and actual livephysician/patient/attachment workflows pass;latestnative25/26failurepreserved,stablepair27casepending.",
+      "implemented": "311Python/29frontend/7Chromium/5project and27actualnative plus actuallivephysician/patient/attachment workflows pass;earlierfailurespreserved.",
       "remaining": "All specified cross-role/procedure/ambient/external/device/failure workflows are not accepted."
     },
     {

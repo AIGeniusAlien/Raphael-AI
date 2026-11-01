@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
   "starting_commit": "214cc169b9935282b694b557f5400da5dfafde9f",
-  "implementation_commit": "9c885ccd3bbc37ecbf678db73ea4a84a99fa9ae9",
+  "implementation_commit": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
   "release_decisions": {
     "synthetic_local_web_demonstration": "PASS",
     "controlled_synthetic_testflight": "FAIL",
@@ -28,11 +28,11 @@
     },
     {
       "id": "authenticated_native",
-      "status": "FAIL",
-      "cause": "Latest4069057native run failed enrollment403 with submittedpassword mismatch;earlier5be26pass does not establish reliability.",
-      "attempted_remediation": "Stable UIKit-owned MFA pair/private store avoids per-character SwiftUI binding reconciliation;new unit regression added;no password/factor validation relaxation.",
+      "status": "PASS",
+      "cause": "Bounded actual27case stable-editor simulator acceptance;not full device/distribution/clinical acceptance.",
+      "attempted_remediation": "UIKit-owned pair/private store eliminates per-character SwiftUI binding reconciliation;newregression plus realtypedpassword/TOTP/recovery/replay/disable/revocation allpass27/0/0 onb6ab21c. EveryMFApasswordmatchtrue;0active sessions.",
       "responsible_party": "Engineering",
-      "next_verification": "Actual27cases(15unit+12UI)must pass with0active sessions;device/VoiceOver/staging/signing remain separate."
+      "next_verification": "Preserve exact softwareproof;ownerphysicaldevice/VoiceOver/staging/signing/independent security remain. Do not equate this with fullTestFlight/clinical readiness."
     },
     {
       "id": "mfa_technical_controls",
@@ -268,11 +268,11 @@
     },
     {
       "id": "native_totp_extended_workflow",
-      "status": "FAIL",
-      "cause": "Latest4069057native run failed enrollment403 with submittedpassword mismatch;earlier5be26pass does not establish reliability.",
-      "attempted_remediation": "Stable UIKit-owned MFA pair/private store avoids per-character SwiftUI binding reconciliation;new unit regression added;no password/factor validation relaxation.",
+      "status": "PASS",
+      "cause": "Bounded actual27case stable-editor simulator acceptance;not full device/distribution/clinical acceptance.",
+      "attempted_remediation": "UIKit-owned pair/private store eliminates per-character SwiftUI binding reconciliation;newregression plus realtypedpassword/TOTP/recovery/replay/disable/revocation allpass27/0/0 onb6ab21c. EveryMFApasswordmatchtrue;0active sessions.",
       "responsible_party": "Engineering",
-      "next_verification": "Actual27cases(15unit+12UI)must pass with0active sessions;device/VoiceOver/staging/signing remain separate."
+      "next_verification": "Preserve exact softwareproof;ownerphysicaldevice/VoiceOver/staging/signing/independent security remain. Do not equate this with fullTestFlight/clinical readiness."
     }
   ],
   "requirements": {
@@ -290,9 +290,9 @@
       "PLATFORM-006"
     ],
     "canonical_state_counts": {
-      "PARTIAL": 873,
+      "PARTIAL": 872,
       "NOT_IMPLEMENTED": 189,
-      "VERIFIED": 77,
+      "VERIFIED": 78,
       "IMPLEMENTED_UNVERIFIED": 22
     },
     "historical_evidence_preserved": "Baseline Git history and archived source-scoped reports;current views do not replace old verification history.",
@@ -305,33 +305,32 @@
   "deployed": false,
   "apple_submitted": false,
   "verification_scope": "Bounded synthetic implementations and actual general CDC education only;whole directive remains incomplete. See source-scoped local/live reports and actual CI. No clinical validation.",
-  "native_followup_source": "4069057407174def4c419641dbd23a9cd35a9b24",
-  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41352788712",
-  "native_followup_status": "FAIL",
+  "native_followup_source": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
+  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41355525846",
+  "native_followup_status": "PASS",
   "ci_evidence": {
-    "source": "4069057407174def4c419641dbd23a9cd35a9b24",
-    "run_id": 41352788712,
+    "source": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
+    "run_id": 41355525846,
     "regression": "PASS",
     "dependency_audit": "PASS",
-    "ios_simulator": "FAIL",
+    "ios_simulator": "PASS",
     "final_pr_head_checks": "https://github.com/AIGeniusAlien/Raphael-AI/pull/1/checks"
   },
   "native_tests": {
-    "status": "FAIL",
-    "passed": 25,
-    "failed": 1,
+    "status": "PASS",
+    "passed": 27,
+    "failed": 0,
     "skipped": 0,
-    "unit": 14,
+    "unit": 15,
     "ui": 12,
     "source": "actualxcresulttool",
-    "commit": "4069057407174def4c419641dbd23a9cd35a9b24",
-    "expected_corrected_suite": 27
+    "commit": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce"
   },
   "native_server_evidence": {
-    "active_sessions": 1,
+    "active_sessions": 0,
     "expired_sessions_retained": 1,
-    "logins": 18,
-    "logouts": 14,
+    "logins": 20,
+    "logouts": 16,
     "provider_requests": 0,
     "actual_https_main_app": true
   },
@@ -488,5 +487,19 @@
     "workers": 4,
     "persisted_records": 20,
     "production_capacity_validated": false
-  }
+  },
+  "cancelled_superseded_runs": [
+    {
+      "run": 41355482442,
+      "source": "958e3809d5d44d64047a380a13a6cb067182a83a",
+      "status": "CANCELLED",
+      "acceptance_proof": false
+    }
+  ],
+  "native_screenshots_current": {
+    "source": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
+    "manual_inspection": false,
+    "reason": "Automatic approval review rejected repeating the previously blocked native blob-host download;no further retry/workaround after rejection;actualCIannotations and localbrowserimages used."
+  },
+  "final_followup_scope": "Evidence/documentation/acceptance metadata only after b6ab21c;final commit identified inPR/finalresponse;no futureCIresult claimed."
 }

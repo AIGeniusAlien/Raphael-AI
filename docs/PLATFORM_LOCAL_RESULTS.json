@@ -117,6 +117,6 @@
   "production_data_used": false,
   "source_scope": {
     "implementation_commit": "9c885ccd3bbc37ecbf678db73ea4a84a99fa9ae9",
-    "note": "All application and verification code in this commit was present for this run;later changes are source-scoped evidence/acceptance documentation. Linux native skip is not Xcode proof."
+    "note": "This full localrun coversPython/web/frontend/verification code on9c885cc. Laternativeeditor fixes were actually compiled/tested in27caseb6ab21cCI,which also passes all9isolatedchecks. LocalLinux native skip is not Xcode proof."
   }
 }

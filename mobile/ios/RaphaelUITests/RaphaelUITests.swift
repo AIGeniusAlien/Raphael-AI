@@ -79,8 +79,14 @@ final class RaphaelUITests: XCTestCase {
             if username == "native-clinician" {
                 // This role has two authorized records. The portal deliberately
                 // requires a real patient selection before displaying notes.
-                let record = app.webViews.buttons["Synthetic native patient"]
-                XCTAssertTrue(record.waitForExistence(timeout: 15))
+                // SwiftUI's accessibility wrapper does not guarantee a typed
+                // WebView ancestor. Query the unique real button across the app.
+                let record = app.buttons["Synthetic native patient"]
+                for _ in 0..<5 {
+                    if record.waitForExistence(timeout: 2) { break }
+                    app.swipeUp()
+                }
+                XCTAssertTrue(record.exists)
                 record.tap()
             }
             XCTAssertTrue(app.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))
@@ -115,7 +121,9 @@ final class RaphaelUITests: XCTestCase {
         let clinician = XCTAttachment(screenshot: app.screenshot())
         clinician.name = "Authenticated synthetic clinician over trusted HTTPS"
         clinician.lifetime = .keepAlways; add(clinician)
-        app.webViews.buttons["Sign out"].tap()
+        // The native confirmation is dismissed; only the actual portal button
+        // has this label here. Do not require a WebView accessibility ancestor.
+        app.buttons["Sign out"].tap()
         // Native welcome appears only after the model independently observes
         // the revoked web session and clears its private cookie/workspace.
         waitForNativeSessionClear(confirmedLogout: false)

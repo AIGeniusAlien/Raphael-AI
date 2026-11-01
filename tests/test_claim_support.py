@@ -4,7 +4,7 @@ import os
 from types import SimpleNamespace as NS
 import unittest
 from unittest.mock import patch
-from rag.claim_support import validate_screen,screen_claims,ClaimScreenUnavailable,segments
+from rag.claim_support import validate_screen,screen_claims,ClaimScreenUnavailable,ClaimProtocolError,segments,_screen_schema
 
 
 class ClaimSupportTests(unittest.TestCase):
@@ -17,6 +17,9 @@ class ClaimSupportTests(unittest.TestCase):
             {'segment_id':'S2','classification':'medical_claim','verdict':verdict,'supports':[{'chunk_id':'source-1','quote':quote or 'The exact synthetic fixture statement'}] if verdict=='supported' else [],'reason_code':'direct_support' if verdict=='supported' else 'missing_support'},
             {'segment_id':'S3','classification':'case_or_uncertainty','verdict':'not_external_claim','supports':[],'reason_code':'missing_case_data'},
         ]}
+
+    def wire(self,response):
+        return {'checks':{item['segment_id']:{k:v for k,v in item.items() if k!='segment_id'} for item in response['checks']}}
 
     def test_pass_requires_complete_segment_coverage_and_exact_quotes(self):
         result=validate_screen(self.answer,self.evidence,'adult',self.response())
@@ -63,21 +66,45 @@ class ClaimSupportTests(unittest.TestCase):
 
     def test_one_bounded_real_adapter_call_uses_untrusted_data_boundary_and_records_usage(self):
         response=self.response();response['checks'][1]['supports']=[{'quote_ref':'E1:Q0'}]
-        fixture=NS(choices=[NS(message=NS(content=json.dumps(response)),finish_reason='stop')],model='approved-fixture-snapshot',usage=NS(prompt_tokens=100,completion_tokens=50,total_tokens=150))
+        fixture=NS(choices=[NS(message=NS(content=json.dumps(self.wire(response))),finish_reason='stop')],model='approved-fixture-snapshot',usage=NS(prompt_tokens=100,completion_tokens=50,total_tokens=150))
         with patch.dict(os.environ,{'LLM_BASE_URL':'https://provider.invalid/v1','LLM_API_KEY':'SYNTHETIC-KEY','LLM_MODEL':'approved-fixture'}),patch('rag.claim_support.OpenAI') as sdk:
             create=sdk.return_value.__enter__.return_value.chat.completions.create;create.return_value=fixture
             result=screen_claims(self.answer,self.evidence,'adult')
             create.assert_called_once();self.assertEqual(sdk.call_args.kwargs['timeout'],20);self.assertEqual(sdk.call_args.kwargs['max_retries'],0)
             self.assertEqual(create.call_args.kwargs['model'],'approved-fixture');self.assertIn('untrusted data',create.call_args.kwargs['messages'][0]['content']);self.assertTrue(create.call_args.kwargs['response_format']['json_schema']['strict'])
             self.assertEqual(result['usage']['total_tokens'],150);self.assertEqual(result['model_requested'],'approved-fixture')
+            self.assertEqual(result['protocol_version'],2)
 
     def test_unknown_registered_quote_or_wrong_source_fails_closed(self):
         for reference in ('E9:Q0','E1:invented'):
             response=self.response();response['checks'][1]['supports']=[{'quote_ref':reference}]
-            fixture=NS(choices=[NS(message=NS(content=json.dumps(response)),finish_reason='stop')])
+            fixture=NS(choices=[NS(message=NS(content=json.dumps(self.wire(response))),finish_reason='stop')])
             with patch.dict(os.environ,{'LLM_BASE_URL':'https://provider.invalid/v1','LLM_API_KEY':'SYNTHETIC-KEY','LLM_MODEL':'fixture'}),patch('rag.claim_support.OpenAI') as sdk:
                 sdk.return_value.__enter__.return_value.chat.completions.create.return_value=fixture
                 with self.assertRaises(ClaimScreenUnavailable):screen_claims(self.answer,self.evidence,'adult')
+
+    def test_fixed_segment_schema_limits_quotes_to_associated_sources_and_forbids_bypasses(self):
+        parts=segments('One [source-1].\n\nTwo [source-2].\n\nMissing examination.')
+        schema=_screen_schema(parts,{'E1:Q0':{'chunk_id':'source-1'},'E2:Q0':{'chunk_id':'source-2'}})['properties']['checks']
+        self.assertEqual(schema['required'],['S1','S2','S3']);self.assertFalse(schema['additionalProperties'])
+        for sid,ref in [('S1','E1:Q0'),('S2','E2:Q0')]:
+            for variant in schema['properties'][sid]['anyOf']:
+                self.assertEqual(variant['properties']['supports']['items']['properties']['quote_ref']['enum'],[ref])
+                self.assertNotIn('not_external_claim',variant['properties']['verdict']['enum'])
+        for variant in schema['properties']['S3']['anyOf']:
+            self.assertEqual(variant['properties']['supports']['maxItems'],0)
+            self.assertNotIn('supported',variant['properties']['verdict']['enum'])
+
+    def test_missing_segment_and_cited_nonmedical_diagnostics_are_static_and_fail_closed(self):
+        response=self.wire(self.response());del response['checks']['S2']
+        fixture=NS(choices=[NS(message=NS(content=json.dumps(response)),finish_reason='stop')])
+        with patch.dict(os.environ,{'LLM_BASE_URL':'https://provider.invalid/v1','LLM_API_KEY':'SYNTHETIC-KEY','LLM_MODEL':'fixture'}),patch('rag.claim_support.OpenAI') as sdk:
+            sdk.return_value.__enter__.return_value.chat.completions.create.return_value=fixture
+            with self.assertRaises(ClaimScreenUnavailable) as error:screen_claims(self.answer,self.evidence,'adult')
+            self.assertEqual(error.exception.failure_code,'response_structure:segment_coverage')
+        response=self.response();response['checks'][1].update(classification='case_or_uncertainty',verdict='not_external_claim')
+        with self.assertRaises(ClaimProtocolError) as error:validate_screen(self.answer,self.evidence,'adult',response)
+        self.assertEqual(error.exception.code,'cited_nonmedical')
 
     def test_provider_truncation_invalid_json_and_error_payloads_are_redacted(self):
         for fixture in (NS(choices=[NS(message=NS(content='SECRET-REFLECTION'),finish_reason='length')]),NS(choices=[NS(message=NS(content='SECRET-REFLECTION'),finish_reason='stop')]),RuntimeError('SECRET-REFLECTION')):

@@ -24,6 +24,15 @@ from dev_portal import create_dev_user
 from curated_evidence import fetch_sources,search,collection,MODEL,DIMENSIONS
 
 
+def live_environment(database):
+    return dict(os.environ,DATABASE_URL=database,RAPHAEL_DEV_PORTAL='1',RAPHAEL_DEV_SYNTHETIC_ONLY='1',RAPHAEL_EMBEDDING_BACKEND='openai',RAPHAEL_STREAM_EVIDENCE_BACKEND='qdrant',RAPHAEL_VERIFY_CLAIMS='1',EMBED_DIM='384',PYTHONDONTWRITEBYTECODE='1')
+
+
+def completed_supported_workflows(result):
+    """A correct safety block is useful evidence,not successful completion."""
+    return result.get('physician_status')=='complete' and (result.get('claim_screen') or {}).get('status')=='passed' and result.get('patient_workflow',{}).get('status')=='complete' and (result.get('patient_workflow',{}).get('claim_screen') or {}).get('status')=='passed'
+
+
 def run(output):
     stage='setup';result={'status':'failed','uses_mock_services':False}
     try:
@@ -40,7 +49,7 @@ def run(output):
                 else:os.environ['RAPHAEL_DEV_SYNTHETIC_ONLY']=previous
             with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
             base=f'http://127.0.0.1:{port}'
-            env=dict(os.environ,DATABASE_URL=url,RAPHAEL_DEV_PORTAL='1',RAPHAEL_DEV_SYNTHETIC_ONLY='1',RAPHAEL_EMBEDDING_BACKEND='openai',RAPHAEL_STREAM_EVIDENCE_BACKEND='qdrant',EMBED_DIM='384',PYTHONDONTWRITEBYTECODE='1')
+            env=live_environment(url)
             with tempfile.TemporaryFile(mode='w+') as log:
                 process=subprocess.Popen([sys.executable,'-m','uvicorn','main:app','--host','127.0.0.1','--port',str(port)],env=env,stdout=log,stderr=log,start_new_session=True)
                 try:
@@ -131,7 +140,7 @@ def run(output):
         stage='live_missing_evidence_check'
         missing=search('violet gyroscopic calibrator xylophone')
         assert not missing
-        result.update(status='passed',original_source_hash_and_excerpt_checks=True,live_missing_evidence_results=0,collection=collection(),embedding_model=MODEL,actual_dimensions=DIMENSIONS)
+        result.update(status='passed' if completed_supported_workflows(result) else 'blocked',original_source_hash_and_excerpt_checks=True,live_missing_evidence_results=0,collection=collection(),embedding_model=MODEL,actual_dimensions=DIMENSIONS)
     except Exception as error:result.update(failed_stage=stage,error_type=type(error).__name__,http_status=getattr(error,'status_code',None))
     output.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k not in ('response','retrieved_evidence','question','generation_id','citation_ids','diagnostic_thread','patient_workflow','claim_screen')}))

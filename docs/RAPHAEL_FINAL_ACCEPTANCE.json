@@ -28,11 +28,11 @@
     },
     {
       "id": "authenticated_native",
-      "status": "PASS",
-      "cause": "Bounded actual synthetic26case native acceptance;not device/signing/clinical acceptance.",
-      "attempted_remediation": "ActualXcode26pass/0fail/0skip on5be27f7;real independentTOTP enrollment/recovery/login/replay/disable and revocation;20logins16logouts0active sessions0providercalls.",
+      "status": "FAIL",
+      "cause": "Latest4069057native run failed enrollment403 with submittedpassword mismatch;earlier5be26pass does not establish reliability.",
+      "attempted_remediation": "Stable UIKit-owned MFA pair/private store avoids per-character SwiftUI binding reconciliation;new unit regression added;no password/factor validation relaxation.",
       "responsible_party": "Engineering",
-      "next_verification": "Run final integrated head CI and physicaldevice/VoiceOver/authorizedstaging/signing acceptance;preserve all failed attempts."
+      "next_verification": "Actual27cases(15unit+12UI)must pass with0active sessions;device/VoiceOver/staging/signing remain separate."
     },
     {
       "id": "mfa_technical_controls",
@@ -268,11 +268,11 @@
     },
     {
       "id": "native_totp_extended_workflow",
-      "status": "PASS",
-      "cause": "Bounded actual synthetic26case native acceptance;not device/signing/clinical acceptance.",
-      "attempted_remediation": "ActualXcode26pass/0fail/0skip on5be27f7;real independentTOTP enrollment/recovery/login/replay/disable and revocation;20logins16logouts0active sessions0providercalls.",
+      "status": "FAIL",
+      "cause": "Latest4069057native run failed enrollment403 with submittedpassword mismatch;earlier5be26pass does not establish reliability.",
+      "attempted_remediation": "Stable UIKit-owned MFA pair/private store avoids per-character SwiftUI binding reconciliation;new unit regression added;no password/factor validation relaxation.",
       "responsible_party": "Engineering",
-      "next_verification": "Run final integrated head CI and physicaldevice/VoiceOver/authorizedstaging/signing acceptance;preserve all failed attempts."
+      "next_verification": "Actual27cases(15unit+12UI)must pass with0active sessions;device/VoiceOver/staging/signing remain separate."
     }
   ],
   "requirements": {
@@ -290,9 +290,9 @@
       "PLATFORM-006"
     ],
     "canonical_state_counts": {
-      "PARTIAL": 872,
+      "PARTIAL": 873,
       "NOT_IMPLEMENTED": 189,
-      "VERIFIED": 78,
+      "VERIFIED": 77,
       "IMPLEMENTED_UNVERIFIED": 22
     },
     "historical_evidence_preserved": "Baseline Git history and archived source-scoped reports;current views do not replace old verification history.",
@@ -305,32 +305,33 @@
   "deployed": false,
   "apple_submitted": false,
   "verification_scope": "Bounded synthetic implementations and actual general CDC education only;whole directive remains incomplete. See source-scoped local/live reports and actual CI. No clinical validation.",
-  "native_followup_source": "5be27f7ab9729a4809d9f126e4ba4d0acd690f47",
-  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41349108361",
-  "native_followup_status": "PASS",
+  "native_followup_source": "4069057407174def4c419641dbd23a9cd35a9b24",
+  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41352788712",
+  "native_followup_status": "FAIL",
   "ci_evidence": {
-    "source": "5be27f7ab9729a4809d9f126e4ba4d0acd690f47",
-    "run_id": 41349108361,
+    "source": "4069057407174def4c419641dbd23a9cd35a9b24",
+    "run_id": 41352788712,
     "regression": "PASS",
     "dependency_audit": "PASS",
-    "ios_simulator": "PASS",
+    "ios_simulator": "FAIL",
     "final_pr_head_checks": "https://github.com/AIGeniusAlien/Raphael-AI/pull/1/checks"
   },
   "native_tests": {
-    "status": "PASS",
-    "passed": 26,
-    "failed": 0,
+    "status": "FAIL",
+    "passed": 25,
+    "failed": 1,
     "skipped": 0,
     "unit": 14,
     "ui": 12,
     "source": "actualxcresulttool",
-    "commit": "5be27f7ab9729a4809d9f126e4ba4d0acd690f47"
+    "commit": "4069057407174def4c419641dbd23a9cd35a9b24",
+    "expected_corrected_suite": 27
   },
   "native_server_evidence": {
-    "active_sessions": 0,
+    "active_sessions": 1,
     "expired_sessions_retained": 1,
-    "logins": 20,
-    "logouts": 16,
+    "logins": 18,
+    "logouts": 14,
     "provider_requests": 0,
     "actual_https_main_app": true
   },
@@ -375,6 +376,11 @@
       "run": 41350847958,
       "source": "def5e652d95e719fda7b6a9eccc205aeccbabeae",
       "result": "regression/securityPASS;native25pass1fail0skip at test-only secure accessibility mask length assertion after enrollment200;removed unreliable assertion,authoritative server checks preserved;corrected-head CI required"
+    },
+    {
+      "run": 41352788712,
+      "source": "4069057407174def4c419641dbd23a9cd35a9b24",
+      "result": "regression/securityPASS;native25pass1fail0skip;newenrollment403;submittedpassword mismatch confirmed by boolean-only diagnostics;1active synthetic session;stableUIKitcredentialpair remediation requires actual27case rerun"
     }
   ],
   "native_background_recovery": "PASS with one explicit visible user retry after reported stopped WebKit content;actual authenticated web identity,owner revocation,reused-factor rejection and relaunch remain required.",

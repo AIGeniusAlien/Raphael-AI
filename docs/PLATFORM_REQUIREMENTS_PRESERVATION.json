@@ -13,9 +13,9 @@
     "PLATFORM-006"
   ],
   "canonical_state_counts": {
-    "PARTIAL": 872,
+    "PARTIAL": 873,
     "NOT_IMPLEMENTED": 189,
-    "VERIFIED": 78,
+    "VERIFIED": 77,
     "IMPLEMENTED_UNVERIFIED": 22
   },
   "historical_evidence_preserved": "Baseline Git history and archived source-scoped reports;current views do not replace old verification history.",

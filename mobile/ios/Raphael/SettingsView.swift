@@ -1,4 +1,6 @@
 import SwiftUI
+import Combine
+import UIKit
 import Foundation
 import UniformTypeIdentifiers
 
@@ -210,6 +212,74 @@ struct NativeExportActivity: UIViewControllerRepresentable {
     func updateUIViewController(_ controller:UIActivityViewController,context:Context) {}
 }
 
+
+/// Only emptiness and explicit clearing revisions are published. Per-character
+/// private values do not drive SwiftUI Form reconciliation or cell reuse.
+final class NativeMFACredentials: ObservableObject {
+    @Published private(set) var hasPassword=false
+    @Published private(set) var hasFactor=false
+    @Published private(set) var clearRevision=0
+    private var password=""
+    private var factor=""
+    func updatePassword(_ value:String) { password=value;if hasPassword != !value.isEmpty {hasPassword = !value.isEmpty} }
+    func updateFactor(_ value:String) { factor=value;if hasFactor != !value.isEmpty {hasFactor = !value.isEmpty} }
+    func snapshot()->(password:String,factor:String) {(password,factor)}
+    func take()->(password:String,factor:String) {let captured=snapshot();clear();return captured}
+    func clear() {password="";factor="";hasPassword=false;hasFactor=false;clearRevision += 1}
+}
+
+/// One UIKit-owned pair remains stable when SwiftUI updates status/buttons.
+/// Reconciliation never writes an in-flight editor;explicit clear erases both.
+struct NativeMFACredentialFields: UIViewRepresentable {
+    @ObservedObject var credentials:NativeMFACredentials
+    final class Inputs:UIStackView {
+        let password=UITextField()
+        let factor=UITextField()
+        var clearRevision=0
+        override init(frame:CGRect) {
+            super.init(frame:frame);axis = .vertical;spacing=12;alignment = .fill
+            for (input,title,identifier,kind) in [
+                (password,"Current password","native-mfa-password",UITextContentType.password),
+                (factor,"Authenticator or unused recovery code","native-mfa-code",UITextContentType.oneTimeCode)] {
+                input.isSecureTextEntry=true;input.placeholder=title;input.accessibilityLabel=title;input.accessibilityIdentifier=identifier
+                input.textContentType=kind;input.autocapitalizationType = .none;input.autocorrectionType = .no;input.spellCheckingType = .no
+                input.smartDashesType = .no;input.smartQuotesType = .no;input.returnKeyType = .done
+                input.font = .preferredFont(forTextStyle:.body);input.adjustsFontForContentSizeCategory=true
+                input.borderStyle = .roundedRect;input.heightAnchor.constraint(greaterThanOrEqualToConstant:44).isActive=true
+                addArrangedSubview(input)
+            }
+        }
+        required init(coder:NSCoder) {fatalError("Programmatic credential inputs only")}
+    }
+    final class Coordinator:NSObject,UITextFieldDelegate {
+        var credentials:NativeMFACredentials
+        init(_ credentials:NativeMFACredentials) {self.credentials=credentials}
+        @objc func passwordChanged(_ field:UITextField) {credentials.updatePassword(field.text ?? "")}
+        @objc func factorChanged(_ field:UITextField) {credentials.updateFactor(field.text ?? "")}
+        func textFieldShouldReturn(_ field:UITextField)->Bool {field.resignFirstResponder();return true}
+    }
+    func makeCoordinator()->Coordinator {Coordinator(credentials)}
+    func makeInputs(_ coordinator:Coordinator)->Inputs {
+        let inputs=Inputs(frame:.zero),values=credentials.snapshot();inputs.password.text=values.password;inputs.factor.text=values.factor;inputs.clearRevision=credentials.clearRevision
+        inputs.password.delegate=coordinator;inputs.factor.delegate=coordinator
+        inputs.password.addTarget(coordinator,action:#selector(Coordinator.passwordChanged(_:)),for:.editingChanged)
+        inputs.factor.addTarget(coordinator,action:#selector(Coordinator.factorChanged(_:)),for:.editingChanged)
+        return inputs
+    }
+    func updateInputs(_ inputs:Inputs,coordinator:Coordinator) {
+        coordinator.credentials=credentials
+        guard inputs.clearRevision != credentials.clearRevision else {return}
+        inputs.clearRevision=credentials.clearRevision
+        // No editingDidEnd callback republishes the old value during erasure.
+        inputs.endEditing(true);inputs.password.text="";inputs.factor.text=""
+    }
+    func makeUIView(context:Context)->Inputs {makeInputs(context.coordinator)}
+    func updateUIView(_ inputs:Inputs,context:Context) {updateInputs(inputs,coordinator:context.coordinator)}
+    func sizeThatFits(_ proposal:ProposedViewSize,uiView:Inputs,context:Context)->CGSize? {
+        uiView.systemLayoutSizeFitting(CGSize(width:proposal.width ?? 320,height:UIView.layoutFittingCompressedSize.height),withHorizontalFittingPriority:.required,verticalFittingPriority:.fittingSizeLevel)
+    }
+}
+
 struct NativeMFAView: View {
     @ObservedObject var session:PatientWebSession
     let dismiss:()->Void
@@ -217,8 +287,7 @@ struct NativeMFAView: View {
     @State private var enabled:Bool?
     @State private var available = false
     @State private var remaining = 0
-    @State private var password = ""
-    @State private var code = ""
+    @StateObject private var credentials = NativeMFACredentials()
     @State private var setupKey:String?
     @State private var recovery:[String] = []
     @State private var status = "Checking authenticator status…"
@@ -236,17 +305,16 @@ struct NativeMFAView: View {
                     Text("Keep your authenticator and recovery codes on a protected device. Raphael cannot recover a lost setup key. These controls do not verify professional credentials or patient identity.").font(.footnote)
                 }
                 Section("Verify credentials") {
-                    NativeSecretEntry(text:$password,title:"Current password",identifier:"native-mfa-password").id("mfa-password-entry").frame(minHeight:44)
-                    NativeSecretEntry(text:$code,title:"Authenticator or unused recovery code",oneTimeCode:true,identifier:"native-mfa-code").id("mfa-factor-entry").frame(minHeight:44)
+                    NativeMFACredentialFields(credentials:credentials).id("mfa-credential-fields").frame(minHeight:100)
                     Button("Start authenticator enrollment") { perform(.enroll) }
-                        .disabled(busy || enabled != false || !available || password.isEmpty).accessibilityIdentifier("native-mfa-enroll")
+                        .disabled(busy || enabled != false || !available || !credentials.hasPassword).accessibilityIdentifier("native-mfa-enroll")
                     if setupKey != nil {
                         Button("Confirm authenticator enrollment") { perform(.confirm) }
-                            .disabled(busy || password.isEmpty || code.isEmpty).accessibilityIdentifier("native-mfa-confirm")
+                            .disabled(busy || !credentials.hasPassword || !credentials.hasFactor).accessibilityIdentifier("native-mfa-confirm")
                     }
                     if enabled == true {
                         Button("Disable authenticator",role:.destructive) { confirmDisable = true }
-                            .disabled(busy || password.isEmpty || code.isEmpty).accessibilityIdentifier("native-mfa-disable")
+                            .disabled(busy || !credentials.hasPassword || !credentials.hasFactor).accessibilityIdentifier("native-mfa-disable")
                     }
                 }
                 if let key = setupKey {
@@ -274,7 +342,7 @@ struct NativeMFAView: View {
             .toolbar { ToolbarItem(placement:.confirmationAction) { Button("Done") { clearPrivate();dismiss() }.accessibilityIdentifier("native-mfa-done") } }
             .confirmationDialog("Disable authenticator protection?",isPresented:$confirmDisable,titleVisibility:.visible) {
                 Button("Disable and revoke other sessions",role:.destructive) { perform(.disable) }.accessibilityIdentifier("native-mfa-confirm-disable")
-                Button("Cancel",role:.cancel) { password = "";code = "" }
+                Button("Cancel",role:.cancel) { credentials.clear() }
             } message: { Text("This reduces account protection. Your password and an unused factor are required. Other signed-in sessions will be revoked.") }
             .task { perform(.status) }
             .onDisappear { clearPrivate() }
@@ -284,19 +352,18 @@ struct NativeMFAView: View {
     }
     private func clearPrivate() {
         epoch += 1;operationTask?.cancel();operationTask = nil
-        password = "";code = "";setupKey = nil;recovery = [];busy = false;confirmDisable = false
+        credentials.clear();setupKey = nil;recovery = [];busy = false;confirmDisable = false
     }
     private func perform(_ operation:NativeMFAOperation) {
         guard !busy else { return }
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),to:nil,from:nil,for:nil)
-        let capturedPassword = password,capturedCode = code
-        password = "";code = ""
+        let captured = credentials.take()
         if operation == .status { setupKey = nil;recovery = [] }
         epoch += 1;let attempt = epoch
         busy = true;status = "Verifying with the configured secure service…"
         operationTask = Task { @MainActor in
             do {
-                let reply = try await session.manageMFA(operation,password:capturedPassword,code:capturedCode)
+                let reply = try await session.manageMFA(operation,password:captured.password,code:captured.factor)
                 guard attempt == epoch,!Task.isCancelled else { return }
                 switch operation {
                 case .status:enabled = reply.enabled;available = reply.enrollment_available == true;remaining = reply.recovery_codes_remaining ?? 0;status = available ? "Authenticator status verified." : "Enrollment unavailable. Operator key configuration is required."

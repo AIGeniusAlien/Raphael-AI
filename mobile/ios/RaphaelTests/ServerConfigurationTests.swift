@@ -1,11 +1,44 @@
 import XCTest
 import SwiftUI
+import Combine
 import UIKit
 import WebKit
 import UniformTypeIdentifiers
 @testable import Raphael
 
 final class ServerConfigurationTests: XCTestCase {
+    @MainActor
+    func testMFAEditorsSurviveRepeatedReconciliationAndExplicitlyEraseBothFields() {
+        let credentials=NativeMFACredentials()
+        var passwordFlags=[Bool](),factorFlags=[Bool]()
+        let passwordChanges=credentials.$hasPassword.dropFirst().sink {passwordFlags.append($0)}
+        let factorChanges=credentials.$hasFactor.dropFirst().sink {factorFlags.append($0)}
+        defer {passwordChanges.cancel();factorChanges.cancel()}
+        // Use one shared private store exactly as the real screen does.
+        let actual=NativeMFACredentialFields(credentials:credentials),coordinator=actual.makeCoordinator()
+        let inputs=actual.makeInputs(coordinator)
+        let password="Synthetic-Exact_Entry9!",factor="012345"
+        for character in password {
+            inputs.password.text=(inputs.password.text ?? "")+String(character)
+            inputs.password.sendActions(for:.editingChanged)
+            actual.updateInputs(inputs,coordinator:coordinator)
+        }
+        for character in factor {
+            inputs.factor.text=(inputs.factor.text ?? "")+String(character)
+            inputs.factor.sendActions(for:.editingChanged)
+            actual.updateInputs(inputs,coordinator:coordinator)
+        }
+        XCTAssertEqual(passwordFlags,[true]);XCTAssertEqual(factorFlags,[true])
+        XCTAssertEqual(inputs.password.text,password);XCTAssertEqual(inputs.factor.text,factor)
+        XCTAssertTrue(credentials.hasPassword);XCTAssertTrue(credentials.hasFactor)
+        XCTAssertTrue(inputs.password.isSecureTextEntry);XCTAssertTrue(inputs.factor.isSecureTextEntry)
+        let captured=credentials.take();actual.updateInputs(inputs,coordinator:coordinator)
+        XCTAssertEqual(captured.password,password);XCTAssertEqual(captured.factor,factor)
+        XCTAssertEqual(inputs.password.text,"");XCTAssertEqual(inputs.factor.text,"")
+        XCTAssertFalse(credentials.hasPassword);XCTAssertFalse(credentials.hasFactor)
+        inputs.password.sendActions(for:.editingDidEnd);inputs.factor.sendActions(for:.editingDidEnd)
+        XCTAssertEqual(credentials.snapshot().password,"");XCTAssertEqual(credentials.snapshot().factor,"")
+    }
     func testNativeMFARejectsMalformedSecretRecoveryAndStatusResponses() throws {
         func reply(_ value:[String:Any]) throws -> NativeMFAReply { try JSONDecoder().decode(NativeMFAReply.self,from:JSONSerialization.data(withJSONObject:value)) }
         XCTAssertTrue(try reply(["enabled":false,"enrollment_available":true,"recovery_codes_remaining":0]).valid(for:.status))

@@ -26,7 +26,7 @@ def main():
         if request.url.path in ('/api/dev/account/mfa/enroll','/api/dev/account/mfa/confirm','/api/dev/account/mfa/disable') and int(request.headers.get('content-length','0'))<=4096:
             value=await request.json();body=value if isinstance(value,dict) else {}
             expected=(Path(args.key).parent/'password').read_text();supplied=str(body.get('password',''))
-            print('RAPHAEL_CI_FACTOR_INPUT '+json.dumps({'path':request.url.path,'password_matches_fixture':hmac.compare_digest(supplied.encode(),expected.encode()),'trimmed_password_matches_fixture':hmac.compare_digest(supplied.strip().encode(),expected.encode()),'password_present':bool(supplied),'factor_present':bool(body.get('code'))}),flush=True)
+            print('RAPHAEL_CI_FACTOR_INPUT '+json.dumps({'path':request.url.path,'password_matches_fixture':hmac.compare_digest(supplied.encode(),expected.encode()),'trimmed_password_matches_fixture':hmac.compare_digest(supplied.strip().encode(),expected.encode()),'password_present':bool(supplied),'password_length_matches_fixture':len(supplied)==len(expected),'password_is_expected_prefix':bool(supplied) and expected.startswith(supplied),'password_is_expected_suffix':bool(supplied) and expected.endswith(supplied),'password_is_doubled_fixture':hmac.compare_digest(supplied.encode(),(expected+expected).encode()),'factor_present':bool(body.get('code'))}),flush=True)
         if request.url.path=='/api/dev/login' and int(request.headers.get('content-length','0'))<=4096:
             body=await request.json()
             expected=(Path(args.key).parent/'password').read_text()

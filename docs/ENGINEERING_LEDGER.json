@@ -2,9 +2,9 @@
   "schema_version": 1,
   "source": "docs/REQUIREMENTS_MATRIX.md",
   "state_counts": {
-    "PARTIAL": 872,
+    "PARTIAL": 873,
     "NOT_IMPLEMENTED": 189,
-    "VERIFIED": 78,
+    "VERIFIED": 77,
     "IMPLEMENTED_UNVERIFIED": 22
   },
   "requirement_count": 1161,
@@ -16253,13 +16253,13 @@
     {
       "requirement_id": "PLATFORM-006",
       "description": "Independent native authenticator enrollment entry recovery and disable acceptance",
-      "state": "VERIFIED",
+      "state": "PARTIAL",
       "code_location": "mobile/ios/Raphael/SettingsView.swift;PatientWebSession.swift;RaphaelUITests.swift",
-      "test_coverage": "ActualXcode26passed/0failed/0skipped on5be27f7;CI41349108361;3UI failures plus startupfailure preserved",
+      "test_coverage": "Earlier5be27f7actual26pass preserved;def5maskguardfailure and4069057realenroll403/mismatchedinput preserved;stableUIKitpair regression added",
       "external_dependency": "Real synthetic HTTPS app and actual iOS simulator",
-      "remaining_work": "Actual bounded native workflow passes;physicaldevice/VoiceOver/staging/signing remain;later test-private diagnostics require final-head CI.",
+      "remaining_work": "Current native editing reliability is FAILED until stablepair actual27case rerun(15unit+12UI)passes;physicaldevice/VoiceOver/staging/signing remain.",
       "acceptance_criteria": "Actual enrollment/code/recovery/login/replay/revoke/disable must all pass;no fixture bypass",
-      "next_implementation_action": "Actual bounded native workflow passes;physicaldevice/VoiceOver/staging/signing remain;later test-private diagnostics require final-head CI.",
+      "next_implementation_action": "Current native editing reliability is FAILED until stablepair actual27case rerun(15unit+12UI)passes;physicaldevice/VoiceOver/staging/signing remain.",
       "priority": "P0",
       "milestone": "M1",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."

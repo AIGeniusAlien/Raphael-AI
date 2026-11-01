@@ -236,8 +236,8 @@ struct NativeMFAView: View {
                     Text("Keep your authenticator and recovery codes on a protected device. Raphael cannot recover a lost setup key. These controls do not verify professional credentials or patient identity.").font(.footnote)
                 }
                 Section("Verify credentials") {
-                    NativeSecretEntry(text:$password,title:"Current password",identifier:"native-mfa-password").frame(minHeight:44)
-                    NativeSecretEntry(text:$code,title:"Authenticator or unused recovery code",oneTimeCode:true,identifier:"native-mfa-code").frame(minHeight:44)
+                    NativeSecretEntry(text:$password,title:"Current password",identifier:"native-mfa-password").id("mfa-password-entry").frame(minHeight:44)
+                    NativeSecretEntry(text:$code,title:"Authenticator or unused recovery code",oneTimeCode:true,identifier:"native-mfa-code").id("mfa-factor-entry").frame(minHeight:44)
                     Button("Start authenticator enrollment") { perform(.enroll) }
                         .disabled(busy || enabled != false || !available || password.isEmpty).accessibilityIdentifier("native-mfa-enroll")
                     if setupKey != nil {

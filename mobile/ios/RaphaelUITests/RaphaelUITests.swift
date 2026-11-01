@@ -79,14 +79,17 @@ final class RaphaelUITests: XCTestCase {
             if username == "native-clinician" {
                 // This role has two authorized records. The portal deliberately
                 // requires a real patient selection before displaying notes.
-                // SwiftUI's accessibility wrapper does not guarantee a typed
-                // WebView ancestor. Query the unique real button across the app.
-                let record = app.buttons["Synthetic native patient"]
+                // aria-pressed selectors may have a different native AX role.
+                // Match the exact accessible name, preserving pressed semantics.
+                // Any nested text match belongs to this same uniquely named
+                // fixture control;the subsequent protected note proves its tap.
+                let record = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Synthetic native patient")).firstMatch
                 for _ in 0..<5 {
-                    if record.waitForExistence(timeout: 2) { break }
+                    if record.waitForExistence(timeout: 2) && record.isHittable { break }
                     app.swipeUp()
                 }
                 XCTAssertTrue(record.exists)
+                print("Synthetic record selector native accessibility type: \(record.elementType.rawValue)")
                 record.tap()
             }
             XCTAssertTrue(app.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))

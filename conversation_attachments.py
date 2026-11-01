@@ -96,6 +96,10 @@ class Delete(BaseModel):
 
 class AttachmentStore:
     def __init__(self,ctx,thread_for):self.ctx=ctx;self.thread_for=thread_for
+    @staticmethod
+    def active(c,request,user):
+        from dev_account import session_active
+        if not session_active(c,request,user):raise HTTPException(401,'Session revoked;attachment access was cancelled.')
     def thread(self,c,identifier,user):
         thread=self.thread_for(c,identifier,user)
         if not thread['patient_id'] or thread['intake_id']:raise HTTPException(409,'Attachments require a full-chart-authorized patient conversation;intake-only or general threads cannot acquire chart context.')
@@ -173,8 +177,9 @@ def install_attachments(app,ctx,thread_for):
     uploads=APIRouter(prefix='/api/dev/intelligence')
     if not any(item.cls is AttachmentLimit for item in app.user_middleware):app.add_middleware(AttachmentLimit)
     @router.get('/threads/{identifier}/attachments')
-    def listing(identifier:int,user=Depends(ctx.clinician)):
+    def listing(identifier:int,request:Request,user=Depends(ctx.clinician)):
         with ctx.engine.begin() as c:
+            store.active(c,request,user)
             thread=store.thread(c,identifier,user);items=store.listing(c,thread,user)
             try:cipher();available=True
             except HTTPException:available=False
@@ -190,14 +195,14 @@ def install_attachments(app,ctx,thread_for):
             if PurePath(file.filename or '').suffix.lower()!='.txt' or file.content_type not in ('text/plain','application/octet-stream'):raise HTTPException(415,'Only .txt plain-text attachments are supported;PDF/images/executables remain unsupported.')
             content=await file.read(MAX_BYTES+1)
             with ctx.engine.begin() as c:
-                c.exec_driver_sql('BEGIN IMMEDIATE');thread=store.thread(c,identifier,user)
+                c.exec_driver_sql('BEGIN IMMEDIATE');store.active(c,request,user);thread=store.thread(c,identifier,user)
                 return store.add(c,thread,user,title,content)
         finally:await file.close()
     @router.post('/threads/{identifier}/attachments/from-document')
-    def import_document(identifier:int,body:ImportDocument,user=Depends(ctx.clinician)):
+    def import_document(identifier:int,body:ImportDocument,request:Request,user=Depends(ctx.clinician)):
         from dev_chart import chart_document_allowed
         with ctx.engine.begin() as c:
-            c.exec_driver_sql('BEGIN IMMEDIATE');thread=store.thread(c,identifier,user)
+            c.exec_driver_sql('BEGIN IMMEDIATE');store.active(c,request,user);thread=store.thread(c,identifier,user)
             document=c.execute(text('SELECT * FROM dev_chart_documents WHERE id=:id'),{'id':body.document_id}).mappings().first()
             if not document or document['patient_id']!=thread['patient_id'] or not chart_document_allowed(c,document,user,ctx):raise HTTPException(404,'Authorized matching document not found.')
             if document['file_type']!='txt':raise HTTPException(415,'Only the explicit synthetic text contract is supported.')
@@ -205,16 +210,17 @@ def install_attachments(app,ctx,thread_for):
             if hashlib.sha256(content).hexdigest()!=document['sha256']:raise HTTPException(409,'Original document integrity changed.')
             return store.add(c,thread,user,document['title'],content,document['id'])
     @router.get('/threads/{identifier}/attachments/{attachment}/preview')
-    def preview(identifier:int,attachment:int,user=Depends(ctx.clinician)):
+    def preview(identifier:int,attachment:int,request:Request,user=Depends(ctx.clinician)):
         with ctx.engine.begin() as c:
+            store.active(c,request,user)
             thread=store.thread(c,identifier,user);row=store.row(c,attachment,thread,user);body,reviewable=store.content(row)
             ctx.audit(c,user,'preview_conversation_attachment','attachment',attachment)
             return {**store.metadata(row),'text':body,'reviewable':reviewable,'notice':'Untrusted reported text;not verified clinical findings. Suspicious instructions cannot be authorized. No malware-clean claim.'}
     @router.post('/threads/{identifier}/attachments/{attachment}/review')
-    def review(identifier:int,attachment:int,body:Review,user=Depends(ctx.clinician)):
+    def review(identifier:int,attachment:int,body:Review,request:Request,user=Depends(ctx.clinician)):
         if not body.authorize_provider_use:raise HTTPException(422,'Explicit authorization for model context is required.')
         with ctx.engine.begin() as c:
-            c.exec_driver_sql('BEGIN IMMEDIATE');thread=store.thread(c,identifier,user);row=store.row(c,attachment,thread,user)
+            c.exec_driver_sql('BEGIN IMMEDIATE');store.active(c,request,user);thread=store.thread(c,identifier,user);row=store.row(c,attachment,thread,user)
             if row['sha256']!=body.sha256:raise HTTPException(409,'Review hash changed.')
             _,reviewable=store.content(row)
             if not reviewable:raise HTTPException(409,'Suspicious instructions are quarantined;operator review is required. No provider use is allowed.')
@@ -222,10 +228,10 @@ def install_attachments(app,ctx,thread_for):
                 c.execute(text("UPDATE dev_conversation_attachments SET state='reviewed',reviewed_by=:u,reviewed_at=:at WHERE id=:id"),{'u':user['id'],'at':now(),'id':attachment});ctx.audit(c,user,'review_conversation_attachment','attachment',attachment)
             return store.metadata(store.row(c,attachment,thread,user))
     @router.post('/threads/{identifier}/attachments/{attachment}/delete')
-    def delete(identifier:int,attachment:int,body:Delete,user=Depends(ctx.clinician)):
+    def delete(identifier:int,attachment:int,body:Delete,request:Request,user=Depends(ctx.clinician)):
         if not body.confirm:raise HTTPException(422,'Explicit deletion confirmation required.')
         with ctx.engine.begin() as c:
-            c.exec_driver_sql('BEGIN IMMEDIATE');thread=store.thread(c,identifier,user)
+            c.exec_driver_sql('BEGIN IMMEDIATE');store.active(c,request,user);thread=store.thread(c,identifier,user)
             row=c.execute(text('SELECT * FROM dev_conversation_attachments WHERE id=:id AND thread_id=:t'),{'id':attachment,'t':identifier}).mappings().first()
             if not row:raise HTTPException(404,'Attachment unavailable.')
             if row['state']!='deleted':

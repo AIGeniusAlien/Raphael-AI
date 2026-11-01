@@ -68,7 +68,7 @@ class CompletionBrowserTests(unittest.TestCase):
          self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1,name)
        page.locator('#note').fill('Synthetic reviewed care plan. Patient-stated goal retained. No treatment authorized.');page.locator('#save-note').click();expect(page.locator('#note-status')).to_contain_text('Version 2');page.once('dialog',lambda dialog:dialog.accept());page.locator('#approve').click();expect(page.locator('#note-status')).to_contain_text('approved')
        other=browser.new_context(base_url=base);other.request.post('/api/dev/login',data={'tenant':'synthetic','username':'patient','password':password});result=other.request.get('/api/dev/patients/'+str(patient['id'])+'/notes');self.assertEqual(result.status,200);self.assertIn('Synthetic reviewed care plan',result.text());self.assertNotIn(secret,result.text());other.close()
-       page.get_by_text('Your accessible workflow checks',exact=True).click();page.locator('#workflow-refresh').click();expect(page.locator('#workflow-checks')).to_contain_text('accessible generations')
+       page.get_by_text('Your accessible workflow checks',exact=True).click();page.locator('#workflow-refresh').click();expect(page.locator('#workflow-checks')).to_contain_text('accessible generations');expect(page.locator('#workflow-checks')).to_contain_text('Observed total latency')
        page.get_by_text('Supported evidence scope',exact=True).click();page.locator('#coverage-refresh').click();expect(page.locator('#coverage-map')).to_contain_text('Live curated coverage has not been checked')
        page.goto('/static/chart.html?patient_id='+str(patient['id']));expect(page.locator('#chart-content')).to_be_visible()
        from observation_extraction import HEADERS
@@ -109,6 +109,36 @@ class CompletionBrowserTests(unittest.TestCase):
        row=admin_page.locator('[data-lifecycle-id="'+str(uid)+'"]');admin_page.once('dialog',lambda dialog:dialog.accept());row.get_by_role('button',name='Reactivate preserved account',exact=True).click()
        expect(admin_page.locator('#status')).to_contain_text('Account reactivated');self.assertEqual(patient_view.request.get('/api/dev/session').status,401)
        self.assertEqual(patient_view.request.post('/api/dev/login',data={'tenant':'synthetic','username':'patient','password':password}).status,200)
+       # Real owner submission and organization task workflow;no provider,
+       # model training,medical correction or automatic evidence verification.
+       patient_page.goto('/static/feedback.html');expect(patient_page.locator('#feedback')).to_be_visible()
+       patient_page.locator('#title').fill('<script>synthetic feedback title</script>')
+       patient_page.locator('#detail').fill('Synthetic reproducible product issue without patient records.')
+       patient_page.locator('#synthetic-ack').check();patient_page.locator('#private-ack').check();patient_page.locator('#submit-report').click()
+       expect(patient_page.locator('#status')).to_contain_text('persisted')
+       expect(patient_page.locator('#reports')).to_contain_text('<script>synthetic feedback title</script>')
+       self.assertEqual(patient_page.locator('#reports script').count(),0)
+       report_id=patient_page.locator('[data-feedback-id]').first.get_attribute('data-feedback-id')
+       admin_page.goto('/static/feedback.html');expect(admin_page.locator('#administration')).to_be_visible()
+       admin_page.locator('#requirement-search').fill('CORE-007');admin_page.locator('#search').click();expect(admin_page.locator('#requirements')).to_contain_text('CORE-007')
+       report=admin_page.locator('[data-feedback-id="'+report_id+'"]')
+       def feedback_action(kind,note):
+        report.locator('select[id^="action-"]').select_option(kind);report.locator('textarea').fill(note);report.get_by_role('button',name='Apply action to report '+report_id,exact=True).click()
+        expect(admin_page.locator('#status')).to_contain_text('Action recorded')
+        # Avoid accepting an earlier success before the new revision arrives.
+       feedback_action('triage','Private synthetic triage note');expect(report).to_contain_text('revision 2')
+       report.locator('input[id^="requirement-"]').fill('CORE-007');feedback_action('create_task','Private synthetic linked task');expect(report).to_contain_text('task_created')
+       feedback_action('start_task','Private synthetic work started');expect(report).to_contain_text('in_progress')
+       report.locator('input[id^="evidence-"]').fill('docs/RELEASE_READINESS.md');feedback_action('resolve','Private synthetic technical resolution only');expect(report).to_contain_text('resolved')
+       expect(report).to_contain_text('unverified')
+       patient_page.locator('#refresh').click();expect(patient_page.locator('#reports')).to_contain_text('resolved');expect(patient_page.locator('#reports')).not_to_contain_text('Private synthetic')
+       if os.getenv('RAPHAEL_VISUAL_OUTPUT'):
+        for name,width,height in [('desktop',1440,1000),('mobile',390,844),('enlarged',320,900)]:
+         for label,view in [('owner',patient_page),('admin',admin_page)]:
+          view.set_viewport_size({'width':width,'height':height});view.evaluate('(s)=>document.documentElement.style.fontSize=s+"px"',20 if name=='enlarged' else 16)
+          view.screenshot(path=str(output/('feedback-'+label+'-'+name+'.png')),full_page=True)
+          self.assertLessEqual(view.evaluate('document.documentElement.scrollWidth'),width+1,name+' feedback '+label)
+       admin_page.goto('/static/account.html');expect(admin_page.locator('#lifecycle-admin')).to_be_visible()
        patient_page.goto('/static/account.html');expect(patient_page.locator('#lifecycle-status')).to_contain_text('Deactivation blocks sign-in')
        patient_page.locator('#lifecycle-password').fill(password);patient_page.locator('#lifecycle-confirm').check();patient_page.locator('#lifecycle-request-erasure').check();patient_page.once('dialog',lambda dialog:dialog.accept());patient_page.locator('#lifecycle-deactivate').click();expect(patient_page.locator('#account')).to_be_hidden()
        admin_page.locator('#lifecycle-admin-refresh').click();expect(row).to_contain_text('deactivated')

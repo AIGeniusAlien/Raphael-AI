@@ -47,3 +47,9 @@ input,textarea,button { border-radius:.5rem; }
 input[type="checkbox"], input[type="radio"] { width: auto; margin-inline-end: .5rem; }
 
 #lifecycle-accounts article{border:1px solid #cbd8df;border-radius:.5rem;padding:.8rem;margin:1rem 0;overflow-wrap:anywhere}#lifecycle-admin,#lifecycle-section{min-width:0;overflow-wrap:anywhere}
+
+/* Product report text and native selects must fit enlarged narrow layouts. */
+#feedback, #feedback section, #reports article { min-width: 0; overflow-wrap: anywhere; }
+#feedback select { width: 100%; max-width: 100%; min-width: 0; font: inherit; padding: .5rem; }
+#feedback select:focus-visible { outline: 3px solid #aa5c00; outline-offset: 3px; }
+#reports article { border: 1px solid #cbd8df; border-radius: .5rem; padding: .8rem; margin: 1rem 0; }

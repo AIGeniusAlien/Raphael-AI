@@ -7,6 +7,7 @@ import json
 import os
 import re
 import secrets
+import time
 from datetime import datetime, timezone
 from typing import Literal
 from urllib.parse import urlsplit
@@ -68,6 +69,8 @@ def init_intelligence_schema(engine):
     with engine.begin() as c:
         c.exec_driver_sql('BEGIN IMMEDIATE')
         execute_sqlite_script(c, SCHEMA)
+        from generation_metrics import SCHEMA as METRICS
+        execute_sqlite_script(c, METRICS)
         from conversation_attachments import SCHEMA as ATTACHMENTS
         execute_sqlite_script(c, ATTACHMENTS)
         columns = {r[1] for r in c.exec_driver_sql('PRAGMA table_info(dev_active_notes)')}
@@ -132,7 +135,7 @@ class Version(Input):
     expected_version: int = Field(gt=0)
 
 
-def openai_tokens(messages, model):
+def openai_tokens(messages, model, usage_callback=None):
     """Actual provider SSE via SDK. Never yields manufactured runtime tokens."""
     from openai import OpenAI
     base, key = os.getenv('LLM_BASE_URL', ''), os.getenv('LLM_API_KEY', '')
@@ -144,8 +147,11 @@ def openai_tokens(messages, model):
     if (destination.scheme != 'https' and not local_fixture) or not destination.hostname or destination.username or destination.password or destination.query or destination.fragment:
         raise RuntimeError('Provider requires HTTPS; loopback HTTP needs an explicit development opt-in.')
     with OpenAI(base_url=base, api_key=key, timeout=30, max_retries=0) as client:
-        with client.chat.completions.create(model=model, messages=messages, stream=True, max_completion_tokens=2000) as stream:
+        with client.chat.completions.create(model=model, messages=messages, stream=True, stream_options={"include_usage":True}, max_completion_tokens=2000) as stream:
             for event in stream:
+                if usage_callback is not None and event.usage is not None:
+                    from generation_metrics import usage_values
+                    usage_callback(usage_values(event.usage))
                 if event.choices and event.choices[0].delta.content:
                     yield event.choices[0].delta.content
 
@@ -225,6 +231,21 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             ctx.audit(c,user,'review_own_workflow_checks','intelligence')
         return {'window_limit':200,'window_truncated':len(rows)>200,'accessible_generations':included,'outcomes':counts,'claim_screens':screens,'checker_tokens':tokens,'checker_usage_reports':usage_reports,'clinical_validation':False,'scope':'Your currently authorized conversations only;no patient identifiers,text or external telemetry. Checker usage excludes generation/embedding usage and is not a complete cost estimate. Protocol outcomes are not clinical accuracy.'}
 
+    @router.get('/performance')
+    def performance(user=Depends(ctx.clinician)):
+        from generation_metrics import summary
+        with engine.begin() as c:
+            rows=c.execute(text("SELECT m.thread_id,p.* FROM dev_ai_messages m JOIN dev_ai_threads t ON t.id=m.thread_id JOIN dev_ai_generation_metrics p ON p.generation_id=m.generation_id WHERE t.tenant=:t AND t.owner_id=:u AND m.role='assistant' ORDER BY m.id DESC LIMIT 201"),{'t':user['tenant'],'u':user['id']}).mappings().all()
+            allowed=[]
+            for row in rows[:200]:
+                try:
+                    thread_for(c,row['thread_id'],user)
+                    attachment_store.history_access(c,thread_for(c,row['thread_id'],user),user)
+                except HTTPException:continue
+                allowed.append({key:value for key,value in row.items() if key not in ('thread_id','generation_id')})
+            ctx.audit(c,user,'review_own_performance','intelligence')
+        return {**summary(allowed),'window_truncated':len(rows)>200,'clinical_validation':False}
+
     @router.get('/threads')
     def threads(q: str = '', user=Depends(ctx.clinician)):
         if len(q) > 200:
@@ -277,6 +298,8 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
         from dev_knowledge import search_evidence
         from dev_account import session_active
         from clinical_population import from_dob
+        measurement_started=time.perf_counter()
+        measurements={}
         generation = secrets.token_urlsafe(24)
         model = os.getenv('LLM_MODEL', 'gpt-4o-mini')
         with engine.begin() as c:
@@ -316,6 +339,7 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                 context={**(context if isinstance(context,dict) else {'chart_context':context}),'conversation_attachments':[{k:v for k,v in item.items() if k!='text'} for item in attachment_context]}
                 provider_context_value={**context,'conversation_attachments':attachment_context}
             c.execute(text('INSERT INTO dev_ai_context_snapshots(generation_id,snapshot) VALUES (:g,:v)'),{'g':generation,'v':json.dumps(context)})
+        retrieval_started=time.perf_counter()
         try:
             if os.getenv('RAPHAEL_STREAM_EVIDENCE_BACKEND','sqlite') == 'qdrant':
                 from curated_evidence import search
@@ -327,8 +351,10 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
         except Exception:
             with engine.begin() as c:
                 c.execute(text("UPDATE dev_ai_messages SET status='failed' WHERE generation_id=:g"), {'g': generation})
+                c.execute(text('INSERT OR REPLACE INTO dev_ai_generation_metrics(generation_id,retrieval_ms,total_ms) VALUES(:g,:retrieval,:total)'),{'g':generation,'retrieval':(time.perf_counter()-retrieval_started)*1000,'total':(time.perf_counter()-measurement_started)*1000})
                 ctx.audit(c, user, 'ai_retrieval_failed', 'ai_thread', identifier)
             raise HTTPException(503, 'Reviewed evidence retrieval is unavailable. No provider request was made.')
+        measurements['retrieval_ms']=(time.perf_counter()-retrieval_started)*1000
         aliases={}
         model_evidence=evidence
         if os.getenv('RAPHAEL_STREAM_EVIDENCE_BACKEND')=='qdrant':
@@ -347,6 +373,7 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             content, status = '', 'failed'
             phase,failure_code='provider_stream',None
             source = None
+            provider_started=None
             def event(kind, value):
                 return 'event: ' + kind + '\ndata: ' + json.dumps(value) + '\n\n'
             try:
@@ -363,7 +390,8 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                     attachment_store.history_access(c,current_thread,user)
                     if not session_active(c,request,user):
                         raise HTTPException(403, 'Account is inactive.')
-                source = iter((token_provider or openai_tokens)(messages, model))
+                provider_started=time.perf_counter()
+                source = iter(token_provider(messages,model) if token_provider else openai_tokens(messages,model,usage_callback=measurements.update))
                 for delta in source:
                     with engine.connect() as c:
                         active = c.execute(text('SELECT status FROM dev_ai_messages WHERE generation_id=:g'), {'g': generation}).scalar()
@@ -384,8 +412,10 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                         return
                     if not isinstance(delta, str) or len(content) + len(delta) > 50000:
                         raise ValueError('Invalid provider output')
+                    if delta and 'first_delta_ms' not in measurements:measurements['first_delta_ms']=(time.perf_counter()-provider_started)*1000
                     content += delta
                     yield event('delta', {'text': delta})
+                measurements['provider_ms']=(time.perf_counter()-provider_started)*1000
                 phase='provider_cleanup'
                 if source is not None and hasattr(source,'close'):
                     source.close()
@@ -440,6 +470,9 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                         status = 'failed'
                 with engine.begin() as c:
                     c.execute(text("UPDATE dev_ai_messages SET content=:v,failure_code=:error,status=CASE WHEN status='cancelled' THEN 'cancelled' ELSE :s END WHERE generation_id=:g AND status IN ('streaming','cancelled')"), {'v': content, 's': status, 'g': generation,'error':failure_code})
+                    measurements['total_ms']=(time.perf_counter()-measurement_started)*1000
+                    if provider_started is not None and 'provider_ms' not in measurements:measurements['provider_ms']=(time.perf_counter()-provider_started)*1000
+                    c.execute(text('INSERT OR REPLACE INTO dev_ai_generation_metrics(generation_id,retrieval_ms,total_ms,first_delta_ms,provider_ms,prompt_tokens,completion_tokens,total_tokens) VALUES(:g,:retrieval_ms,:total_ms,:first_delta_ms,:provider_ms,:prompt_tokens,:completion_tokens,:total_tokens)'),{'g':generation,**{key:measurements.get(key) for key in ('retrieval_ms','total_ms','first_delta_ms','provider_ms','prompt_tokens','completion_tokens','total_tokens')}})
                     ctx.audit(c, user, 'ai_generation_' + status, 'ai_thread', identifier)
         return StreamingResponse(events(), media_type='text/event-stream', headers={'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no'})
 

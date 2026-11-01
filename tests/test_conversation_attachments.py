@@ -30,6 +30,18 @@ class ConversationAttachmentTests(unittest.TestCase):
     def ready(self,body=None):
         r=self.upload(body);self.assertEqual(r.status_code,200,r.text);item=r.json();r=self.review(item);self.assertEqual(r.status_code,200,r.text);return item
 
+    def test_session_revoked_while_upload_is_read_cannot_persist_attachment(self):
+        from starlette.datastructures import UploadFile
+        original=UploadFile.read
+        async def revoked_read(upload,*args,**kwargs):
+            data=await original(upload,*args,**kwargs)
+            with self.engine.begin() as c:c.execute(text('DELETE FROM dev_sessions'))
+            return data
+        with patch.object(UploadFile,'read',revoked_read):
+            self.assertEqual(self.upload().status_code,401)
+        with self.engine.connect() as c:
+            self.assertEqual(c.execute(text('SELECT count(*) FROM dev_conversation_attachments')).scalar(),0)
+
     def test_encrypted_quarantine_repeat_safe_migration_and_missing_or_wrong_key(self):
         raw=self.content();first=self.upload();self.assertEqual(first.status_code,200,first.text);item=first.json();self.assertEqual(item['state'],'quarantined')
         self.assertEqual(self.upload().json()['id'],item['id']);init_intelligence_schema(self.engine)

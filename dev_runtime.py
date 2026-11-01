@@ -27,6 +27,7 @@ COMPONENTS = (
     ("conversation_attachments", "conversation_attachments", "init_attachment_schema"),
     ("account", "dev_account", "init_account_schema"),
     ("account_lifecycle", "account_lifecycle", "init_lifecycle_schema"),
+    ("product_feedback", "dev_feedback", "init_feedback_schema"),
     ("patient_ai", "dev_patient_ai", "init_patient_ai_schema"),
 )
 

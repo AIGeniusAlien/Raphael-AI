@@ -827,6 +827,8 @@ if DEV_PORTAL:
     from dev_account import install_account
     install_patient_ai(app,portal_context)
     install_account(app,portal_context,patient_ai_exporter=export_patient_ai)
+    from dev_feedback import install_feedback
+    install_feedback(app,portal_context)
 
     @app.get("/api/dev/status")
     def portal_status(user=Depends(portal_context.user)):

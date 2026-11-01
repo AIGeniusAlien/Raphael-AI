@@ -95,6 +95,10 @@ def run(output):
                             assert not errors
                             page.screenshot(path=str(output.with_suffix('.png')),full_page=False)
                             result.update(physician_status=message['status'],claim_screen=message.get('claim_screen'),question=question,response=message['content'],generation_id=message['generation_id'],model=message['model'],citation_ids=ids,retrieved_evidence=message['evidence'],browser_page_errors=errors,clinician_approved=False)
+                            measured=context.request.get('/api/dev/intelligence/performance');assert measured.status==200
+                            result['physician_generation_metrics']=measured.json()
+                            assert result['physician_generation_metrics']['generation_usage_reports']==1
+                            assert result['physician_generation_metrics']['generation_tokens']>0
                             stage='patient_live_conversation'
                             patient_context=browser.new_context(base_url=base,viewport={'width':390,'height':844})
                             patient_context.request.post('/api/dev/login',data={'tenant':'live-synthetic','username':'live-patient','password':password})
@@ -140,6 +144,9 @@ def run(output):
         stage='live_missing_evidence_check'
         missing=search('violet gyroscopic calibrator xylophone')
         assert not missing
+        from curated_evidence import coverage_status
+        coverage=coverage_status()
+        result['read_only_inventory']={key:coverage[key] for key in ('collection','embedding_model','dimensions','active_documents','active_vectors','unrecognized_active_vectors')}
         result.update(status='passed' if completed_supported_workflows(result) else 'blocked',original_source_hash_and_excerpt_checks=True,live_missing_evidence_results=0,collection=collection(),embedding_model=MODEL,actual_dimensions=DIMENSIONS)
     except Exception as error:result.update(failed_stage=stage,error_type=type(error).__name__,http_status=getattr(error,'status_code',None))
     output.write_text(json.dumps(result,indent=2)+'\n')

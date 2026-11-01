@@ -13,4 +13,4 @@ build_settings=()
 if [[ "${RAPHAEL_AUTHENTICATED_CI:-}" == "1" ]]; then
   build_settings+=(RAPHAEL_SERVER_URL=https://raphael-ci.test RAPHAEL_SERVER_HOST=raphael-ci.test)
 fi
-xcodebuild -project "$mobile_root/ios/Raphael.xcodeproj" -scheme Raphael -configuration Debug -sdk iphonesimulator -destination "$RAPHAEL_SIMULATOR_DESTINATION" -derivedDataPath "$mobile_root/artifacts/DerivedData" -resultBundlePath "$result_dir/NativeTests.xcresult" CODE_SIGNING_ALLOWED=NO "${build_settings[@]}" test
+xcodebuild -project "$mobile_root/ios/Raphael.xcodeproj" -scheme Raphael -configuration Debug -sdk iphonesimulator -destination "$RAPHAEL_SIMULATOR_DESTINATION" -derivedDataPath "$mobile_root/artifacts/DerivedData" -resultBundlePath "$result_dir/NativeTests.xcresult" CODE_SIGNING_ALLOWED=NO "${build_settings[@]}" -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 300 test

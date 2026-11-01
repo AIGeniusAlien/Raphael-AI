@@ -24,3 +24,15 @@ class NativeLogRedactionTests(unittest.TestCase):
             Path(folder,'password').write_text('SYNTHETIC-PASSWORD-FOR-REDACTION')
             result=subprocess.run([sys.executable,str(script)],cwd=folder,env={'RAPHAEL_NATIVE_CI_PRIVATE':folder},input='PRIVATE-INPUT',text=True,capture_output=True)
             self.assertNotEqual(result.returncode,0);self.assertNotIn('PRIVATE-INPUT',result.stdout+result.stderr)
+
+    def test_timeout_progress_preserves_last_case_and_redacts_bounded_annotation(self):
+        script=Path(__file__).resolve().parents[1]/'.github/scripts/redact_native_log.py'
+        with tempfile.TemporaryDirectory() as folder:
+            private=Path(folder);secret='SYNTHETIC-NATIVE-PROGRESS-SECRET'
+            (private/'password').write_text(secret);(private/'redactions.json').write_text(json.dumps([secret]))
+            (private/'native-build.log').write_text('Older output\n'*10000+"Test Case '-[SyntheticTests testAwaitingActualUI]' started.\n"+(' t = 12.3s Wait '+secret+' 100%\n')*30)
+            result=subprocess.run([sys.executable,str(script),'--progress'],cwd=folder,env={'RAPHAEL_NATIVE_CI_PRIVATE':folder},text=True,capture_output=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stderr);self.assertNotIn(secret,result.stdout+result.stderr)
+            self.assertIn('testAwaitingActualUI',result.stdout);self.assertIn('%0A',result.stdout);self.assertIn('%25',result.stdout)
+            self.assertLessEqual(len(result.stdout.strip().split('::',2)[2]),4096)
+            self.assertIn(secret,(private/'native-build.log').read_text()) # no mutation of the preserved input

@@ -63,7 +63,7 @@ jobs:
           retention-days: 14
   ios-simulator:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -94,6 +94,7 @@ jobs:
           command -v socat >/dev/null || brew install socat
           python3 mobile/scripts/authenticated_ci.py 2>&1 | tee native-setup.log
       - name: Compile and test native app
+        timeout-minutes: 25
         run: |
           set -o pipefail
           bash mobile/scripts/native_checks.sh 2>&1 | python3 .github/scripts/redact_native_log.py
@@ -107,8 +108,9 @@ jobs:
         if: always()
         run: python3 .github/scripts/native_screenshots.py
       - name: Publish native failure diagnostics
-        if: failure()
+        if: failure() || cancelled()
         run: |
+          if [ -f native-build.log ]; then python3 .github/scripts/redact_native_log.py --progress; fi
           python3 .github/scripts/publish_diagnostics.py native-setup.log
           if [ -f native-backend-startup.log ]; then python3 .github/scripts/publish_diagnostics.py native-backend-startup.log; fi
           python3 .github/scripts/publish_diagnostics.py native-build.log --native-crashes

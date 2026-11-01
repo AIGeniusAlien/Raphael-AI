@@ -11,11 +11,17 @@ import venv
 
 ROOT=Path(__file__).resolve().parent
 
-def runtime_environment(database,live=False):
+def runtime_environment(database,live=False,document_key_file=None,mfa_key_file=None):
     from dev_verify import isolated_environment
     env=dict(os.environ) if live else isolated_environment()
-    if os.environ.get('RAPHAEL_MFA_ENCRYPTION_KEY'):
-        env['RAPHAEL_MFA_ENCRYPTION_KEY']=os.environ['RAPHAEL_MFA_ENCRYPTION_KEY']
+    for binding in ('RAPHAEL_MFA_ENCRYPTION_KEY','RAPHAEL_DOCUMENT_ENCRYPTION_KEY'):
+        if os.environ.get(binding):env[binding]=os.environ[binding]
+    from dev_keys import load_key_file
+    for binding,path in (('RAPHAEL_DOCUMENT_ENCRYPTION_KEY',document_key_file),('RAPHAEL_MFA_ENCRYPTION_KEY',mfa_key_file)):
+        if path is not None:
+            if env.get(binding):raise ValueError('Choose one key source per service:protected file or environment binding.')
+            env[binding]=load_key_file(path)
+    if env.get('RAPHAEL_DOCUMENT_ENCRYPTION_KEY') and env.get('RAPHAEL_DOCUMENT_ENCRYPTION_KEY')==env.get('RAPHAEL_MFA_ENCRYPTION_KEY'):raise ValueError('Use distinct document and MFA keys.')
     env.update(DATABASE_URL=database,RAPHAEL_DEV_PORTAL='1',RAPHAEL_DEV_SYNTHETIC_ONLY='1')
     if live:env.update(RAPHAEL_EMBEDDING_BACKEND='openai',RAPHAEL_STREAM_EVIDENCE_BACKEND='qdrant',RAPHAEL_VERIFY_CLAIMS='1',EMBED_DIM='384')
     return env
@@ -26,7 +32,7 @@ def runtime_requirements():
     return '\n'.join(line for line in (ROOT/'requirements.txt').read_text().splitlines() if not line.startswith(excluded))+'\n'
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--setup',action='store_true');p.add_argument('--without-local-ml',action='store_true',help='Install the hosted/disabled-AI runtime without optional Torch/transformers;automatic on Intel macOS.');p.add_argument('--provision',action='store_true');p.add_argument('--live-services',action='store_true');p.add_argument('--database',type=Path);p.add_argument('--port',type=int,default=8000);args=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--setup',action='store_true');p.add_argument('--without-local-ml',action='store_true',help='Install the hosted/disabled-AI runtime without optional Torch/transformers;automatic on Intel macOS.');p.add_argument('--provision',action='store_true');p.add_argument('--live-services',action='store_true');p.add_argument('--database',type=Path);p.add_argument('--port',type=int,default=8000);p.add_argument('--document-key-file',type=Path);p.add_argument('--mfa-key-file',type=Path);args=p.parse_args()
     if not 1<=args.port<=65535:p.error('Port must be1to65535.')
     if sys.version_info[:2]!=(3,12):p.error('Use Python3.12 for the tested dependency set.')
     if args.setup:
@@ -49,7 +55,9 @@ def main():
     if importlib.util.find_spec('sqlalchemy') is None:p.error('Dependencies missing.Run python -m dev_start --setup --provision.')
     database=args.database.resolve() if args.database else Path(tempfile.mkdtemp(prefix='raphael-synthetic-'))/'portal.db'
     database.parent.mkdir(parents=True,exist_ok=True)
-    url='sqlite:///'+database.as_posix();env=runtime_environment(url,args.live_services)
+    url='sqlite:///'+database.as_posix()
+    try:env=runtime_environment(url,args.live_services,args.document_key_file,args.mfa_key_file)
+    except (ValueError,OSError):p.error('Protected key configuration refused. Use distinct owner-only keys and exactly one source per service;no key values were disclosed.')
     if args.live_services and not all(env.get(k) for k in ('LLM_API_KEY','LLM_BASE_URL','LLM_MODEL','QDRANT_URL','QDRANT_API_KEY')):p.error('Live mode requires all five secure provider bindings;none are supplied by this launcher.')
     subprocess.run([sys.executable,'-m','dev_runtime','migrate','--database-url',url],cwd=ROOT,env=env,check=True)
     if args.provision:

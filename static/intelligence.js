@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const state = {thread: null, session: null, version: 0, dirty: false, generation: null, controller: null, lastPrompt: '', busy: false, epoch: 0};
+  const state = {thread: null, session: null, version: 0, dirty: false, generation: null, controller: null, lastPrompt: '', busy: false, epoch: 0, attachmentItems:[], attachmentPreview:null, attachmentSelected:new Set(), attachmentEncryption:false};
   const node = (tag, value) => { const n = document.createElement(tag); n.textContent = value; return n; };
   const status = message => { $('status').textContent = message; };
   async function api(path, body, method='POST') {
@@ -35,16 +35,61 @@
   }
   function capturedFields(){const fields={};for(const name of documentationFormats[$('format').value]||[]){const value=$('document-field-'+name)?.value.trim();if(value)fields[name]={text:value,chart_entry_ids:[],transcript_segment_ids:[]};}return fields;}
   async function loadThreads() { const rows=await api('/intelligence/threads?q='+encodeURIComponent($('search').value));$('threads').replaceChildren();for(const t of rows){const b=node('button',t.title);b.onclick=()=>action(()=>selectThread(t.id));$('threads').append(b);} }
+  function renderConversation(thread) {
+    $('messages').replaceChildren();$('evidence').replaceChildren();
+    for(const m of thread.messages){entry(m.role,m.content,m.status);if(m.patient_context && m.role==='assistant'){const details=node('details'),summary=node('summary','Inspect prepared patient context for response '+m.id),body=node('pre',JSON.stringify(m.patient_context,null,2));details.append(summary,node('p','Authorized preparation snapshot,not independently verified findings or proof of transmission. Omitted facts are unknown,not negative findings.'),body);$('messages').append(details);}if(m.evidence?.length){const inspect=node('button','Inspect evidence for response '+m.id);inspect.onclick=()=>renderEvidence(m.evidence);$('messages').append(inspect);}}
+    const latestEvidence=[...thread.messages].reverse().find(m=>m.evidence?.length);
+    if(latestEvidence)renderEvidence(latestEvidence.evidence);const latestScreen=[...thread.messages].reverse().find(m=>m.claim_screen);if(latestScreen)status('Stored automated claim-support screen: '+latestScreen.claim_screen.status+'. Clinician review still required.');
+  }
+  function attachmentPath(){if(!state.thread)throw new Error('Select a patient conversation.');return '/intelligence/threads/'+state.thread.id+'/attachments';}
+  function attachmentIdle(){if(state.busy)throw new Error('Stop or finish generation before changing attachments.');}
+  function renderAttachmentItems(){
+    $('attachment-list').replaceChildren();
+    for(const item of state.attachmentItems){
+      const box=node('article','');box.dataset.attachmentId=item.id;box.append(node('strong',item.title),node('p','Status: '+item.state));
+      if(item.state!=='unavailable'){
+        const preview=node('button','Preview reported text');preview.type='button';preview.onclick=()=>action(async()=>{
+          attachmentIdle();const id=state.thread.id,epoch=state.epoch;
+          const value=await api(attachmentPath()+'/'+item.id+'/preview');if(epoch!==state.epoch||id!==state.thread?.id)return;
+          state.attachmentPreview=value;$('attachment-preview').replaceChildren(node('h3','Private reported attachment '+value.id),node('p','Source SHA-256: '+value.sha256),node('p',value.notice),node('pre',value.text));renderAttachmentItems();
+        });box.append(preview);
+        if(item.state==='quarantined'){
+          const review=node('button','Authorize reviewed text for provider use');review.type='button';review.disabled=state.attachmentPreview?.id!==item.id||!state.attachmentPreview?.reviewable;
+          review.onclick=()=>action(async()=>{attachmentIdle();if(!confirm('Authorize this exact reviewed text for the configured development provider? It is unverified reported data,not clinical evidence.'))return;await api(attachmentPath()+'/'+item.id+'/review',{sha256:item.sha256,authorize_provider_use:true});await loadAttachments();status('Attachment reviewed. Select it and explicitly authorize each provider request.');});box.append(review);
+        }
+        if(item.state==='reviewed'){
+          const label=node('label','Use '+item.title+' as reported context'),check=document.createElement('input');check.type='checkbox';check.value=item.id;check.checked=state.attachmentSelected.has(item.id);
+          check.onchange=()=>action(()=>{if(state.busy){check.checked=state.attachmentSelected.has(item.id);throw new Error('Finish generation before changing context.');}if(check.checked&&state.attachmentSelected.size>=2){check.checked=false;throw new Error('Select at most two attachments.');}if(check.checked)state.attachmentSelected.add(item.id);else state.attachmentSelected.delete(item.id);});label.prepend(check);box.append(label);
+        }
+      }
+      const remove=node('button','Delete attachment payload');remove.type='button';remove.onclick=()=>action(async()=>{
+        attachmentIdle();if(!confirm('Delete this attachment payload? Prior derived drafts will be withheld and reuse blocked. Original chart records and audit history remain. Copies already disclosed cannot be recalled.'))return;
+        const id=state.thread.id,epoch=state.epoch;await api(attachmentPath()+'/'+item.id+'/delete',{confirm:true});if(epoch!==state.epoch||id!==state.thread?.id)return;
+        const thread=await api('/intelligence/threads/'+id);if(epoch!==state.epoch)return;state.thread=thread;renderConversation(thread);await loadAttachments();status('Attachment payload deleted logically. This is not original-chart or account erasure. Start a new conversation if prior context is no longer authorized.');
+      });box.append(remove);$('attachment-list').append(box);
+    }
+  }
+  async function loadAttachments(){
+    state.attachmentSelected.clear();state.attachmentPreview=null;$('attachment-ai-consent').checked=false;$('attachment-preview').replaceChildren();
+    const thread=state.thread,epoch=state.epoch;const eligible=thread?.patient_id&&!thread?.intake_id;$('attachments-section').hidden=!eligible;
+    if(!eligible){state.attachmentItems=[];$('attachment-list').replaceChildren();return;}
+    const result=await api(attachmentPath());if(epoch!==state.epoch||thread.id!==state.thread?.id)return;
+    state.attachmentItems=result.items;state.attachmentEncryption=result.encryption_available;
+    $('attachment-header').textContent='RAPHAEL_SYNTHETIC_PATIENT_ID: '+thread.patient_id;
+    $('attachment-limits').textContent=result.encryption_available?result.scope:'Protected attachment storage unavailable. Ask the operator to configure its document encryption key. Existing records have not been overwritten.';
+    $('attachment-upload-button').disabled=!result.encryption_available;$('attachment-import').disabled=!result.encryption_available;renderAttachmentItems();
+    const documents=await api('/patients/'+thread.patient_id+'/documents');if(epoch!==state.epoch)return;
+    $('attachment-document').replaceChildren(node('option','Select authorized text document'));$('attachment-document').firstChild.value='';
+    for(const source of documents.filter(v=>v.file_type==='txt')){const option=node('option',source.title);option.value=source.id;$('attachment-document').append(option);}
+  }
   async function selectThread(id) {
     if(state.busy)throw new Error('Stop generation before changing conversations.');
-    voice.stop();state.epoch++;state.session=null;state.version=0;state.dirty=false;$('note').value='';$('transcript').textContent='';$('audit').replaceChildren();$('versions').replaceChildren();$('note-status').textContent='';$('session-id').value='';$('consent').checked=false;state.structuredDirty=false;documentFields();
+    voice.stop();state.epoch++;state.attachmentSelected.clear();state.attachmentPreview=null;$('attachments-section').hidden=true;$('attachment-preview').replaceChildren();$('attachment-ai-consent').checked=false;state.session=null;state.version=0;state.dirty=false;$('note').value='';$('transcript').textContent='';$('audit').replaceChildren();$('versions').replaceChildren();$('note-status').textContent='';$('session-id').value='';$('consent').checked=false;state.structuredDirty=false;documentFields();
     const epoch=state.epoch;
     const thread=await api('/intelligence/threads/'+id);
     if(epoch!==state.epoch)return;
     state.thread=thread;$('thread-scope').textContent=thread.intake_id?'Uses only the authorized intake snapshot. No live chart is included; expired or revoked consent denies future access.':thread.patient_id?'A selected authorized chart snapshot is prepared. Omitted facts remain unknown; inspect saved context.':'General research conversation; no patient chart is included.';$('thread-title').textContent=state.thread.title;$('patient').value=state.thread.patient_id||'';$('patient').disabled=true;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();
-    for(const m of state.thread.messages){entry(m.role,m.content,m.status);if(m.patient_context && m.role==='assistant'){const details=node('details'),summary=node('summary','Inspect prepared patient context for response '+m.id),body=node('pre',JSON.stringify(m.patient_context,null,2));details.append(summary,node('p','Authorized preparation snapshot,not independently verified findings or proof of transmission. Omitted facts are unknown,not negative findings.'),body);$('messages').append(details);}if(m.evidence?.length){const inspect=node('button','Inspect evidence for response '+m.id);inspect.onclick=()=>renderEvidence(m.evidence);$('messages').append(inspect);}}
-    const latestEvidence=[...state.thread.messages].reverse().find(m=>m.evidence?.length);
-    if(latestEvidence)renderEvidence(latestEvidence.evidence);const latestScreen=[...state.thread.messages].reverse().find(m=>m.claim_screen);if(latestScreen)status('Stored automated claim-support screen: '+latestScreen.claim_screen.status+'. Clinician review still required.');
+    renderConversation(thread);
     $('intake-return').hidden=!thread.intake_id;
     $('intake-return').href=thread.intake_id?'/static/care.html?intake='+thread.intake_id+'&thread='+thread.id:'/static/care.html';
     const interrupted = state.thread.messages.find(m=>m.status==='streaming');
@@ -53,7 +98,7 @@
     if(interrupted)status('A previous generation is unfinished. Stop it to recover this conversation.');
     $('export').disabled=false;$('retry').disabled=!state.thread.messages.some(m=>m.role==='user');
     state.lastPrompt=[...state.thread.messages].reverse().find(m=>m.role==='user')?.content||'';
-    await encounters();if(thread.intake_id)$('thread-title').textContent=thread.title+' · consented snapshot only';
+    await encounters();await loadAttachments();if(thread.intake_id)$('thread-title').textContent=thread.title+' · consented snapshot only';
   }
   async function encounters() {
     $('encounter').replaceChildren();const id=$('patient').value;$('chart-link').href=id?'/static/chart.html?patient_id='+encodeURIComponent(id):'/';
@@ -62,10 +107,13 @@
   }
   async function send(prompt) {
     if(!state.thread)throw new Error('Create or select a conversation.');if(state.busy)throw new Error('A generation is already running.');if(!prompt.trim())return;
+    const selected=[...state.attachmentSelected],authorized=$('attachment-ai-consent').checked;
+    if((selected.length||state.thread.requires_attachment_authorization)&&!authorized)throw new Error('Authorize selected text and attachment-derived history for this question before sending.');
     state.lastPrompt=prompt;state.busy=true;state.generation=null;state.controller=new AbortController();$('cancel').disabled=false;$('send').disabled=true;$('retry').disabled=true;entry('user',prompt);const output=entry('Raphael','Provisional stream — awaiting clinician review.');let full='';
     try {
-      const response=await fetch('/api/dev/intelligence/threads/'+state.thread.id+'/stream',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:prompt}),signal:state.controller.signal});
+      const response=await fetch('/api/dev/intelligence/threads/'+state.thread.id+'/stream',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:prompt,attachment_ids:selected,allow_attachment_ai:authorized}),signal:state.controller.signal});
       if(!response.ok){const error=await response.json();throw new Error(error.detail||'Provider request failed.');}
+      if(selected.length)state.thread.requires_attachment_authorization=true;
       const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
       for(;;){const {done,value}=await reader.read();buffer+=decoder.decode(value||new Uint8Array(),{stream:!done});buffer=buffer.replaceAll('\r\n','\n');let boundary;
         while((boundary=buffer.indexOf('\n\n'))>=0){const frame=buffer.slice(0,boundary);buffer=buffer.slice(boundary+2);const type=frame.split('\n').find(l=>l.startsWith('event: '))?.slice(7);const payload=frame.split('\n').filter(l=>l.startsWith('data: ')).map(l=>l.slice(6)).join('\n');if(!payload)continue;const data=JSON.parse(payload);
@@ -80,7 +128,7 @@
           if(type==='cancelled')status('Generation cancelled.');
         }if(done)break;
       }
-    }catch(error){if(!state.controller?.signal.aborted)throw error;status('Generation stopped.');}finally{state.busy=false;state.generation=null;state.controller=null;$('cancel').disabled=true;$('send').disabled=false;$('retry').disabled=false;}
+    }catch(error){if(!state.controller?.signal.aborted)throw error;status('Generation stopped.');}finally{$('attachment-ai-consent').checked=false;state.busy=false;state.generation=null;state.controller=null;$('cancel').disabled=true;$('send').disabled=false;$('retry').disabled=false;}
   }
   async function cancel(){voice.stop();try{if(state.generation)await api('/intelligence/generations/'+encodeURIComponent(state.generation)+'/cancel',{});}finally{state.controller?.abort();state.busy=false;state.generation=null;$('cancel').disabled=true;$('send').disabled=false;status('Generation stopped.');} }
   async function loadSession(){if(!state.session)throw new Error('Start or resume a documentation session.');const session=state.session,epoch=state.epoch;const s=await api('/intelligence/sessions/'+session);if(session!==state.session||epoch!==state.epoch)return null;$('transcript').textContent=s.segments.map(v=>v.origin+': '+v.content).join('\n');$('consent').checked=!!s.consent;const latest=s.notes.at(-1);state.version=latest?.version||0;if(!state.dirty){$('note').value=latest?.content||'';if(latest)$('format').value=latest.format;if(!state.structuredDirty){documentFields();const fields=latest?.source_snapshot?JSON.parse(latest.source_snapshot).clinician_fields||{}:{};for(const [key,field] of Object.entries(fields)){const input=$('document-field-'+key);if(input)input.value=field.text;}}}$('note-status').textContent=latest?'Version '+latest.version+' · '+latest.status:'';$('versions').replaceChildren();for(const v of s.notes){const b=node('button','View version '+v.version+' · '+v.status);b.onclick=()=>{status('Historical note: '+v.content);};$('versions').append(b);}const audit=await api('/intelligence/sessions/'+session+'/audit');if(session!==state.session||epoch!==state.epoch)return null;$('audit').replaceChildren(...audit.map(e=>node('p',e.created_at+' · '+e.event)));return s;}
@@ -94,10 +142,18 @@
     $('intelligence').hidden=false;await loadThreads();await encounters();const linked=new URLSearchParams(location.search).get('thread');if(linked&&/^\d+$/.test(linked))await selectThread(Number(linked));$('voice-status').textContent=voice.supported()?'Microphone off. Recognition available; explicit permission required.':'Speech recognition unavailable. Manual synthetic transcript entry supported.';
   }
   $('format').onchange=()=>{state.structuredDirty=false;documentFields();};
-  $('assessment').onclick=()=>action(async()=>{if(!state.thread||state.busy)throw new Error('Select a conversation and finish generation first.');const epoch=state.epoch;const output=await api('/intelligence/threads/'+state.thread.id+'/assessment',{content:$('prompt').value});if(epoch!==state.epoch)return;const holder=$('structured-assessment');holder.replaceChildren(node('p','Structured clinician draft — requires review.'));for(const [key,value] of Object.entries(output)){holder.append(node('h3',key.replaceAll('_',' ')),node('pre',typeof value==='string'?value:JSON.stringify(value,null,2)));}status('Structured assessment saved. No note was approved and no message was sent.');});
-  $('new-draft').onclick=()=>action(async()=>{if(state.busy)throw new Error('Stop generation before starting a new conversation.');voice.stop();state.epoch++;state.thread=null;$('intake-return').hidden=true;state.session=null;state.version=0;state.dirty=false;$('patient').disabled=false;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();$('note').value='';$('transcript').textContent='';$('audit').replaceChildren();$('versions').replaceChildren();$('consent').checked=false;$('session-id').value='';$('note-status').textContent='';$('thread-title').textContent='New conversation';state.structuredDirty=false;documentFields();$('export').disabled=true;$('retry').disabled=true;await encounters();});
+  $('assessment').onclick=()=>action(async()=>{if(state.attachmentSelected.size||state.thread?.requires_attachment_authorization)throw new Error('Attachment-derived context requires the reviewed streaming workflow. Start a clean thread for structured assessment.');if(!state.thread||state.busy)throw new Error('Select a conversation and finish generation first.');const epoch=state.epoch;const output=await api('/intelligence/threads/'+state.thread.id+'/assessment',{content:$('prompt').value});if(epoch!==state.epoch)return;const holder=$('structured-assessment');holder.replaceChildren(node('p','Structured clinician draft — requires review.'));for(const [key,value] of Object.entries(output)){holder.append(node('h3',key.replaceAll('_',' ')),node('pre',typeof value==='string'?value:JSON.stringify(value,null,2)));}status('Structured assessment saved. No note was approved and no message was sent.');});
+  $('new-draft').onclick=()=>action(async()=>{if(state.busy)throw new Error('Stop generation before starting a new conversation.');voice.stop();state.epoch++;state.thread=null;state.attachmentSelected.clear();state.attachmentItems=[];state.attachmentPreview=null;$('attachment-preview').replaceChildren();$('attachment-list').replaceChildren();$('attachments-section').hidden=true;$('attachment-ai-consent').checked=false;$('intake-return').hidden=true;state.session=null;state.version=0;state.dirty=false;$('patient').disabled=false;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();$('note').value='';$('transcript').textContent='';$('audit').replaceChildren();$('versions').replaceChildren();$('consent').checked=false;$('session-id').value='';$('note-status').textContent='';$('thread-title').textContent='New conversation';state.structuredDirty=false;documentFields();$('export').disabled=true;$('retry').disabled=true;await encounters();});
   $('coverage-refresh').onclick=()=>action(async()=>{const r=await api('/intelligence/coverage');const holder=$('coverage-map');holder.replaceChildren(node('p',r.supported_use));if(!r.index_checked)return;holder.append(node('p',`${r.active_documents} active documents · ${r.active_vectors} vectors. ${r.freshness}`));for(const source of r.sources){const item=node('p',`${source.domain.replaceAll('_',' ')} · ${source.population} · ${source.indexed_documents} documents. ${source.scope_note}`),a=node('a','Open original source');a.href=source.url;a.target='_blank';a.rel='noopener noreferrer';holder.append(item,a);}holder.append(node('p','Not validated: '+r.not_validated.join('; ')));});
   $('workflow-refresh').onclick=()=>action(async()=>{const r=await api('/intelligence/workflow-checks');$('workflow-checks').textContent=`${r.accessible_generations} accessible generations: ${r.outcomes.complete} complete, ${r.outcomes.blocked} blocked, ${r.outcomes.failed} failed. Support screens: ${r.claim_screens.passed} passed, ${r.claim_screens.blocked} blocked, ${r.claim_screens.missing} missing. Checker-only usage: ${r.checker_tokens} tokens from ${r.checker_usage_reports} reports. ${r.scope}`;});
+  $('attachment-upload').onsubmit=e=>{e.preventDefault();action(async()=>{
+    attachmentIdle();const id=state.thread?.id,epoch=state.epoch;const file=$('attachment-file').files[0];if(!id||!file)throw new Error('Select a patient conversation and synthetic text file.');
+    const form=new FormData();form.append('title',$('attachment-title').value);form.append('file',file);
+    const response=await fetch('/api/dev'+attachmentPath(),{method:'POST',credentials:'same-origin',body:form});const value=await response.json();if(!response.ok){if(response.status===401){voice.stop();$('intelligence').hidden=true;}throw new Error(typeof value.detail==='string'?value.detail:'Attachment upload failed.');}
+    if(epoch!==state.epoch||id!==state.thread?.id)return;$('attachment-file').value='';$('attachment-title').value='';await loadAttachments();status('Encrypted attachment quarantined. Preview and explicitly review it before model use.');
+  });};
+  $('attachment-import').onclick=()=>action(async()=>{attachmentIdle();const value=Number($('attachment-document').value);if(!value)throw new Error('Select an authorized matching text document.');await api(attachmentPath()+'/from-document',{document_id:value});await loadAttachments();status('Authorized chart source copied into encrypted quarantine. Original-source consent remains required.');});
+  $('attachment-refresh').onclick=()=>action(async()=>{attachmentIdle();const id=state.thread?.id,epoch=state.epoch;await loadAttachments();if(id&&epoch===state.epoch){const thread=await api('/intelligence/threads/'+id);if(epoch===state.epoch){state.thread=thread;renderConversation(thread);}}status('Attachment permissions refreshed;selection and per-question consent cleared.');});
   $('search-button').onclick=()=>action(loadThreads);$('patient').onchange=()=>action(async()=>{if(state.thread){$('patient').value=state.thread.patient_id||'';throw new Error('Create a new thread to change its patient context.');}await encounters();});
   $('thread-form').onsubmit=e=>{e.preventDefault();action(async()=>{const t=await api('/intelligence/threads',{title:$('title').value,patient_id:$('patient').value?Number($('patient').value):null});await loadThreads();await selectThread(t.id);});};
   $('prompt-form').onsubmit=e=>{e.preventDefault();action(()=>send($('prompt').value));};$('cancel').onclick=()=>action(cancel);$('retry').onclick=()=>action(()=>send(state.lastPrompt));

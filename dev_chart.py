@@ -25,6 +25,13 @@ from dev_portal import _require_synthetic
 MAX_DOCUMENT_BYTES = 5 * 1024 * 1024
 
 
+def chart_document_allowed(c,row,user,ctx):
+    """Shared current authorization for original documents and derived context."""
+    ctx.patient_for(c,row['patient_id'],user)
+    if user['role']=='patient' or row['visibility']=='care_team' or row['uploaded_by']==user['id']:return True
+    return bool(c.execute(text('SELECT granted FROM dev_chart_document_consents WHERE patient_id=:p AND clinician_id=:u'),{'p':row['patient_id'],'u':user['id']}).scalar())
+
+
 class DocumentLimitMiddleware:
     """Bound multipart bodies before the parser can spool an arbitrary file.
 
@@ -291,11 +298,7 @@ def install_chart(app, ctx):
                                                        " ORDER BY recorded_at,id"), {"p": patient_id}).mappings()]
 
     def document_allowed(c, row, user):
-        ctx.patient_for(c, row["patient_id"], user)
-        if user["role"] == "patient" or row["visibility"] == "care_team" or row["uploaded_by"] == user["id"]:
-            return True
-        return bool(c.execute(text("SELECT granted FROM dev_chart_document_consents WHERE patient_id=:p AND clinician_id=:u"),
-                              {"p": row["patient_id"], "u": user["id"]}).scalar())
+        return chart_document_allowed(c,row,user,ctx)
 
     def documents_for(c, patient_id, user):
         ctx.patient_for(c, patient_id, user)

@@ -8,10 +8,17 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 import httpx
 from dev_verify import isolated_environment
 
 class LauncherTests(unittest.TestCase):
+    def test_document_key_is_explicitly_forwarded_without_provider_credentials(self):
+        from dev_start import runtime_environment
+        with patch.dict(os.environ,{'RAPHAEL_DOCUMENT_ENCRYPTION_KEY':'SYNTHETIC-DOCUMENT-KEY','LLM_API_KEY':'SYNTHETIC-PROVIDER-KEY','QDRANT_API_KEY':'SYNTHETIC-QDRANT-KEY'}):
+            env=runtime_environment('sqlite:///synthetic-only.db')
+            self.assertEqual(env['RAPHAEL_DOCUMENT_ENCRYPTION_KEY'],'SYNTHETIC-DOCUMENT-KEY')
+            self.assertNotIn('LLM_API_KEY',env);self.assertNotIn('QDRANT_API_KEY',env)
     def test_synthetic_launcher_health_security_headers_and_restart_without_credentials(self):
         with tempfile.TemporaryDirectory(prefix='raphael-launcher-') as directory:
             db=Path(directory)/'synthetic.db';env=isolated_environment()

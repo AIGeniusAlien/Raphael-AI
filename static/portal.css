@@ -45,3 +45,5 @@ input,textarea,button { border-radius:.5rem; }
 /* Private factor material must wrap without forcing narrow account pages wider. */
 #mfa-private { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: #fff3cc; border-radius: .5rem; }
 input[type="checkbox"], input[type="radio"] { width: auto; margin-inline-end: .5rem; }
+
+#lifecycle-accounts article{border:1px solid #cbd8df;border-radius:.5rem;padding:.8rem;margin:1rem 0;overflow-wrap:anywhere}#lifecycle-admin,#lifecycle-section{min-width:0;overflow-wrap:anywhere}

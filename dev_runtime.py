@@ -24,7 +24,9 @@ COMPONENTS = (
     ("knowledge", "dev_knowledge", "init_knowledge_schema"),
     ("care", "dev_care", "init_care_schema"),
     ("intelligence", "dev_intelligence", "init_intelligence_schema"),
+    ("conversation_attachments", "conversation_attachments", "init_attachment_schema"),
     ("account", "dev_account", "init_account_schema"),
+    ("account_lifecycle", "account_lifecycle", "init_lifecycle_schema"),
     ("patient_ai", "dev_patient_ai", "init_patient_ai_schema"),
 )
 

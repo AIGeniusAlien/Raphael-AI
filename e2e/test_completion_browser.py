@@ -17,7 +17,7 @@ class CompletionBrowserTests(unittest.TestCase):
    engine=create_engine(url)
    with patch.dict(os.environ,{'RAPHAEL_DEV_SYNTHETIC_ONLY':'1'}):
     migrate(engine)
-    for name,role in [('doctor','clinician'),('patient','patient')]:create_dev_user(engine,'synthetic',name,password,role)
+    for name,role in [('doctor','clinician'),('patient','patient'),('admin','org_admin')]:create_dev_user(engine,'synthetic',name,password,role)
    engine.dispose()
    with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
    base=f'http://127.0.0.1:{port}'
@@ -91,7 +91,41 @@ class CompletionBrowserTests(unittest.TestCase):
        patient_view=browser.new_context(base_url=base,viewport={'width':390,'height':844});patient_view.request.post('/api/dev/login',data={'tenant':'synthetic','username':'patient','password':password})
        patient_page=patient_view.new_page();patient_page.goto('/static/chart.html?patient_id='+str(patient['id']));expect(patient_page.locator('#longitudinal')).to_contain_text('Entered first-to-last change: 4 test-unit')
        self.assertEqual(patient_page.get_by_role('button',name='Review tabular observations').count(),0)
-       patient_view.close();self.assertEqual(errors,[]);context.close()
+       # Integrated lifecycle uses the same account/privacy interface and
+       # existing administrator activation API;never a real erasure policy.
+       patient_page.on('pageerror',lambda error:errors.append(str(error)))
+       uid=patient_view.request.get('/api/dev/session').json()['id']
+       patient_page.goto('/static/account.html');expect(patient_page.locator('#lifecycle-status')).to_contain_text('Deactivation blocks sign-in')
+       if os.getenv('RAPHAEL_VISUAL_OUTPUT'):
+        for name,width,height in [('desktop',1440,1000),('mobile',390,844),('enlarged',320,900)]:
+         patient_page.set_viewport_size({'width':width,'height':height});patient_page.evaluate('(s)=>document.documentElement.style.fontSize=s+"px"',20 if name=='enlarged' else 16)
+         patient_page.locator('#lifecycle-section').screenshot(path=str(output/('lifecycle-patient-'+name+'.png')))
+         self.assertLessEqual(patient_page.evaluate('document.documentElement.scrollWidth'),width+1,name+' lifecycle')
+       patient_page.locator('#lifecycle-password').fill(password);patient_page.locator('#lifecycle-confirm').check();patient_page.locator('#lifecycle-request-erasure').check();patient_page.once('dialog',lambda dialog:dialog.accept());patient_page.locator('#lifecycle-deactivate').click()
+       expect(patient_page.locator('#account')).to_be_hidden();expect(patient_page.locator('#status')).to_contain_text('Account deactivated')
+       self.assertEqual(patient_view.request.get('/api/dev/session').status,401)
+       admin=browser.new_context(base_url=base);admin.request.post('/api/dev/login',data={'tenant':'synthetic','username':'admin','password':password});admin_page=admin.new_page();admin_page.on('pageerror',lambda error:errors.append(str(error)))
+       admin_page.goto('/static/account.html');expect(admin_page.locator('#lifecycle-admin')).to_be_visible()
+       row=admin_page.locator('[data-lifecycle-id="'+str(uid)+'"]');admin_page.once('dialog',lambda dialog:dialog.accept());row.get_by_role('button',name='Reactivate preserved account',exact=True).click()
+       expect(admin_page.locator('#status')).to_contain_text('Account reactivated');self.assertEqual(patient_view.request.get('/api/dev/session').status,401)
+       self.assertEqual(patient_view.request.post('/api/dev/login',data={'tenant':'synthetic','username':'patient','password':password}).status,200)
+       patient_page.goto('/static/account.html');expect(patient_page.locator('#lifecycle-status')).to_contain_text('Deactivation blocks sign-in')
+       patient_page.locator('#lifecycle-password').fill(password);patient_page.locator('#lifecycle-confirm').check();patient_page.locator('#lifecycle-request-erasure').check();patient_page.once('dialog',lambda dialog:dialog.accept());patient_page.locator('#lifecycle-deactivate').click();expect(patient_page.locator('#account')).to_be_hidden()
+       admin_page.locator('#lifecycle-admin-refresh').click();expect(row).to_contain_text('deactivated')
+       admin_page.locator('#lifecycle-policy-reference').fill('SYNTHETIC TEST POLICY NOT LEGAL APPROVAL');admin_page.locator('#lifecycle-policy-days').fill('0');admin_page.locator('#lifecycle-policy-enabled').check();admin_page.locator('#lifecycle-password').fill(password);admin_page.locator('#lifecycle-policy-save').click();expect(admin_page.locator('#status')).to_contain_text('Policy reference/version recorded')
+       row.locator('input[id^="hold-reference-"]').fill('SYNTHETIC HOLD');admin_page.locator('#lifecycle-password').fill(password);row.get_by_role('button',name='Place retention hold',exact=True).click();expect(row).to_contain_text('Retention hold active')
+       expect(row.get_by_role('button',name='Erase credentials and preferences; retain clinical records',exact=True)).to_be_disabled()
+       if os.getenv('RAPHAEL_VISUAL_OUTPUT'):
+        for name,width,height in [('desktop',1440,1000),('mobile',390,844),('enlarged',320,900)]:
+         admin_page.set_viewport_size({'width':width,'height':height});admin_page.evaluate('(s)=>document.documentElement.style.fontSize=s+"px"',20 if name=='enlarged' else 16)
+         admin_page.locator('#lifecycle-admin').screenshot(path=str(output/('lifecycle-admin-'+name+'.png')))
+         self.assertLessEqual(admin_page.evaluate('document.documentElement.scrollWidth'),width+1,name+' lifecycle admin')
+       row.locator('input[id^="hold-reference-"]').fill('SYNTHETIC HOLD RELEASE');admin_page.locator('#lifecycle-password').fill(password);row.get_by_role('button',name='Release retention hold',exact=True).click();expect(row).to_contain_text('No active retention hold')
+       row.locator('input[id^="erase-target-"]').fill('patient');admin_page.locator('#lifecycle-password').fill(password);admin_page.once('dialog',lambda dialog:dialog.accept());row.get_by_role('button',name='Erase credentials and preferences; retain clinical records',exact=True).click();expect(admin_page.locator('#status')).to_contain_text('not full account or medical-record erasure')
+       self.assertEqual(patient_view.request.post('/api/dev/login',data={'tenant':'synthetic','username':'patient','password':password}).status,401)
+       self.assertEqual(admin.request.get('/api/dev/patients').status,403)
+       retained=context.request.get('/api/dev/patients/'+str(patient['id'])+'/notes');self.assertEqual(retained.status,200);self.assertIn('Synthetic reviewed care plan',retained.text())
+       admin.close();patient_view.close();self.assertEqual(errors,[]);context.close()
       finally:browser.close()
     finally:
      os.killpg(process.pid,signal.SIGTERM)

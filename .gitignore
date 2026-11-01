@@ -7,3 +7,7 @@ __pycache__/
 *.db-wal
 *.db-shm
 verification-results/
+
+# Explicit development key files must remain outside source control.
+*.key
+*.key.backup

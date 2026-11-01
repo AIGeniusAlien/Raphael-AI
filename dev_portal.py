@@ -300,6 +300,11 @@ class NoteDraftIn(Input):
 def install_dev_portal(app, engine, assessment_generator=None):
     """Register routes. The host initializes the schema during normal startup."""
     _require_synthetic(engine)
+    # Register the bounded upload transport at shared bootstrap. Some supported
+    # embeddings install intelligence routes after an authenticated chart session
+    # starts;ASGI middleware cannot safely be added at that later point.
+    from conversation_attachments import AttachmentLimit
+    if not any(item.cls is AttachmentLimit for item in app.user_middleware):app.add_middleware(AttachmentLimit)
     router = APIRouter(prefix="/api/dev", tags=["synthetic development portal"])
 
     from dev_security import RequestBudget
@@ -668,6 +673,8 @@ def install_dev_portal(app, engine, assessment_generator=None):
                     count = c.execute(text("SELECT count(*) FROM dev_users WHERE tenant=:t AND role='org_admin' AND active=1"), {"t": user["tenant"]}).scalar()
                     if count <= 1:
                         raise HTTPException(409, "The final active administrator cannot be deactivated.")
+            from account_lifecycle import update_account_state
+            update_account_state(c,user_id,body.active)
             c.execute(text("UPDATE dev_users SET active=:a WHERE id=:id"), {"a": int(body.active), "id": user_id})
             if not body.active:
                 c.execute(text("DELETE FROM dev_sessions WHERE user_id=:id"), {"id": user_id})

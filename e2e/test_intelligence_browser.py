@@ -19,6 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
 
 import httpx
+from cryptography.fernet import Fernet
 from playwright.sync_api import sync_playwright, expect
 from sqlalchemy import create_engine
 from dev_portal import init_portal_schema, create_dev_user
@@ -49,7 +50,7 @@ class IntelligenceBrowserTests(unittest.TestCase):
             engine.dispose()
             with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
             base=f'http://127.0.0.1:{port}'
-            environment=dict(os.environ,DATABASE_URL=url,RAPHAEL_DEV_PORTAL='1',RAPHAEL_DEV_SYNTHETIC_ONLY='1',LLM_BASE_URL=f'http://127.0.0.1:{server.server_port}/v1',LLM_API_KEY='synthetic-provider-fixture',RAPHAEL_ALLOW_LOCAL_LLM='1',QDRANT_URL='',STATIC_PATH='static',PYTHONDONTWRITEBYTECODE='1')
+            environment=dict(os.environ,DATABASE_URL=url,RAPHAEL_DEV_PORTAL='1',RAPHAEL_DEV_SYNTHETIC_ONLY='1',LLM_BASE_URL=f'http://127.0.0.1:{server.server_port}/v1',LLM_API_KEY='synthetic-provider-fixture',RAPHAEL_ALLOW_LOCAL_LLM='1',QDRANT_URL='',RAPHAEL_DOCUMENT_ENCRYPTION_KEY=Fernet.generate_key().decode(),STATIC_PATH='static',PYTHONDONTWRITEBYTECODE='1')
             with tempfile.TemporaryFile(mode='w+') as log:
                 process=subprocess.Popen([sys.executable,'-m','uvicorn','main:app','--host','127.0.0.1','--port',str(port)],cwd=Path(__file__).resolve().parents[1],env=environment,stdout=log,stderr=log,start_new_session=True)
                 try:
@@ -73,6 +74,49 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             page.locator('#title').fill('Synthetic clinical thread');page.locator('#thread-form button').click();expect(page.locator('#thread-title')).to_have_text('Synthetic clinical thread')
                             page.locator('#prompt').fill('violet calibrator');page.locator('#prompt-form button').click();expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete')
                             expect(page.locator('#evidence')).to_contain_text('Nonclinical synthetic fixture');expect(page.locator('#evidence a[href^="/api/dev/knowledge/citations/"]')).to_have_attribute('href',__import__('re').compile(r'/api/dev/knowledge/citations/'))
+                            # Separate real attachment conversation,actual encrypted API/SDK
+                            # fixture path;the provider remains nonclinical and local.
+                            page.locator('#new-draft').click();page.locator('#title').fill('Attachment privacy workflow');page.locator('#thread-form button').click()
+                            expect(page.locator('#thread-title')).to_have_text('Attachment privacy workflow')
+                            page.locator('#attachments-section summary').click()
+                            page.locator('#attachment-title').fill('Reviewed synthetic attachment')
+                            attachment_bytes=f"RAPHAEL_SYNTHETIC_PATIENT_ID: {patient['id']}\nViolet calibrator reported attachment value.".encode()
+                            page.locator('#attachment-file').set_input_files({'name':'synthetic.txt','mimeType':'text/plain','buffer':attachment_bytes})
+                            page.locator('#attachment-upload-button').click();expect(page.locator('#attachment-list')).to_contain_text('quarantined')
+                            expect(page.get_by_role('button',name='Authorize reviewed text for provider use',exact=True)).to_be_disabled()
+                            page.get_by_role('button',name='Preview reported text',exact=True).click();expect(page.locator('#attachment-preview')).to_contain_text('Violet calibrator reported attachment value.')
+                            page.once('dialog',lambda dialog:dialog.accept());page.get_by_role('button',name='Authorize reviewed text for provider use',exact=True).click()
+                            expect(page.locator('#attachment-list')).to_contain_text('reviewed')
+                            page.get_by_label('Use Reviewed synthetic attachment as reported context',exact=True).check()
+                            before=len(requests);page.locator('#prompt').fill('violet calibrator attachment');page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Authorize selected text')
+                            self.assertEqual(len(requests),before)
+                            page.locator('#attachment-ai-consent').check();page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Draft complete')
+                            self.assertIn('Violet calibrator reported attachment value.',requests[-1]['messages'][0]['content'])
+                            attachment_thread=next(row for row in context.request.get('/api/dev/intelligence/threads').json() if row['title']=='Attachment privacy workflow')
+                            stored=context.request.get(f"/api/dev/intelligence/threads/{attachment_thread['id']}").json()
+                            self.assertNotIn('text',stored['messages'][-1]['patient_context']['conversation_attachments'][0])
+                            if os.getenv('RAPHAEL_VISUAL_OUTPUT'):
+                                output=Path(os.environ['RAPHAEL_VISUAL_OUTPUT']);output.mkdir(parents=True,exist_ok=True)
+                                for name,width,height,font in [('desktop',1440,1000,16),('tablet',768,1024,16),('mobile',390,844,16),('enlarged',320,900,20)]:
+                                    page.set_viewport_size({'width':width,'height':height});page.evaluate('(size)=>document.documentElement.style.fontSize=size+"px"',font)
+                                    self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth+1'),name+' attachment overflow')
+                                    page.locator('#attachments-section').screenshot(path=str(output/('attachments-'+name+'.png')))
+                                page.set_viewport_size({'width':1280,'height':900});page.evaluate('document.documentElement.style.fontSize="16px"')
+                            page.reload();expect(page.locator('#intelligence')).to_be_visible();page.get_by_role('button',name='Attachment privacy workflow',exact=True).click()
+                            page.locator('#attachments-section summary').click()
+                            page.locator('#prompt').fill('violet calibrator followup');page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Authorize selected text')
+                            page.locator('#attachment-ai-consent').check();page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Draft complete')
+                            # Text is rendered as data even when it is quarantined.
+                            page.locator('#attachment-title').fill('Quarantined script text');page.locator('#attachment-file').set_input_files({'name':'untrusted.txt','mimeType':'text/plain','buffer':f"RAPHAEL_SYNTHETIC_PATIENT_ID: {patient['id']}\n<script>window.__attachment_xss=1</script>".encode()})
+                            page.locator('#attachment-upload-button').click();expect(page.locator('#attachment-list')).to_contain_text('Quarantined script text')
+                            bad=page.locator('#attachment-list article').filter(has_text='Quarantined script text');bad.get_by_role('button',name='Preview reported text',exact=True).click()
+                            expect(page.locator('#attachment-preview')).to_contain_text('<script>');self.assertFalse(page.evaluate('!!window.__attachment_xss'))
+                            expect(bad.get_by_role('button',name='Authorize reviewed text for provider use',exact=True)).to_be_disabled()
+                            good=page.locator('#attachment-list article').filter(has_text='Reviewed synthetic attachment')
+                            page.once('dialog',lambda dialog:dialog.accept());good.get_by_role('button',name='Delete attachment payload',exact=True).click()
+                            expect(page.locator('#status')).to_contain_text('Attachment payload deleted logically');expect(page.locator('#messages')).to_contain_text('Attachment-derived draft withheld')
+                            messages=context.request.get(f"/api/dev/intelligence/threads/{attachment_thread['id']}").json()['messages'];self.assertTrue(all(m['status']=='attachment_access_revoked' for m in messages))
+                            page.get_by_role('button',name='Synthetic clinical thread',exact=True).click();expect(page.locator('#thread-title')).to_have_text('Synthetic clinical thread')
                             # Explicit browser-only SSE fixture tests the blocked terminal UI,
                             # never used as proof of provider or clinical validation.
                             page.route('**/api/dev/intelligence/threads/*/stream',lambda route:route.fulfill(status=200,content_type='text/event-stream',body='event: blocked\ndata: '+json.dumps({'detail':'Synthetic unsupported-claim fixture. Not approved.'})+'\n\n'),times=1)

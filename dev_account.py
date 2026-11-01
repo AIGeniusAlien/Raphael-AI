@@ -31,7 +31,10 @@ def session_active(c,request,user):
     return bool(token and c.execute(text('SELECT 1 FROM dev_sessions s JOIN dev_users u ON u.id=s.user_id WHERE s.token_hash=:h AND s.user_id=:u AND s.expires_at>:at AND u.active=1'),{'h':hashlib.sha256(token.encode()).hexdigest(),'u':user['id'],'at':now()}).scalar())
 def init_account_schema(engine):
     _require_synthetic(engine)
-    with engine.begin() as c:execute_sqlite_script(c,SCHEMA)
+    with engine.begin() as c:
+        execute_sqlite_script(c,SCHEMA)
+        from account_lifecycle import SCHEMA as LIFECYCLE
+        execute_sqlite_script(c,LIFECYCLE)
 
 
 class Profile(BaseModel):
@@ -55,6 +58,8 @@ class Review(BaseModel):
 
 
 def install_account(app,ctx,patient_ai_exporter=None):
+    from account_lifecycle import install_lifecycle
+    install_lifecycle(app,ctx)
     engine=ctx.engine
     router=APIRouter(prefix='/api/dev/account',dependencies=[Depends(ctx.same_origin_json)])
     @router.get('')

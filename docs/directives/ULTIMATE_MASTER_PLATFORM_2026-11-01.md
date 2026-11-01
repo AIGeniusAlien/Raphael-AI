@@ -3,10 +3,10 @@
 
 ## THE DEFINITIVE BUILD SPECIFICATION
 
-**Product:** Raphael AI  
-**Repository:** `AIGeniusAlien/Raphael-AI`  
-**Development branch:** `fix/sqlite-startup-recovery`  
-**Existing pull request:** Draft PR #1  
+**Product:** Raphael AI
+**Repository:** `AIGeniusAlien/Raphael-AI`
+**Development branch:** `fix/sqlite-startup-recovery`
+**Existing pull request:** Draft PR #1
 **Mission:** Build the most comprehensive, capable, dependable, continuously improving healthcare intelligence and workflow platform achievable through rigorous engineering and evidence-based clinical validation.
 
 ---

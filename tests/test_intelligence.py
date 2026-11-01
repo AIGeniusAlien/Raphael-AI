@@ -68,6 +68,41 @@ class IntelligenceTests(unittest.TestCase):
         self.assertIn('Every cited excerpt must directly support the adjacent claim',seen[0])
         self.assertNotIn('Citation syntax examples:',seen[0])
 
+    def test_context_snapshot_is_minimized_immutable_and_denied_after_chart_revocation(self):
+        path=f"/api/dev/patients/{self.patient['id']}"
+        first=self.client.post(path+'/entries',json={'kind':'history','label':'Needle','text':'Synthetic reported fact','recorded_at':'2020-01-01T00:00:00+00:00'}).json()
+        self.client.post(path+'/entries',json={'kind':'care_plan','label':'Draft','text':'NEVER-TRANSMIT-DRAFT'}).raise_for_status()
+        seen=[]
+        def provider(messages,model):
+            seen.append(messages[0]['content']);yield 'Synthetic draft [fixture-1]'
+        self.provider=provider
+        identifier=self.thread();thread=f'/api/dev/intelligence/threads/{identifier}'
+        result=self.client.post(thread+'/stream',json={'content':'Needle'})
+        self.assertIn('event: complete',result.text)
+        self.assertNotIn('NEVER-TRANSMIT-DRAFT',seen[0])
+        message=self.client.get(thread).json()['messages'][-1]
+        snapshot=message['patient_context']
+        self.assertEqual([r['id'] for r in snapshot['records']],[first['id']])
+        self.client.patch('/api/dev/chart-entries/'+str(first['id']),json={'kind':'history','label':'Needle','text':'Later correction','revision':1}).raise_for_status()
+        init_intelligence_schema(self.engine)
+        self.assertEqual(self.client.get(thread).json()['messages'][-1]['patient_context'],snapshot)
+        self.login('second');self.assertEqual(self.client.get(thread).status_code,404)
+        self.login('foreign','two');self.assertEqual(self.client.get(thread).status_code,404)
+        self.login('patient')
+        with self.engine.connect() as c:doctor=c.execute(text("SELECT id FROM dev_users WHERE tenant='one' AND username='doctor'")).scalar()
+        self.client.post(path+'/chart-access/'+str(doctor)+'/revoke',json={}).raise_for_status()
+        self.login();self.assertEqual(self.client.get(thread).status_code,404)
+        self.assertEqual(self.client.get('/api/dev/intelligence/workflow-checks').json()['accessible_generations'],0)
+
+    def test_workflow_checks_are_content_free_owner_scoped_and_do_not_imply_clinical_accuracy(self):
+        identifier=self.thread();self.client.post(f'/api/dev/intelligence/threads/{identifier}/stream',json={'content':'PRIVATE-SYNTHETIC-QUESTION'}).raise_for_status()
+        result=self.client.get('/api/dev/intelligence/workflow-checks');self.assertEqual(result.status_code,200,result.text)
+        self.assertEqual(result.json()['outcomes']['complete'],1);self.assertEqual(result.json()['claim_screens']['missing'],1)
+        self.assertFalse(result.json()['clinical_validation']);self.assertNotIn('PRIVATE-SYNTHETIC-QUESTION',result.text)
+        self.assertNotIn('Synthetic draft',result.text)
+        self.login('second');self.assertEqual(self.client.get('/api/dev/intelligence/workflow-checks').json()['accessible_generations'],0)
+        self.login('patient');self.assertEqual(self.client.get('/api/dev/intelligence/workflow-checks').status_code,403)
+
     def test_date_inside_reference_is_rejected_with_persisted_redacted_failure_stage(self):
         seen=[]
         def provider(messages,model):

@@ -52,6 +52,28 @@
   }
   function entryName(kind) { return ({history: 'Medical history', medication: 'Medication', allergy: 'Allergy',
     lab: 'Laboratory', vital: 'Vital observation', imaging_report: 'Imaging report', care_plan: 'Care plan'})[kind] || kind; }
+  function renderLongitudinal() {
+    const holder = byId('longitudinal'); holder.replaceChildren();
+    const review = chart.longitudinal;
+    if (!review?.timeline.length) { holder.append(node('p', 'No dated records are available for review.')); return; }
+    if (review.records_truncated) holder.append(node('p', `Showing the most recent ${review.record_limit} records. Earlier records remain in the chart.`, 'flag'));
+    for (const trend of review.trends) {
+      const change = trend.delta_first_to_last === null ? 'No comparison: fewer than two distinct times, conflicting values or an arithmetic limit.' : `Entered first-to-last change: ${trend.delta_first_to_last} ${trend.unit}.`;
+      const source = trend.source.replace(/; SHA-256 [a-f0-9]{64}$/, '');
+      const item = summaryRecord(`${trend.label} · ${trend.unit}`, change, `${trend.points.length} recorded observations · source: ${source}`);
+      if (trend.review_flags.length) item.append(node('p', 'Review flags: ' + trend.review_flags.join(', ').replaceAll('_', ' '), 'flag'));
+      holder.append(item);
+    }
+    const details = node('details'), summary = node('summary', `Dated record provenance (${review.timeline.length} records)`), list = node('ol');
+    for (const record of review.timeline) {
+      const li = node('li'), link = node('a', record.label); link.href = '#chart-entry-' + record.entry_id;
+      li.append(link, node('p', `${record.recorded_at} · ${record.classification.replaceAll('_', ' ')} · revision ${record.revision} · source: ${record.source}`, 'meta'));
+      if (record.review_flags.length) li.append(node('p', record.review_flags.join(', ').replaceAll('_', ' '), 'flag'));
+      list.append(li);
+    }
+    details.append(summary, list); holder.append(details);
+    const rules = node('details'); rules.append(node('summary', 'Comparison rules and limits'), node('p', review.limitations, 'meta')); holder.append(rules);
+  }
   function renderEntries() {
     const holder = byId('entries'); holder.replaceChildren();
     if (!chart.entries.length) holder.append(node('p', 'No visible structured records yet.'));
@@ -77,6 +99,8 @@
         d.value !== null ? `Entered value: ${d.value} ${d.unit || ''}` : ''].filter(Boolean).join('\n');
       const item = summaryRecord(`${entryName(e.kind)} · ${e.label}`, details,
         `${e.recorded_at} · ${e.status} · revision ${e.revision} · source: ${d.source}`);
+      item.id = 'chart-entry-' + e.id;
+      if (d.extraction_provenance) item.append(node('p', `Reviewed tabular source: document ${d.extraction_provenance.document_id}, line ${d.extraction_provenance.line_number}. Original source values and hash remain in the record provenance.`, 'meta'));
       if (e.status === 'draft') item.classList.add('draft');
       if (clinician()) {
         item.append(button('Edit record', () => editEntry(e)));
@@ -126,16 +150,42 @@
       const item = summaryRecord(d.title, 'Uploaded document — not clinician-approved advice.', `${d.file_type} · ${d.size_bytes} bytes · ${d.visibility} · ${d.created_at}`);
       const a = node('a', 'Download authorized attachment'); a.href = `/api/dev/documents/${Number(d.id)}/content`;
       item.append(a, node('p', `SHA-256: ${d.sha256}`, 'meta')); holder.append(item);
+      if (clinician() && d.file_type === 'txt') item.append(button('Review tabular observations', () => previewObservations(d, item)));
     }
   }
+  async function previewObservations(document, item) {
+    item.querySelector('.observation-preview')?.remove();
+    const preview = await api(`/documents/${document.id}/observation-preview`);
+    const holder = node('section', undefined, 'observation-preview'), selected = new Set();
+    holder.append(node('h4', 'Source rows awaiting your review'), node('p', preview.limitations));
+    const approve = button('Approve selected observations into chart', async () => {
+      if (!selected.size) throw new Error('Review and select at least one source row.');
+      if (!confirm('Approve these reviewed source values as patient-visible chart facts? Check the patient, dates, units and values. Original document access remains separate. No clinical orders are created.')) return;
+      const result = await post(`/documents/${document.id}/approve-observations`, {expected_sha256:preview.document_sha256,row_numbers:[...selected],acknowledged:true});
+      await load(); status(`${result.entries_created} reviewed observations created. Source provenance is retained; original document access is unchanged.`);
+    });
+    approve.disabled = true;
+    for (const row of preview.rows) {
+      const label = node('label'), check = node('input'); check.type = 'checkbox';
+      check.disabled = !!row.imported_entry_id;
+      check.addEventListener('change', () => { if (check.checked) selected.add(row.line_number); else selected.delete(row.line_number); approve.disabled = !selected.size; });
+      const f = row.fields;
+      label.append(check, documentNode(` Row ${row.line_number}: ${f.kind} · ${f.label} · ${f.value} ${f.unit} · ${f.recorded_at} · range ${f.reference_low ?? 'not entered'} to ${f.reference_high ?? 'not entered'}${row.imported_entry_id ? ' · already imported' : ''}`));
+      holder.append(label);
+    }
+    for (const error of preview.errors) holder.append(node('p', `Row ${error.line_number}: ${error.detail}`, 'flag'));
+    holder.append(approve); item.append(holder);
+  }
+  function documentNode(value) { return window.document.createTextNode(value); }
   async function load() {
     const version = ++generation;
     const data = await api(base() + '/chart');
     if (version !== generation || !user) return;
     chart = data;
+    byId('extraction-patient-id').textContent = String(chart.patient.id);
     byId('patient-name').textContent = `${chart.patient.name} · Synthetic chart`;
     byId('chart-content').hidden = false;
-    renderEntries(); renderEncounters(); renderAppointments(); renderDocuments();
+    renderLongitudinal(); renderEntries(); renderEncounters(); renderAppointments(); renderDocuments();
     if (user.role === 'patient') {
       const consents = await api(base() + '/document-consents');
       if (version !== generation || !user) return;

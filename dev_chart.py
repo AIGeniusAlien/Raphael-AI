@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import Response
 from starlette.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import StrictBool,StrictInt
 from pypdf import PdfReader
 from sqlalchemy import text
 
@@ -125,6 +126,15 @@ CREATE TABLE IF NOT EXISTS dev_chart_document_consents (
  updated_at TEXT NOT NULL,
  PRIMARY KEY(patient_id,clinician_id)
 );
+CREATE TABLE IF NOT EXISTS dev_chart_observation_imports (
+ document_id INTEGER NOT NULL REFERENCES dev_chart_documents(id),
+ line_number INTEGER NOT NULL,
+ document_sha256 TEXT NOT NULL,
+ entry_id INTEGER NOT NULL REFERENCES dev_chart_entries(id),
+ approved_by INTEGER NOT NULL REFERENCES dev_users(id),
+ created_at TEXT NOT NULL,
+ PRIMARY KEY(document_id,line_number)
+);
 """
 
 
@@ -203,6 +213,12 @@ class EntryUpdate(EntryIn):
 
 class Approve(Input):
     revision: int = Field(gt=0)
+
+
+class ObservationApproval(Input):
+    expected_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    row_numbers: list[StrictInt] = Field(min_length=1,max_length=50)
+    acknowledged: StrictBool
 
 
 class AppointmentIn(Input):
@@ -305,6 +321,8 @@ def install_chart(app, ctx):
                       "entries": entries_for(c, patient_id, user), "appointments": appointments_for(c, patient_id, user),
                       "documents": documents_for(c, patient_id, user),
                       "limitations": "Synthetic records only. Range flags compare entered values and ranges; no diagnosis, dosing, reminder delivery or clinical validation is performed. Document consent applies only to private document access, not all chart access."}
+            from longitudinal import review
+            result['longitudinal']=review(result['entries'])
             ctx.audit(c, user, "read_structured_chart", "patient", patient_id)
             return result
 
@@ -370,10 +388,12 @@ def install_chart(app, ctx):
                 if encounter["status"] == "closed":
                     raise HTTPException(409, "Reopen the encounter before changing records.")
             data = body.model_dump(mode="json", exclude={"revision"})
+            provenance=json.loads(existing['data']).get('extraction_provenance')
+            if provenance:data['extraction_provenance']=provenance
             result = c.execute(text("UPDATE dev_chart_entries SET label=:l,encounter_id=:e,recorded_at=:at,data=:data,status=:s,"
                                     "revision=revision+1,approved_by=NULL,approved_at=NULL WHERE id=:id AND revision=:r"),
                                {"l": body.label, "e": body.encounter_id, "at": timestamp(body.recorded_at), "data": json.dumps(data),
-                                "s": "draft" if body.kind in ("care_plan", "imaging_report") else "recorded", "id": entry_id, "r": body.revision})
+                                "s": "draft" if provenance or body.kind in ("care_plan", "imaging_report") else "recorded", "id": entry_id, "r": body.revision})
             if result.rowcount != 1:
                 raise HTTPException(409, "The chart entry changed; reload before editing.")
             ctx.audit(c, user, "update_chart_entry", "chart_entry", entry_id)
@@ -475,6 +495,52 @@ def install_chart(app, ctx):
                 return next(item for item in documents_for(c, patient_id, user) if item["id"] == result.lastrowid)
         finally:
             await file.close()
+
+    def extraction_source(c,document_id,user):
+        row=c.execute(text('SELECT * FROM dev_chart_documents WHERE id=:id'),{'id':document_id}).mappings().first()
+        if not row or not document_allowed(c,row,user):raise HTTPException(404,'Document not found.')
+        if row['file_type']!='txt':raise HTTPException(422,'Only the documented synthetic tabular text format is supported.')
+        content=bytes(row['content'])
+        if hashlib.sha256(content).hexdigest()!=row['sha256']:raise HTTPException(409,'Document integrity changed;review the source before extraction.')
+        from observation_extraction import preview
+        try:result=preview(content,row['patient_id'])
+        except ValueError as error:raise HTTPException(422,str(error)) from None
+        return row,result
+
+    @router.get('/documents/{document_id}/observation-preview')
+    def observation_preview(document_id:int,user=Depends(clinician)):
+        with engine.begin() as c:
+            row,result=extraction_source(c,document_id,user)
+            imports={r['line_number']:r['entry_id'] for r in c.execute(text('SELECT line_number,entry_id FROM dev_chart_observation_imports WHERE document_id=:d'),{'d':document_id}).mappings()}
+            for candidate in result['rows']:candidate['imported_entry_id']=imports.get(candidate['line_number'])
+            ctx.audit(c,user,'preview_observation_extraction','document',document_id)
+            return {**result,'document_id':document_id,'document_sha256':row['sha256']}
+
+    @router.post('/documents/{document_id}/approve-observations',dependencies=[Depends(ctx.same_origin_json)])
+    def approve_observations(document_id:int,body:ObservationApproval,user=Depends(clinician)):
+        if not body.acknowledged or len(set(body.row_numbers))!=len(body.row_numbers):raise HTTPException(422,'Explicit review and unique source rows are required.')
+        with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            row,result=extraction_source(c,document_id,user)
+            if body.expected_sha256!=row['sha256']:raise HTTPException(409,'Source hash changed;preview again before approving.')
+            candidates={r['line_number']:r for r in result['rows']}
+            if set(body.row_numbers)-set(candidates):raise HTTPException(422,'Selected source rows are missing or invalid.')
+            identifiers=[];created=0
+            for number in body.row_numbers:
+                previous=c.execute(text('SELECT entry_id FROM dev_chart_observation_imports WHERE document_id=:d AND line_number=:n'),{'d':document_id,'n':number}).scalar()
+                if previous:identifiers.append(previous);continue
+                candidate=candidates[number];fields=candidate['fields']
+                duplicate=c.execute(text('SELECT id FROM dev_chart_entries WHERE patient_id=:p AND kind=:k AND label=:l AND recorded_at=:at'),{'p':row['patient_id'],'k':fields['kind'],'l':fields['label'],'at':fields['recorded_at']}).first()
+                if duplicate:raise HTTPException(409,'An observation at this label/time already exists;reconcile it manually. No records were overwritten.')
+                data=EntryIn(**fields,source=f"Reviewed document {document_id}; SHA-256 {row['sha256']}").model_dump(mode='json')
+                data['extraction_provenance']={'document_id':document_id,'document_sha256':row['sha256'],'line_number':number,'line_sha256':candidate['line_sha256'],'parser_version':1,'original_fields':fields,'review':'Explicit clinician review;not independent clinical validation'}
+                at=now()
+                identifier=c.execute(text("INSERT INTO dev_chart_entries(patient_id,author_id,kind,label,recorded_at,data,status,approved_by,approved_at,created_at) VALUES (:p,:u,:k,:l,:recorded,:data,'approved',:u,:at,:at)"),{'p':row['patient_id'],'u':user['id'],'k':fields['kind'],'l':fields['label'],'recorded':fields['recorded_at'],'data':json.dumps(data),'at':at}).lastrowid
+                c.execute(text('INSERT INTO dev_chart_observation_imports(document_id,line_number,document_sha256,entry_id,approved_by,created_at) VALUES (:d,:n,:h,:e,:u,:at)'),{'d':document_id,'n':number,'h':row['sha256'],'e':identifier,'u':user['id'],'at':at})
+                identifiers.append(identifier);created+=1
+            ctx.audit(c,user,'approve_observation_extraction','document',document_id)
+            states=[dict(c.execute(text('SELECT id,status,revision FROM dev_chart_entries WHERE id=:id'),{'id':identifier}).mappings().one()) for identifier in identifiers]
+            return {'entry_ids':identifiers,'entry_states':states,'entries_created':created,'status':'review_processed','notice':'New approved facts are chart records under full-chart permissions. Original document access remains separately controlled. Previously imported records retain their current state;later edits are not reapproved by retrying import.'}
 
     @router.get("/documents/{document_id}/content")
     def download_document(document_id: int, user=Depends(chart_user)):

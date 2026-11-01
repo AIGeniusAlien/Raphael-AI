@@ -56,6 +56,51 @@ class StructuredChartTests(unittest.TestCase):
         return self.client.post(self.prefix + "/documents", data={"title": "Synthetic document", "visibility": visibility},
                                 files={"file": (name, content, "application/octet-stream")})
 
+    def observation_source(self,value=5,patient=None):
+        from observation_extraction import HEADERS
+        return (','.join(HEADERS)+f"\n{patient or self.patient['id']},lab,Synthetic analyte,2020-01-01T00:00:00+00:00,{value},test-unit,,\n").encode()
+
+    def test_reviewed_extraction_is_explicit_idempotent_and_provenance_survives_edits(self):
+        document=self.upload(self.observation_source()).json()['id'];path=f'/api/dev/documents/{document}'
+        preview=self.client.get(path+'/observation-preview');self.assertEqual(preview.status_code,200,preview.text)
+        body={'expected_sha256':preview.json()['document_sha256'],'row_numbers':[2],'acknowledged':True}
+        self.assertEqual(self.client.post(path+'/approve-observations',json={**body,'acknowledged':False}).status_code,422)
+        first=self.client.post(path+'/approve-observations',json=body);self.assertEqual(first.status_code,200,first.text)
+        self.assertEqual(first.json()['entries_created'],1);identifier=first.json()['entry_ids'][0]
+        init_chart_schema(self.engine)
+        repeated=self.client.post(path+'/approve-observations',json=body).json();self.assertEqual(repeated['entry_ids'],[identifier]);self.assertEqual(repeated['entries_created'],0)
+        self.login('patient');record=self.client.get(self.prefix+'/entries').json()[0]
+        self.assertEqual(record['status'],'approved');provenance=record['data']['extraction_provenance'];self.assertEqual(provenance['document_sha256'],body['expected_sha256'])
+        self.assertEqual(self.client.get(path+'/observation-preview').status_code,403)
+        self.login();edit=self.client.patch('/api/dev/chart-entries/'+str(identifier),json={'kind':'lab','label':'Synthetic analyte','value':8,'unit':'test-unit','revision':1})
+        self.assertEqual(edit.status_code,200,edit.text);self.assertEqual(edit.json()['status'],'draft')
+        self.assertEqual(edit.json()['data']['extraction_provenance'],provenance)
+        retried=self.client.post(path+'/approve-observations',json=body).json()
+        self.assertEqual(retried['entries_created'],0);self.assertEqual(retried['entry_states'][0]['status'],'draft')
+        self.assertEqual(retried['status'],'review_processed')
+        self.login('patient');self.assertEqual(self.client.get(self.prefix+'/entries').json(),[])
+        self.login();self.client.post('/api/dev/chart-entries/'+str(identifier)+'/approve',json={'revision':2}).raise_for_status()
+
+    def test_extraction_wrong_patient_stale_source_and_conflicting_batch_do_not_write(self):
+        wrong=self.upload(self.observation_source(patient=self.other['id'])).json()['id']
+        self.assertEqual(self.client.get(f'/api/dev/documents/{wrong}/observation-preview').status_code,422)
+        document=self.upload(self.observation_source()+self.observation_source(9).split(b'\n')[1]+b'\n').json()['id'];path=f'/api/dev/documents/{document}'
+        preview=self.client.get(path+'/observation-preview').json()
+        body={'expected_sha256':preview['document_sha256'],'row_numbers':[2,3],'acknowledged':True}
+        self.assertEqual(self.client.post(path+'/approve-observations',json={**body,'expected_sha256':'0'*64}).status_code,409)
+        self.assertEqual(self.client.post(path+'/approve-observations',json=body).status_code,409)
+        self.assertEqual(self.client.get(self.prefix+'/entries').json(),[])
+        self.login('outsider','beta');self.assertEqual(self.client.get(path+'/observation-preview').status_code,404)
+
+    def test_private_source_consent_is_rechecked_at_approval(self):
+        self.login('patient');document=self.upload(self.observation_source()).json()['id'];path=f'/api/dev/documents/{document}'
+        self.login();self.assertEqual(self.client.get(path+'/observation-preview').status_code,404)
+        self.login('patient');self.client.post(self.prefix+'/document-consents',json={'clinician_username':'doctor','granted':True}).raise_for_status()
+        self.login();preview=self.client.get(path+'/observation-preview').json()
+        self.login('patient');self.client.post(self.prefix+'/document-consents',json={'clinician_username':'doctor','granted':False}).raise_for_status()
+        self.login();self.assertEqual(self.client.post(path+'/approve-observations',json={'expected_sha256':preview['document_sha256'],'row_numbers':[2],'acknowledged':True}).status_code,404)
+        self.assertEqual(self.client.get(self.prefix+'/entries').json(),[])
+
     def test_structured_records_trends_and_entered_reference_flags(self):
         entries = [
             {"kind": "medication", "label": "Synthetic medication", "dose": "Entered test dose; not a prescribing instruction"},

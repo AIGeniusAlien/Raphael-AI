@@ -1,6 +1,8 @@
 import Foundation
 import WebKit
 import Combine
+import UniformTypeIdentifiers
+import UIKit
 
 @MainActor
 final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate, WKUIDelegate {
@@ -20,6 +22,12 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     private var recoveringWorkspace = false
     private static let recoveryProblem = "The secure web session stopped. Retry replaces this private workspace; unsaved changes may be lost."
     private var nativeCookie: HTTPCookie?
+    @Published private(set) var nativeExportSummary: NativeExportSummary?
+    @Published private(set) var nativeExportTicket: NativeExportTicket?
+    @Published private(set) var nativeExportBusy = false
+    @Published private(set) var nativeExportStatus = "No export prepared."
+    private var nativeExportEpoch = 0
+    private var nativeExportTask: Task<Void,Never>?
     @Published private(set) var loading = false
     @Published var problem: String?
     @Published var externalSource: URL?
@@ -131,6 +139,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     }
 
     func suspendWorkspaceProbe() {
+        cancelNativeExport()
         foregroundProbeEpoch += 1
         if recoveringWorkspace {
             recoveringWorkspace = false
@@ -235,9 +244,104 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         }
     }
 
+    func cancelNativeExport() {
+        nativeExportEpoch += 1
+        nativeExportTask?.cancel();nativeExportTask = nil
+        nativeExportTicket?.invalidate();nativeExportTicket = nil
+        nativeExportSummary = nil
+        nativeExportBusy = false
+        nativeExportStatus = "Prepared export cleared. Already copied or shared data is outside Raphael's control."
+    }
+
+    private func exportContext(_ expected: NativeIdentity, _ epoch: Int) throws {
+        guard !Task.isCancelled, nativeExportEpoch == epoch, identity == expected,
+              expected.role == "patient", !authenticating else { throw URLError(.cancelled) }
+    }
+
+    /// Every transfer fetches a new own-record snapshot and rechecks the same
+    /// server session AFTER the bounded response. No stale preview is exported.
+    private func authorizedNativeExport(_ expected: NativeIdentity, _ epoch: Int) async throws -> Data {
+        try exportContext(expected,epoch)
+        let (data,response) = try await request("api/dev/account/export",maximumBytes:NativePatientExport.maximumBytes)
+        try exportContext(expected,epoch)
+        if response.statusCode == 401 { await clearAuthentication();throw URLError(.userAuthenticationRequired) }
+        guard response.statusCode == 200, response.mimeType == "application/json" else { throw URLError(.badServerResponse) }
+        _ = try NativePatientExport.inspect(data,expected:expected)
+        let (sessionData,sessionResponse) = try await request("api/dev/session")
+        try exportContext(expected,epoch)
+        guard sessionResponse.statusCode == 200,
+              (try? JSONDecoder().decode(NativeIdentity.self,from:sessionData)) == expected else {
+            if sessionResponse.statusCode == 401 || sessionResponse.statusCode == 200 { await clearAuthentication() }
+            throw URLError(.userAuthenticationRequired)
+        }
+        return data
+    }
+
+    func prepareNativeExport() {
+        guard let expected = identity, expected.role == "patient", !nativeExportBusy else { return }
+        cancelNativeExport()
+        let epoch = nativeExportEpoch
+        nativeExportBusy = true;nativeExportStatus = "Preparing an authorized, bounded record snapshot…"
+        nativeExportTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let data = try await self.authorizedNativeExport(expected,epoch)
+                let summary = try NativePatientExport.inspect(data,expected:expected)
+                try self.exportContext(expected,epoch)
+                self.nativeExportSummary = summary
+                self.nativeExportBusy = false
+                self.nativeExportStatus = "Review the scope before copying or sharing. Data is fetched again at transfer time."
+            } catch {
+                guard self.nativeExportEpoch == epoch else { return }
+                self.nativeExportBusy = false;self.nativeExportSummary = nil
+                self.nativeExportStatus = "Export unavailable. Nothing was copied or shared. Check your session and connection,then prepare again."
+            }
+        }
+    }
+
+    func copyNativeExport() {
+        guard let expected = identity, expected.role == "patient", nativeExportSummary != nil, !nativeExportBusy else { return }
+        let epoch = nativeExportEpoch
+        nativeExportBusy = true;nativeExportStatus = "Rechecking authorization before copying…"
+        nativeExportTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let data = try await self.authorizedNativeExport(expected,epoch)
+                try self.exportContext(expected,epoch)
+                // An intentional export is a disclosure boundary. Do not erase
+                // a user's later clipboard on logout. Ask the OS for local-only
+                // delivery and60s expiry;copies made elsewhere cannot be recalled.
+                UIPasteboard.general.setItems([[UTType.json.identifier:data,
+                    UTType.utf8PlainText.identifier:String(decoding:data,as:UTF8.self)]],
+                    options:[.localOnly:true,.expirationDate:Date().addingTimeInterval(60)])
+                self.nativeExportSummary = nil;self.nativeExportBusy = false
+                self.nativeExportStatus = "Sensitive JSON copied locally; clipboard expiry requested in 60 seconds. Copies made elsewhere cannot be recalled."
+            } catch {
+                guard self.nativeExportEpoch == epoch else { return }
+                self.nativeExportSummary = nil;self.nativeExportBusy = false
+                self.nativeExportStatus = "Export unavailable. Nothing was copied. Prepare again after checking your session."
+            }
+        }
+    }
+
+    func beginNativeExportSharing() {
+        guard let expected = identity, expected.role == "patient", nativeExportSummary != nil, !nativeExportBusy else { return }
+        nativeExportTicket?.invalidate()
+        nativeExportTicket = NativeExportTicket(identity:expected,epoch:nativeExportEpoch)
+        nativeExportStatus = "Choose a destination deliberately. Backgrounding or session loss cancels pending export access."
+    }
+
+    func dataForNativeExportSharing(_ ticket: NativeExportTicket) async throws -> Data {
+        guard ticket.isValid else { throw URLError(.cancelled) }
+        let data = try await authorizedNativeExport(ticket.identity,ticket.epoch)
+        try exportContext(ticket.identity,ticket.epoch)
+        guard ticket.isValid, nativeExportTicket?.id == ticket.id else { throw URLError(.cancelled) }
+        return data
+    }
+
     // One memory-only cookie store is shared explicitly by native HTTP and WebKit.
     // No password/token is evaluated as JavaScript or written to UserDefaults/disk.
-    private func request(_ path: String, body: Data? = nil) async throws -> (Data, HTTPURLResponse) {
+    private func request(_ path: String, body: Data? = nil, maximumBytes: Int = 65536) async throws -> (Data, HTTPURLResponse) {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpShouldSetCookies = false
         configuration.httpCookieStorage = nil
@@ -264,8 +368,9 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
               http.url?.host == self.configuration.origin.host else { throw URLError(.badServerResponse) }
         var data = Data()
         for try await byte in bytes {
-            guard data.count < 65536 else { throw URLError(.dataLengthExceedsMaximum) }
+            guard data.count < maximumBytes else { throw URLError(.dataLengthExceedsMaximum) }
             data.append(byte)
+            if data.count % 16384 == 0 { try Task.checkCancellation();await Task.yield() }
         }
         return (data, http)
     }
@@ -344,6 +449,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     }
 
     private func clearAuthentication() async {
+        cancelNativeExport()
         authenticationEpoch += 1
         let epoch = authenticationEpoch
         let alreadyAuthenticating = authenticating
@@ -359,6 +465,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
 
     func signOut() {
         guard !authenticating else { return }
+        cancelNativeExport()
         authenticationEpoch += 1
         authenticating = true
         authenticationStatus = "Signing out securely"
@@ -415,7 +522,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         if url.absoluteString == "about:blank", webView.url == nil { decisionHandler(.allow); return }
         switch NavigationPolicy(origin: configuration.origin).decision(for: url) {
         case .sameOrigin:
-            if action.shouldPerformDownload { problem = "Downloads are unavailable in the native development app. Use the protected web application for an explicit export."; decisionHandler(.cancel) }
+            if action.shouldPerformDownload { problem = "Arbitrary downloads are unavailable. Use Protected record export in native settings for an explicit own-record JSON export;individual file downloads remain disabled."; decisionHandler(.cancel) }
             else { decisionHandler(.allow) }
         case .externalCDC:
             externalSource = url
@@ -517,4 +624,66 @@ struct NativeCredentials: Encodable {
 struct NativeRecordChoice: Decodable, Identifiable {
     let id: Int
     let name: String
+}
+
+
+struct NativeExportSummary {
+    let records: Int
+    let approvedNotes: Int
+    let byteCount: Int
+    let recordNames: [String]
+    let generatedAt: String
+}
+
+enum NativePatientExport {
+    static let maximumBytes = 5 * 1024 * 1024
+    static func inspect(_ data: Data, expected: NativeIdentity) throws -> NativeExportSummary {
+        guard expected.role == "patient", !data.isEmpty, data.count <= maximumBytes,
+              let root = try JSONSerialization.jsonObject(with:data) as? [String:Any],
+              root["format"] as? String == "raphael-synthetic-patient-export-v1",
+              let account = root["account"] as? [String:Any],
+              let generated = root["generated_at"] as? String, !generated.isEmpty,
+              let patients = root["patients"] as? [[String:Any]], patients.count <= 500 else { throw URLError(.cannotParseResponse) }
+        let identity = try JSONDecoder().decode(NativeIdentity.self,from:JSONSerialization.data(withJSONObject:account))
+        guard identity == expected else { throw URLError(.userAuthenticationRequired) }
+        let collections = ["entries","approved_notes","appointments","documents","shared_messages","patient_reports","intakes","approved_summaries"]
+        for key in collections {
+            guard let rows = root[key] as? [[String:Any]], rows.count <= 500 else { throw URLError(.cannotParseResponse) }
+        }
+        let names = try patients.map { row -> String in
+            guard let id = row["id"] as? Int, id > 0, let name = row["name"] as? String, !name.isEmpty else { throw URLError(.cannotParseResponse) }
+            return name
+        }
+        // Defense against accidentally returning credential tables or drafts.
+        func credentials(_ value:Any,depth:Int = 0) -> Bool {
+            if depth > 32 { return true }
+            if let object = value as? [String:Any] {
+                let forbidden:Set<String> = ["password","password_hash","token_hash","encrypted_secret","mfa_secret","recovery_codes","access_token","refresh_token","session_token","api_key"]
+                return object.contains { forbidden.contains($0.key.lowercased()) || credentials($0.value,depth:depth+1) }
+            }
+            if let array = value as? [Any] { return array.contains { credentials($0,depth:depth+1) } }
+            return false
+        }
+        guard let entries = root["entries"] as? [[String:Any]], let notes = root["approved_notes"] as? [[String:Any]],
+              !credentials(root), !entries.contains(where:{$0["status"] as? String == "draft"}) else { throw URLError(.cannotParseResponse) }
+        for note in notes {
+            guard let approved = note["approved_by"] as? Int, approved > 0,
+                  let at = note["approved_at"] as? String, !at.isEmpty else { throw URLError(.cannotParseResponse) }
+        }
+        return NativeExportSummary(records:patients.count,approvedNotes:notes.count,byteCount:data.count,recordNames:Array(names.prefix(10)),generatedAt:generated)
+    }
+}
+
+/// A short-lived revocable capability,not cached patient bytes. Item-provider
+/// requests fetch fresh server-authorized data;invalidation prevents late delivery.
+final class NativeExportTicket: Identifiable, @unchecked Sendable {
+    let id = UUID()
+    let identity: NativeIdentity
+    let epoch: Int
+    private let expires = Date().addingTimeInterval(60)
+    private let lock = NSLock()
+    private var valid = true
+    init(identity:NativeIdentity,epoch:Int) { self.identity = identity;self.epoch = epoch }
+    var isValid:Bool { lock.lock();defer{lock.unlock()};return valid && Date() < expires }
+    func invalidate() { lock.lock();valid = false;lock.unlock() }
 }

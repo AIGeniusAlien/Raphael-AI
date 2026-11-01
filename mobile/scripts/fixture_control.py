@@ -45,7 +45,7 @@ class FixtureControl:
                 else:raise ValueError()
             except (ValueError,TypeError):return await JSONResponse({'detail':'Unsupported fixture operation.'},422)(scope,receive,send)
             return await JSONResponse({'applied':True,'scope':'disposable_synthetic_fixture'})(scope,receive,send)
-        if scope['type']=='http' and scope.get('path') in ('/readyz','/api/dev/session'):
+        if scope['type']=='http' and scope.get('path') in ('/readyz','/api/dev/session','/api/dev/account/export'):
             if self.readiness=='unavailable':return await JSONResponse({'status':'not_ready','scope':'synthetic-development'},503)(scope,receive,send)
             if self.readiness=='slow':await asyncio.sleep(16)
         await self.app(scope,receive,send)

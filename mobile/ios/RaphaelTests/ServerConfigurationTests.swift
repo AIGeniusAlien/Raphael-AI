@@ -2,6 +2,7 @@ import XCTest
 import SwiftUI
 import UIKit
 import WebKit
+import UniformTypeIdentifiers
 @testable import Raphael
 
 final class ServerConfigurationTests: XCTestCase {
@@ -126,6 +127,57 @@ final class ServerConfigurationTests: XCTestCase {
         } catch {
             // Expected:the native sign-out caller takes its warning/local-clear path.
         }
+    }
+
+    private func exportIdentity(_ role:String = "patient",id:Int = 7) throws -> NativeIdentity {
+        try JSONDecoder().decode(NativeIdentity.self,from:JSONSerialization.data(withJSONObject:["id":id,"tenant":"synthetic","username":"synthetic-export","role":role]))
+    }
+    private func exportFixture() -> [String:Any] {
+        ["format":"raphael-synthetic-patient-export-v1","generated_at":"2026-01-01T00:00:00+00:00",
+         "account":["id":7,"tenant":"synthetic","username":"synthetic-export","role":"patient"],
+         "patients":[["id":9,"name":"Synthetic own patient"]],
+         "entries":[["id":1,"status":"patient_reported"]],
+         "approved_notes":[["id":1,"content":"Synthetic approved note","approved_by":8,"approved_at":"2026-01-01"]],
+         "appointments":[],"documents":[],"shared_messages":[],"patient_reports":[],"intakes":[],"approved_summaries":[]]
+    }
+    func testNativePatientExportValidatesOwnAccountAndScope() throws {
+        let data = try JSONSerialization.data(withJSONObject:exportFixture())
+        let summary = try NativePatientExport.inspect(data,expected:exportIdentity())
+        XCTAssertEqual(summary.records,1);XCTAssertEqual(summary.approvedNotes,1)
+        XCTAssertEqual(summary.recordNames,["Synthetic own patient"]);XCTAssertEqual(summary.byteCount,data.count)
+        XCTAssertThrowsError(try NativePatientExport.inspect(data,expected:exportIdentity(id:8)))
+        XCTAssertThrowsError(try NativePatientExport.inspect(data,expected:exportIdentity("clinician")))
+    }
+    func testNativePatientExportRejectsCredentialDraftMalformedAndOversizedPayloads() throws {
+        let user = try exportIdentity()
+        for key in ["password_hash","token_hash","encrypted_secret","recovery_codes","access_token"] {
+            var payload=exportFixture();payload["unexpected"]=[key:"SYNTHETIC-MUST-NOT-EXPORT"]
+            XCTAssertThrowsError(try NativePatientExport.inspect(JSONSerialization.data(withJSONObject:payload),expected:user))
+        }
+        var draft=exportFixture();draft["entries"]=[["status":"draft"]]
+        XCTAssertThrowsError(try NativePatientExport.inspect(JSONSerialization.data(withJSONObject:draft),expected:user))
+        var unapproved=exportFixture();unapproved["approved_notes"]=[["id":1,"approved_by":NSNull()]]
+        XCTAssertThrowsError(try NativePatientExport.inspect(JSONSerialization.data(withJSONObject:unapproved),expected:user))
+        var many=exportFixture();many["patients"]=Array(repeating:["id":9,"name":"Synthetic"] as [String:Any],count:501)
+        XCTAssertThrowsError(try NativePatientExport.inspect(JSONSerialization.data(withJSONObject:many),expected:user))
+        var missing=exportFixture();missing.removeValue(forKey:"documents")
+        XCTAssertThrowsError(try NativePatientExport.inspect(JSONSerialization.data(withJSONObject:missing),expected:user))
+        XCTAssertThrowsError(try NativePatientExport.inspect(Data("not JSON".utf8),expected:user))
+        XCTAssertThrowsError(try NativePatientExport.inspect(Data(repeating:32,count:NativePatientExport.maximumBytes+1),expected:user))
+    }
+    @MainActor
+    func testCancelledNativeExportProviderCannotLoadUnauthenticatedData() async throws {
+        let configuration=try XCTUnwrap(ServerConfiguration(urlString:"https://raphael.example.org",boundHost:"raphael.example.org"))
+        let session=PatientWebSession(configuration:configuration)
+        let ticket=NativeExportTicket(identity:try exportIdentity(),epoch:0)
+        let provider=NativeExportActivity.provider(session:session,ticket:ticket)
+        ticket.invalidate()
+        let finished=expectation(description:"Cancelled provider rejects data")
+        provider.loadDataRepresentation(forTypeIdentifier:UTType.json.identifier) { data,error in
+            XCTAssertNil(data);XCTAssertNotNil(error);finished.fulfill()
+        }
+        await fulfillment(of:[finished],timeout:5)
+        XCTAssertNil(session.nativeExportSummary);XCTAssertNil(session.nativeExportTicket)
     }
 
 }

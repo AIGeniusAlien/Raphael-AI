@@ -111,6 +111,7 @@ struct PatientApplication: View {
                 .accessibilityElement(children: .combine)
             }
         }
+        .onChange(of:session.identity) { _,identity in if identity == nil { settings = false } }
         .onAppear { if session.identity != nil && session.webView.url == nil { session.open(.dashboard) } }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }

@@ -43,7 +43,7 @@ def prepare():
     engine=create_engine(database)
     try:
         migrate(engine)
-        for name,role in (('native-patient','patient'),('native-clinician','clinician'),('native-mfa-patient','patient'),('native-expiry-patient','patient'),('native-consent-patient','patient'),('native-consultant','clinician')):
+        for name,role in (('native-patient','patient'),('native-clinician','clinician'),('native-mfa-patient','patient'),('native-expiry-patient','patient'),('native-consent-patient','patient'),('native-consultant','clinician'),('native-export-patient','patient')):
             create_dev_user(engine,'native-ci',name,password,role)
     finally:engine.dispose()
     certificate=private/'certificate.pem';key=private/'key.pem';config=private/'openssl.cnf'
@@ -95,7 +95,7 @@ def prepare():
         note=client.post(f"/api/dev/patients/{record.json()['id']}/notes",json={'content':'Synthetic native approved note. No real clinical findings.'});note.raise_for_status()
         client.post(f"/api/dev/notes/{note.json()['id']}/approve",json={}).raise_for_status()
         client.post('/api/dev/patients',json={'name':'Synthetic native unlinked record'}).raise_for_status()
-        for suffix in ('mfa','expiry','consent'):
+        for suffix in ('mfa','expiry','consent','export'):
             client.post('/api/dev/patients',json={'name':'Synthetic native '+suffix+' patient','patient_username':'native-'+suffix+'-patient'}).raise_for_status()
         client.post('/api/dev/logout',json={}).raise_for_status()
         client.post('/api/dev/login',json={'tenant':'native-ci','username':'native-mfa-patient','password':password}).raise_for_status()
@@ -132,7 +132,7 @@ def cleanup():
         from datetime import datetime,timezone
         total=connection.execute('SELECT count(*) FROM dev_sessions').fetchone()[0]
         remaining=connection.execute('SELECT count(*) FROM dev_sessions WHERE expires_at>?',(datetime.now(timezone.utc).isoformat(),)).fetchone()[0]
-        events={event:count for event,count in connection.execute("SELECT event,count(*) FROM dev_audit WHERE event IN ('login','logout','read_patient','read_notes','list_patients') GROUP BY event")}
+        events={event:count for event,count in connection.execute("SELECT event,count(*) FROM dev_audit WHERE event IN ('login','logout','read_patient','read_notes','list_patients','export_own_patient_records') GROUP BY event")}
     routes=Counter()
     for line in (private/'backend.log').read_text(errors='replace').splitlines():
         if line.startswith('RAPHAEL_CI_HTTP '):

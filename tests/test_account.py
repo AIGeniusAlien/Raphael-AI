@@ -47,3 +47,22 @@ class AccountTests(unittest.TestCase):
   self.login('admin');self.client.post('/api/dev/account/deletion-review/'+str(first['id']),json={'note':'Retention policy review pending;no erasure.'}).raise_for_status()
   self.login();self.assertEqual(self.client.post(path,json=body).json()['state'],'ACKNOWLEDGED');self.assertTrue(self.client.get('/api/dev/patients').json())
   migrate(self.engine);self.assertEqual(self.client.get(path).json()[0]['state'],'ACKNOWLEDGED');self.client.post(path+'/'+str(first['id'])+'/cancel',json={}).raise_for_status();self.assertEqual(self.client.get(path).json()[0]['state'],'CANCELLED')
+
+ def test_export_rejects_clinicians_and_revoked_owner_session(self):
+  self.login('doctor');self.assertEqual(self.client.get('/api/dev/account/export').status_code,403)
+  self.login();owner=TestClient(self.app);self.addCleanup(owner.close);self.login(client=owner)
+  sessions=owner.get('/api/dev/account/sessions').json()
+  others=[row for row in sessions if not row['current']]
+  self.assertTrue(others)
+  for row in others:owner.post('/api/dev/account/sessions/'+row['id']+'/revoke',json={}).raise_for_status()
+  self.assertEqual(self.client.get('/api/dev/account/export').status_code,401)
+  self.assertEqual(owner.get('/api/dev/account/export').status_code,200)
+
+ def test_export_limits_fail_without_a_partial_attachment(self):
+  with self.engine.begin() as c:
+   doctor=c.execute(text("SELECT id FROM dev_users WHERE tenant='one' AND username='doctor'")).scalar_one()
+   c.execute(text("INSERT INTO dev_notes(patient_id,author_id,content,status,created_at,approved_by,approved_at) VALUES(:p,:u,:v,'approved','2020-01-01',:u,'2020-01-01')"),{'p':self.pid,'u':doctor,'v':'SYNTHETIC-OVERSIZE-'+'x'*(5*1024*1024)})
+  result=self.client.get('/api/dev/account/export')
+  self.assertEqual(result.status_code,413)
+  self.assertNotIn('content-disposition',result.headers)
+  self.assertNotIn('SYNTHETIC-OVERSIZE',result.text)

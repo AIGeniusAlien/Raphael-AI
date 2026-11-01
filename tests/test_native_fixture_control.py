@@ -36,8 +36,10 @@ class NativeFixtureControlTests(unittest.TestCase):
         self.assertEqual(self.client.get('/readyz').status_code,200)
         with sqlite3.connect(self.private/'synthetic.db') as c:self.assertEqual(c.execute("SELECT count(*) FROM dev_sessions WHERE expires_at='2099-01-01'").fetchone()[0],2)
 
-    def test_failure_and_recovery_affect_only_readiness(self):
+    def test_failure_and_recovery_affect_only_fixed_native_read_paths(self):
         self.assertEqual(self.control('unavailable').status_code,200);self.assertEqual(self.client.get('/readyz').status_code,503)
+        self.assertEqual(self.client.get('/api/dev/account/export').status_code,503)
+        self.assertEqual(self.client.get('/unrelated').status_code,404)
         self.assertEqual(self.control('healthy').status_code,200);self.assertEqual(self.client.get('/readyz').status_code,200)
         self.assertEqual(self.control('arbitrary-command').status_code,422)
         self.assertEqual(self.client.post('/_ci/native-control',content=b'x'*257,headers={'X-Raphael-CI-Control':self.token}).status_code,413)

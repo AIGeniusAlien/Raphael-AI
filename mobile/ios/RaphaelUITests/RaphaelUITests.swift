@@ -378,6 +378,86 @@ final class RaphaelUITests: XCTestCase {
         let screenshot=XCTAttachment(screenshot:app.screenshot());screenshot.name="Actual largest Dynamic Type synthetic sign-in";screenshot.lifetime = .keepAlways;add(screenshot)
     }
 
+    private func visibleExportAction(_ app:XCUIApplication,_ identifier:String) throws -> XCUIElement {
+        let button=app.buttons[identifier]
+        for upward in [true,false] {
+            for _ in 0..<7 {
+                if button.exists && button.isHittable { return button }
+                if upward { app.swipeUp() } else { app.swipeDown() }
+            }
+        }
+        try requireUI(button.exists && button.isHittable,"Native export action must be reachable.")
+        return button
+    }
+
+    @MainActor
+    func testNativePatientExportCopyAndSystemShareCancellation() async throws {
+        try configuredFixture();continueAfterFailure=true
+        let app=XCUIApplication();app.launch();try signIn(app,username:"native-patient")
+        try tapHeader(app.buttons["Privacy and session settings"])
+        try tapHeader(visibleExportAction(app,"native-export-prepare"))
+        try requireUI(app.staticTexts["native-export-summary"].waitForExistence(timeout:25),"Authorized export summary must appear.")
+        try tapHeader(visibleExportAction(app,"native-export-copy"))
+        try tapHeader(app.buttons["native-export-confirm-copy"])
+        let copied=expectation(for:NSPredicate(format:"label BEGINSWITH %@","Sensitive JSON copied locally"),evaluatedWith:app.staticTexts["native-export-status"])
+        await fulfillment(of:[copied],timeout:25)
+        let text=try XCTUnwrap(UIPasteboard.general.string,"A deliberate native export must reach the real simulator clipboard.")
+        let payload=try XCTUnwrap(JSONSerialization.jsonObject(with:Data(text.utf8)) as? [String:Any])
+        XCTAssertEqual(payload["format"] as? String,"raphael-synthetic-patient-export-v1")
+        let records=try XCTUnwrap(payload["patients"] as? [[String:Any]])
+        XCTAssertEqual(records.count,1);XCTAssertEqual(records.first?["name"] as? String,"Synthetic native patient")
+        XCTAssertFalse(text.contains("Synthetic native unlinked record"));XCTAssertFalse(text.contains("password_hash"));XCTAssertFalse(text.contains(fixturePassword))
+        UIPasteboard.general.items=[]
+        try tapHeader(visibleExportAction(app,"native-export-prepare"))
+        try requireUI(app.staticTexts["native-export-summary"].waitForExistence(timeout:25),"A new export must be prepared before another delivery.")
+        try tapHeader(visibleExportAction(app,"native-export-share"))
+        try tapHeader(app.buttons["native-export-confirm-share"])
+        try requireUI(app.buttons["native-export-share-cancel"].waitForExistence(timeout:15),"Real system share container must be presented.")
+        app.buttons["native-export-share-cancel"].tap()
+        try requireUI(app.buttons["Done"].waitForExistence(timeout:15),"Cancelling share must return settings.")
+        app.buttons["Done"].tap()
+        // Use the real existing web sign-out,not a synthetic cleanup mutation.
+        try requireUI(app.buttons["Sign out"].waitForExistence(timeout:15),"Patient portal sign-out must remain available.")
+        app.buttons["Sign out"].tap()
+        try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30),"Export must preserve normal session invalidation.")
+    }
+
+    @MainActor
+    func testNativeExportFailureCancellationAndOwnerRevocation() async throws {
+        try configuredFixture();continueAfterFailure=true
+        UIPasteboard.general.string="Synthetic export cancellation sentinel"
+        let before=UIPasteboard.general.changeCount
+        let http=FixtureHTTPS();defer{http.close()}
+        let app=XCUIApplication();app.launch();try signIn(app,username:"native-export-patient")
+        try tapHeader(app.buttons["Privacy and session settings"])
+        try await http.control("unavailable",token:fixtureControl)
+        try tapHeader(visibleExportAction(app,"native-export-prepare"))
+        let failed=expectation(for:NSPredicate(format:"label BEGINSWITH %@","Export unavailable."),evaluatedWith:app.staticTexts["native-export-status"])
+        await fulfillment(of:[failed],timeout:25)
+        XCTAssertFalse(app.buttons["native-export-copy"].exists)
+        XCTAssertEqual(UIPasteboard.general.changeCount,before)
+        try await http.control("healthy",token:fixtureControl)
+        try await http.control("slow",token:fixtureControl)
+        try tapHeader(visibleExportAction(app,"native-export-prepare"))
+        try tapHeader(visibleExportAction(app,"native-export-cancel"))
+        XCTAssertFalse(app.staticTexts["native-export-summary"].exists)
+        try await http.control("healthy",token:fixtureControl)
+        try tapHeader(visibleExportAction(app,"native-export-prepare"))
+        try requireUI(app.staticTexts["native-export-summary"].waitForExistence(timeout:25),"A cancelled export can be prepared again.")
+        let owner=try await http.login("native-export-patient",password:fixturePassword)
+        let (bytes,_)=try await http.call("api/dev/account/sessions",cookie:owner)
+        let sessions=try XCTUnwrap(JSONSerialization.jsonObject(with:bytes) as? [[String:Any]])
+        let others=sessions.filter{($0["current"] as? Bool)==false};XCTAssertEqual(others.count,1)
+        for row in others {
+            let id=try XCTUnwrap(row["id"] as? String)
+            let (_,response)=try await http.call("api/dev/account/sessions/\(id)/revoke",cookie:owner,body:[:]);XCTAssertEqual(response.statusCode,200)
+        }
+        try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:40),"Owner revocation must dismiss export/settings and clear prepared data.")
+        XCTAssertFalse(app.buttons["native-export-copy"].exists)
+        XCTAssertEqual(UIPasteboard.general.changeCount,before)
+        let loggedOut=try await http.logout(owner);XCTAssertEqual(loggedOut,200)
+    }
+
     func testProtectedDocumentConsentAndFullChartRevocationOverActualHTTPS() async throws {
         try configuredFixture()
         let http=FixtureHTTPS();defer {http.close()}

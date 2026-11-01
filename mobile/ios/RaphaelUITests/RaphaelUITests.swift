@@ -281,9 +281,9 @@ final class RaphaelUITests: XCTestCase {
         try requireUI(app.staticTexts[username+" · Patient workspace · native-ci"].waitForExistence(timeout:45),"Actual authenticated patient web workspace must appear.")
     }
 
-    private func tapHeader(_ element: XCUIElement) {
-        XCTAssertTrue(element.waitForExistence(timeout:10))
-        XCTAssertFalse(element.frame.isEmpty)
+    private func tapHeader(_ element: XCUIElement) throws {
+        try requireUI(element.waitForExistence(timeout:10),"Visible native action must exist.")
+        try requireUI(!element.frame.isEmpty,"Visible native action must have a real target frame.")
         element.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.5)).tap()
     }
 
@@ -306,7 +306,7 @@ final class RaphaelUITests: XCTestCase {
         // authenticated web workspace after one real user retry. Never bypass
         // sign-in or accept a native-only identity as web-session proof.
         if !resumed && problem.exists && problem.label.hasPrefix("The secure web session stopped.") {
-            app.buttons["Retry this section"].tap()
+            try tapHeader(app.buttons["Retry this section"])
             resumed = identity.waitForExistence(timeout:30)
             print("::notice title=Raphael native background recovery::Explicit user retry after reported WebKit content-process termination;authenticated web identity remains required.")
         }
@@ -338,7 +338,7 @@ final class RaphaelUITests: XCTestCase {
         try configuredFixture();continueAfterFailure=true
         let http=FixtureHTTPS();defer {http.close()}
         let app=XCUIApplication();app.launch();try signIn(app,username:"native-expiry-patient")
-        tapHeader(app.buttons["Privacy and session settings"])
+        try tapHeader(app.buttons["Privacy and session settings"])
         try await http.control("unavailable",token:fixtureControl)
         app.buttons["Check backend connection"].tap()
         let status=app.staticTexts["native-readiness-status"]

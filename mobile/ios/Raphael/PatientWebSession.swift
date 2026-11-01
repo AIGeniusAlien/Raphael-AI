@@ -401,6 +401,10 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     }
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         guard webView === self.webView else { return }
+        // This is the already-stopped old context while the user's recovery
+        // request is being verified. Its late notification must not cancel the
+        // new attempt. A death during the fresh cookie handoff still fails closed.
+        if recoveringWorkspace && workspaceNeedsRecovery { return }
         loading = false
         markWorkspaceStopped()
     }

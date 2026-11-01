@@ -1,5 +1,6 @@
 import XCTest
 import UIKit
+import Vision
 
 final class RaphaelUITests: XCTestCase {
     private let fixturePassword = "__CI_SYNTHETIC_PASSWORD__"
@@ -225,6 +226,33 @@ final class RaphaelUITests: XCTestCase {
         if fixturePassword.hasPrefix("__CI_") || fixtureControl.hasPrefix("__CI_") { throw XCTSkip("Private actual HTTPS fixture required;no extended acceptance implied.") }
     }
 
+    private func foregroundFailureState(_ app: XCUIApplication) -> String {
+        let screenshot = app.screenshot()
+        let attachment = XCTAttachment(screenshot:screenshot)
+        attachment.name = "Synthetic foreground failure diagnostic"
+        attachment.lifetime = .keepAlways;add(attachment)
+        var flags:[String:Any] = ["application_state":app.state.rawValue,
+            "native_privacy_cover_ax":app.staticTexts["Private workspace hidden"].exists,
+            "native_sections_ax":app.buttons["Patient sections"].exists,
+            "native_notice_ax":app.staticTexts["synthetic-notice"].exists,
+            "sign_in_button_ax":app.buttons["Sign in"].exists,
+            "ocr_available":false]
+        if let image=screenshot.image.cgImage {
+            let request=VNRecognizeTextRequest();request.recognitionLevel = .accurate;request.usesLanguageCorrection=false
+            do {
+                try VNImageRequestHandler(cgImage:image,options:[:]).perform([request])
+                let text=(request.results ?? []).compactMap{$0.topCandidates(1).first?.string}.joined(separator:" ").lowercased()
+                // Never publish recognized text: only fixed synthetic UI flags.
+                flags["ocr_available"]=true
+                flags["pixels_privacy_cover"]=text.contains("private workspace hidden")
+                flags["pixels_patient_workspace"]=text.contains("patient workspace")
+                flags["pixels_sign_in"]=text.contains("sign in")
+                flags["pixels_synthetic_notice"]=text.contains("synthetic development")
+            } catch { flags["ocr_available"]=false }
+        }
+        let data=(try? JSONSerialization.data(withJSONObject:flags,options:[.sortedKeys])) ?? Data()
+        return String(data:data,encoding:.utf8) ?? "bounded diagnostic unavailable"
+    }
     private enum FixtureFailure: Error { case requiredUIState }
     private func requireUI(_ condition: Bool, _ message: String, file: StaticString = #filePath, line: UInt = #line) throws {
         guard condition else {
@@ -284,7 +312,8 @@ final class RaphaelUITests: XCTestCase {
         }
         let stopped = problem.exists && problem.label.hasPrefix("The secure web session stopped.")
         let welcome = app.staticTexts["Welcome to Raphael"].exists
-        try requireUI(resumed,"Actual authenticated web workspace must survive or visibly recover after background;state=\(app.state.rawValue),reportedWebTermination=\(stopped),nativeSignIn=\(welcome).")
+        let observed = resumed ? "authenticated web identity visible" : foregroundFailureState(app)
+        try requireUI(resumed,"Actual authenticated web workspace must survive or visibly recover after background;reportedWebTermination=\(stopped),nativeSignIn=\(welcome),observed=\(observed).")
         let owner=try await http.login("native-mfa-patient",password:fixturePassword,factor:recoverySecond)
         let (sessionData,status)=try await http.call("api/dev/account/sessions",cookie:owner)
         XCTAssertEqual(status.statusCode,200)

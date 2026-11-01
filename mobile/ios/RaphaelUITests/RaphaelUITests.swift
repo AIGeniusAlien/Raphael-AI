@@ -270,7 +270,21 @@ final class RaphaelUITests: XCTestCase {
         try requireUI(app.wait(for:.runningBackground,timeout:10) || app.state == .runningBackgroundSuspended,"App must reach the background before activation.")
         app.activate()
         try requireUI(app.wait(for:.runningForeground,timeout:20),"App must return to foreground.")
-        try requireUI(app.staticTexts["native-mfa-patient · Patient workspace · native-ci"].waitForExistence(timeout:30),"Actual authenticated web workspace must survive background and foreground.")
+        let identity = app.staticTexts["native-mfa-patient · Patient workspace · native-ci"]
+        var resumed = identity.waitForExistence(timeout:20)
+        let problem = app.staticTexts["native-workspace-problem"]
+        // WebKit may legitimately terminate its content process in background.
+        // Accept only its explicit existing recovery UI,then prove the actual
+        // authenticated web workspace after one real user retry. Never bypass
+        // sign-in or accept a native-only identity as web-session proof.
+        if !resumed && problem.exists && problem.label.hasPrefix("The secure web session stopped.") {
+            app.buttons["Retry this section"].tap()
+            resumed = identity.waitForExistence(timeout:30)
+            print("::notice title=Raphael native background recovery::Explicit user retry after reported WebKit content-process termination;authenticated web identity remains required.")
+        }
+        let stopped = problem.exists && problem.label.hasPrefix("The secure web session stopped.")
+        let welcome = app.staticTexts["Welcome to Raphael"].exists
+        try requireUI(resumed,"Actual authenticated web workspace must survive or visibly recover after background;state=\(app.state.rawValue),reportedWebTermination=\(stopped),nativeSignIn=\(welcome).")
         let owner=try await http.login("native-mfa-patient",password:fixturePassword,factor:recoverySecond)
         let (sessionData,status)=try await http.call("api/dev/account/sessions",cookie:owner)
         XCTAssertEqual(status.statusCode,200)

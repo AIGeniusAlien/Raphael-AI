@@ -35,7 +35,7 @@ struct SettingsView: View {
                 }
                 if session.identity?.role == "patient" {
                     Section("Protected record export") {
-                        Text("Own linked records only. File bytes and unsigned clinician drafts are excluded. The snapshot is refreshed before copying or sharing.").font(.footnote)
+                        Text("Own linked records only, up to 500 rows per section and 5 MiB. File bytes and unsigned clinician drafts are excluded. The snapshot is refreshed before copying or sharing.").font(.footnote)
                         Text(session.nativeExportStatus).accessibilityIdentifier("native-export-status")
                         Button(session.nativeExportBusy ? "Preparing export" : "Prepare record export") { session.prepareNativeExport() }
                             .disabled(session.nativeExportBusy).accessibilityIdentifier("native-export-prepare")

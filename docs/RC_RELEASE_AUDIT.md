@@ -1,4 +1,6 @@
-> Product-completion update,2026-11-01 UTC: [Authoritative implementation and release gates](RAPHAEL_FINAL_LAUNCH_READINESS.md). Fresh live workflow FAILED CLOSED;historical successful runs below are not current acceptance. Native follow-up and exact-source results are recorded in the authoritative report. Reports below retain their historical source scope.
+> Ultimate increment,2026-11-01: [Authoritative implementation and release evidence](RAPHAEL_FINAL_LAUNCH_READINESS.md). Real supported physician/patient workflows now complete with strict screening;longitudinal review and clinician-approved tabular extraction are integrated. Earlier checkpoints below retain their original source scope.
+
+> Historical checkpoint before f9ee83f,2026-11-01 UTC: [Authoritative implementation and release gates](RAPHAEL_FINAL_LAUNCH_READINESS.md). Fresh live workflow FAILED CLOSED;historical successful runs below are not current acceptance. Native follow-up and exact-source results are recorded in the authoritative report. Reports below retain their historical source scope.
 
 # Release-candidate audit — 2026-10-28
 

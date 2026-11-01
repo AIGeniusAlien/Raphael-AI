@@ -1,0 +1,16 @@
+{
+  "scope": "single local uvicorn process;actual HTTP and SQLite;synthetic only",
+  "operations": 40,
+  "workers": 4,
+  "status_counts": {
+    "200": 40
+  },
+  "duration_seconds": 0.137,
+  "p50_ms": 11.962,
+  "p95_ms": 23.889,
+  "expected_records": 20,
+  "persisted_records": 20,
+  "provider_requests": 0,
+  "production_capacity_validated": false,
+  "status": "passed"
+}

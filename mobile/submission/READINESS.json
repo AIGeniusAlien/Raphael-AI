@@ -20,7 +20,7 @@
     "Provide owner Apple team,registered bundle,approved icon and real privacy/support URLs",
     "Approve applicable retention,intended-use and distribution policies"
   ],
-  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41264520128",
+  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41273265490",
   "simulator_unit_ui_tests": "CORE_AUTHENTICATED_ACCEPTANCE_PASS",
   "simulator_tests": {
     "passed": 14,
@@ -37,8 +37,8 @@
   },
   "audit_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
   "audit_date": "2026-11-01",
-  "authenticated_native_workflow": "PASS bounded core:typed/paste patient+clinician chart/note/logout/relaunch;7logins7logouts0sessions. Expiry/outage/accessibility/export/device acceptance remains incomplete.",
-  "native_source_commit": "ebe5628ff0a1b5d35a8f81d3b113e25bd6dfab71",
+  "authenticated_native_workflow": "PASS actual current4299e13:14passed0failed0skipped;typed/paste patient+clinician chart/note/logout/relaunch;7logins7logouts0sessions. Extended acceptance and distribution remain incomplete.",
+  "native_source_commit": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada",
   "remaining_engineering": [
     "Complete native expiry/outage/accessibility and protected export acceptance",
     "Implement policy-backed erasure,production identity/guardian and live PHI controls",

@@ -1,4 +1,4 @@
-> Product-completion increment: [Current implementation and release gates](docs/RAPHAEL_FINAL_LAUNCH_READINESS.md). Reports below retain their historical source scope.
+> Ultimate increment,2026-11-01: [Current implementation and release gates](docs/RAPHAEL_FINAL_LAUNCH_READINESS.md). Reports below retain their historical source scope.
 
 Release readiness:see [the2026-10-28 source-scoped audit](docs/RC_RELEASE_AUDIT.md). Historical test/live reports do not imply TestFlight or clinical-production approval.
 

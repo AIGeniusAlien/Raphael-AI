@@ -2,9 +2,9 @@
   "schema_version": 1,
   "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
   "starting_commit": "a7e79cb792121b794af6aca110816cd6d123843c",
-  "implementation_commit": "ebe5628ff0a1b5d35a8f81d3b113e25bd6dfab71",
+  "implementation_commit": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada",
   "release_decisions": {
-    "synthetic_local_web_demonstration": "FAIL",
+    "synthetic_local_web_demonstration": "PASS",
     "controlled_synthetic_testflight": "FAIL",
     "controlled_clinical_pilot": "FAIL",
     "clinical_production": "FAIL"
@@ -14,23 +14,23 @@
       "id": "synthetic_web_workflow",
       "status": "PASS",
       "cause": "Bounded synthetic development scope only.",
-      "attempted_remediation": "MFA/recovery and versioned paperwork integrated;237 Python/29 frontend/7 Chromium/5 structural cases passed.",
+      "attempted_remediation": "257Python/29frontend/7Chromium/5structural pass;includes approved tabular observations and patient-visible chronology.",
       "responsible_party": "Engineering",
       "next_verification": "Re-run python -m dev_verify --all --require-browser on exact reviewed source."
     },
     {
       "id": "real_evidence_workflow",
-      "status": "FAIL",
-      "cause": "Fresh real workflow failed closed at claim support;only historical complete workflow passed.",
-      "attempted_remediation": "Preserved failure;fixed safe checker subphase loss;one bounded checker-only replay passed without completing original workflow.",
+      "status": "PASS",
+      "cause": "Bounded supported CDC education only;not comprehensive medicine or clinical validation.",
+      "attempted_remediation": "Protocol2fixed paragraph coverage/per-source quotes;strict live acceptance;two separate real physician/patient runs complete with source hash/date/excerpt checks. Final run on4299e13.",
       "responsible_party": "Engineering",
-      "next_verification": "Separate explicit full live physician/patient workflow with original-source checks;no automatic retries or lowered safety thresholds."
+      "next_verification": "Preserve prior failure;extend rights-reviewed coverage and independently adjudicated populations/high-risk cases without relaxing gates."
     },
     {
       "id": "authenticated_native",
       "status": "PASS",
       "cause": "Bounded actual synthetic simulator core workflow;broader native release acceptance remains incomplete.",
-      "attempted_remediation": "14actual Xcode cases pass:typed/paste patient+clinician protected chart/note,native/web logout,revocation and relaunch;7logins/7logouts/zero sessions. Fresh-store reset and phase-keyed polling fix lifecycle stalls.",
+      "attempted_remediation": "Actual14Xcode cases pass on4299e13,including typed/paste patient+clinician chart/note/native+web logout/relaunch;7logins7logouts0sessions. New Python/chart features preserve core native acceptance;extended mobile checks remain separate.",
       "responsible_party": "Engineering",
       "next_verification": "Separate physical-device,expiry/outage,VoiceOver/Dynamic Type and protected export acceptance;no clinical or signed-build inference."
     },
@@ -174,18 +174,51 @@
       "id": "dependency_and_source_security_scan",
       "status": "PASS",
       "cause": "Bounded automated scan only;not independent security certification.",
-      "attempted_remediation": "11new advisories patched via pypdf6.21.4 and pyasn1 0.6.5;83locked packages fresh audit clear;zero high/high source findings and errors.",
+      "attempted_remediation": "Fresh83-package advisory audit zero known vulnerabilities;high/high Python scan zero findings/errors,includinglongitudinal and extraction modules.",
       "responsible_party": "Engineering",
       "next_verification": "Keep exact-head CI gate and independent penetration testing;retain failed advisory evidence."
+    },
+    {
+      "id": "longitudinal_review_context",
+      "status": "PASS",
+      "cause": "Entered data only;not clinical inference.",
+      "attempted_remediation": "7tests plus immutable context/revocation and actual clinician/patient browser trend tests pass;whole-record bounded snapshots persist.",
+      "responsible_party": "Engineering",
+      "next_verification": "Clinical relevance,causal synthesis,unit reconciliation and expert validation incomplete."
+    },
+    {
+      "id": "reviewed_tabular_observation_extraction",
+      "status": "PASS",
+      "cause": "Exact synthetic CSV-in-text contract only.",
+      "attempted_remediation": "4parser+3API cases and actual upload-preview-explicit approval-patient journey pass;atomic non-overwriting idempotence;later edits require review.",
+      "responsible_party": "Engineering",
+      "next_verification": "Free-text/PDF/OCR and verified clinical identity/extraction evaluation incomplete."
+    },
+    {
+      "id": "private_workflow_checks",
+      "status": "PASS",
+      "cause": "Own currently authorized last200generations;not clinical accuracy.",
+      "attempted_remediation": "Content-free outcome/missing-screen/checker-token counts with role/owner/revocation tests and actual Chromium refresh.",
+      "responsible_party": "Engineering",
+      "next_verification": "Org-wide assurance,complete provider cost accounting and clinical monitoring/adjudication incomplete."
+    },
+    {
+      "id": "strict_live_verification",
+      "status": "PASS",
+      "cause": "A block or missing check is never counted as supported completion.",
+      "attempted_remediation": "2verifier contract tests plus real physician/patient complete/passed support screens;source checks and live missing-evidence0.",
+      "responsible_party": "Engineering",
+      "next_verification": "Maintain source-scoped real evidence,not mock or skipped-success claims."
     }
   ],
   "requirements": {
-    "baseline_preserved": 1136,
-    "current": 1146,
+    "baseline_preserved": 1146,
+    "original_baseline_preserved": 1136,
+    "current": 1151,
     "states": {
       "PARTIAL": 870,
       "NOT_IMPLEMENTED": 191,
-      "VERIFIED": 63,
+      "VERIFIED": 68,
       "IMPLEMENTED_UNVERIFIED": 22
     }
   },
@@ -194,18 +227,18 @@
   "merged": false,
   "deployed": false,
   "apple_submitted": false,
-  "verification_scope": "Application sourceebe5628ff0a1b5d35a8f81d3b113e25bd6dfab71:regression,security and actual native CI PASS.237Python/29frontend/7Chromium/5structural plus project audit,traceability and14safety protocol fixtures pass locally;actual native14pass0fail0skip with7logins7logouts0sessions. Fresh full live medical conversation FAIL;one checker-only replay PASS is separate. Fresh read-only real inventory9documents/48vectors/384dimensions PASS. Clinical validation and physical signing/device acceptance absent.",
-  "native_followup_source": "ebe5628ff0a1b5d35a8f81d3b113e25bd6dfab71",
-  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41264520128",
+  "verification_scope": "Application4299e13 regression/security/actual native CI all PASS;257Python/29frontend/7Chromium/5structural plus14protocol fixtures,project audit and ledger passed locally. Actual native14passed0failed0skipped;7logins7logouts0sessions. Real physician/patient workflows complete with protocol2 screens and original CDC checks on4299e13;9documents48vectors384dimensions unchanged. No independent clinical or physical-device validation.",
+  "native_followup_source": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada",
+  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41273265490",
   "native_followup_status": "PASS",
-  "ci_evidence": "docs/PRODUCT_COMPLETION_CURRENT_CI.json",
+  "ci_evidence": "docs/ULTIMATE_CI_RESULTS.json",
   "native_tests": {
     "passed": 14,
     "failed": 0,
     "skipped": 0,
     "total": 14,
     "source": "xcresulttool",
-    "commit": "ebe5628ff0a1b5d35a8f81d3b113e25bd6dfab71"
+    "commit": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada"
   },
   "native_server_evidence": {
     "logins": 7,
@@ -213,5 +246,8 @@
     "session_401_responses": 4,
     "active_sessions_remaining": 0,
     "provider_requests": 0
-  }
+  },
+  "previous_verified_head": "de485cc58d6f2e6987f86ba8a40a9069f61ff87d",
+  "directive": "docs/directives/ULTIMATE_COMPLETION_2026-11-01.md",
+  "live_evidence": "docs/ULTIMATE_LIVE_RESULTS.json"
 }

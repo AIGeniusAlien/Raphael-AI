@@ -8,10 +8,11 @@ final class RaphaelUITests: XCTestCase {
     private let fixtureControl = "__CI_CONTROL_TOKEN__"
     private let recoveryFirst = "__CI_RECOVERY_CODE__"
     private let recoverySecond = "__CI_RECOVERY_SECOND__"
+    private var privateAuthenticatorTest=false
     override func tearDownWithError() throws {
         if !fixturePassword.hasPrefix("__CI_") { UIPasteboard.general.items = [] }
         let app = XCUIApplication()
-        if app.state != .notRunning {
+        if app.state != .notRunning && !privateAuthenticatorTest {
             let finalState = XCTAttachment(screenshot: app.screenshot())
             finalState.name = "Final synthetic native UI state;workflow result is separate"
             finalState.lifetime = .keepAlways
@@ -404,6 +405,7 @@ final class RaphaelUITests: XCTestCase {
         field.tap()
         try requireUI(app.keyboards.firstMatch.waitForExistence(timeout:10),"Actual software keyboard is required.")
         field.typeText(value)
+        try requireUI((field.value as? String)?.count==value.count,"Private input must accept the complete value;no value is logged.")
     }
 
     // An independent authenticator implementation in the UI TEST target only.
@@ -426,7 +428,7 @@ final class RaphaelUITests: XCTestCase {
     }
     @MainActor
     func testNativeTOTPEnrollmentVerificationRecoveryAndDisable() async throws {
-        try configuredFixture();continueAfterFailure=false
+        try configuredFixture();continueAfterFailure=true;privateAuthenticatorTest=true
         XCTAssertEqual(try authenticatorCode("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ",step:1),"287082")
         let app=XCUIApplication();app.launch();try signIn(app,username:"native-totp-patient")
         try tapHeader(app.buttons["Privacy and session settings"])

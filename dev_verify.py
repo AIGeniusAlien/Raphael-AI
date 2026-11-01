@@ -73,6 +73,8 @@ def main(argv=None):
     run('mobile-structure',[sys.executable,'mobile/scripts/project_audit.py'])
     run('mobile-tests',[sys.executable,'-m','unittest','discover','-s','mobile/tests','-v'])
     run('traceability',[sys.executable,'-m','scripts.build_engineering_ledger','--check'])
+    run('platform-acceptance',[sys.executable,'-m','scripts.build_platform_acceptance','--check'])
+    run('protected-runtime',[sys.executable,'-m','scripts.verify_protected_runtime','--output',str(directory/'protected-runtime.json')],os.name=='posix','Private-key file verification requires POSIX;not run on this host.',False,120)
     run('safety-evaluation',[sys.executable,'-m','eval.safety_eval','--output',str(directory/'safety-evaluation.json')])
     native=platform.system()=='Darwin' and bool(shutil.which('xcodebuild')) and bool(os.getenv('RAPHAEL_SIMULATOR_DESTINATION'))
     run('ios-native',['bash','mobile/scripts/native_checks.sh'],native,'macOS,Xcode and RAPHAEL_SIMULATOR_DESTINATION required;no native build ran.',False,1800)

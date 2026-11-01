@@ -16213,7 +16213,7 @@
       "description": "Explicit private local development key creation and repeatable file binding",
       "state": "VERIFIED",
       "code_location": "dev_keys.py;dev_start.py",
-      "test_coverage": "4private-file/source-conflict/restart tests;launcher regression",
+      "test_coverage": "4private-file/source-conflict/restart tests;actual protected launcher2starts/health/readiness/MFArecovery/attachmentdecryption",
       "external_dependency": "POSIX protected owner-controlled storage;distinct component keys",
       "remaining_work": "Not production KMS,escrow,rotation or Windows ACL acceptance;staging keys remain operator action",
       "acceptance_criteria": "Exclusive0600 creation;no key output or overwrite;reject symlink/FIFO/public files;no auto rotation",

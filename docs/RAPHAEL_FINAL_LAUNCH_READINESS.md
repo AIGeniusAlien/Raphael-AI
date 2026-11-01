@@ -75,6 +75,14 @@ Actual prior physician excerpt: “Antibiotics do not work against viruses; they
 
 Existing implemented bounded workflows remain:encrypted MFA/recovery,six structured paperwork formats and seven transcript preparations,explicit clinician edit/approval/publication,authorized longitudinal chronology and same-unit/source arithmetic,immutable bounded generation snapshots,reviewed CSV-in-text lab/vital extraction,content-free owner-scoped outcome checks,evidence staging/withdrawal/refresh planning,encrypted synthetic backup/restore and durable logout recovery. Their original detailed evidence is preserved in [the previous checkpoint](ULTIMATE_READINESS_CHECKPOINT.md). Free-text/PDF/OCR extraction,clinical causal synthesis,full cost accounting and evaluated multi-model routing remain unfinished.
 
+## Evidence scope and final-head validation
+
+The stored18case success above is explicitly the application-implementation snapshot4fd9116. Later documentation/test-only commits do not rewrite that source-scoped evidence. Current-head CI is linked from draft PR1 and must be checked independently.
+
+Evidence head22b8863 reran all9authenticated UI cases successfully,with13logins/11logouts/0active sessions/1expired row. Its full suite was17passed/1failed because the existing bridge unit fixture allowed10seconds for a new WebKit process that actually took22.6seconds to launch. [Actual failure CI](FINAL_RC_COLD_WEBKIT_FIXTURE_FAILURE_CI.json) and [annotations](FINAL_RC_COLD_WEBKIT_FIXTURE_FAILURE_ANNOTATIONS.json) are retained. The fixture now permits one bounded30second document startup;Promise resolution/rejection assertions and all app/auth deadlines are unchanged. This is a test-host timing correction,not permission to call the failed run a pass.
+
+The recovery log's reported content-process termination is a UI recovery label. Actual diagnostics establish blank/unresponsive content;they do not independently establish the OS termination cause. Failure-only OCR does not replace any workspace assertion.
+
 ## Failure history and stale reports
 
 - Baseline3ee4eec CI41274334534 failed provisioning with `httpx.ReadTimeout` at the first login with10second deadline,before Xcode. [Exact annotation](FINAL_RC_BASELINE_NATIVE_SETUP_FAILURE.json). Prior14passed on4299e13 remains historical evidence;the failed follow-up is not a native pass. Exact lower-level timeout cause was not captured.

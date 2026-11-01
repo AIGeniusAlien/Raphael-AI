@@ -114,7 +114,10 @@ final class ServerConfigurationTests: XCTestCase {
         web.navigationDelegate = navigation
         defer { web.navigationDelegate = nil; _ = navigation }
         web.loadHTMLString("<html><body>Synthetic bridge test;no patient data.</body></html>", baseURL: nil)
-        await fulfillment(of: [loaded], timeout: 10)
+        // This bounds fixture process startup,not bridge execution or auth.
+        // A measured cold simulator launch took22.6s;10s incorrectly failed
+        // before either Promise behavior assertion could begin.
+        await fulfillment(of: [loaded], timeout: 30)
         let value = try await WebKitScriptBridge.call("return await Promise.resolve(true)", in: web)
         XCTAssertEqual(value as? Bool, true)
         do {

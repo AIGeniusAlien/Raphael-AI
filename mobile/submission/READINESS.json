@@ -71,5 +71,6 @@
     "skipped": 0,
     "status": "PASS",
     "scope": "Bounded synthetic simulator;not native export or physical-device/VoiceOver acceptance."
-  }
+  },
+  "snapshot_scope": "Stored acceptance snapshot4fd9116;current-head validation is independent inPR1checks. Later cold-WebKit fixture failure preserved in docs/FINAL_RC_COLD_WEBKIT_FIXTURE_FAILURE_CI.json;no failed run is a pass."
 }

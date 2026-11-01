@@ -285,5 +285,18 @@
     "docs/FINAL_RC_FOREGROUND_MITIGATION_FAILURE_CI.json",
     "docs/FINAL_RC_RENDERED_DIAGNOSTIC_FAILURE_CI.json"
   ],
-  "native_background_recovery": "PASS with one explicit visible user retry after reported stopped WebKit content;actual authenticated web identity,owner revocation,reused-factor rejection and relaunch remain required."
+  "native_background_recovery": "PASS with one explicit visible user retry after reported stopped WebKit content;actual authenticated web identity,owner revocation,reused-factor rejection and relaunch remain required.",
+  "validation_scope_note": "Native18PASS is source-scoped application evidence at4fd9116. Current-head CI is independently linked from draftPR1;all later failures remain history,not retroactive passes.",
+  "later_validation_history": [
+    {
+      "source": "22b88630b64af24f7924d681ba368ec00d84937a",
+      "status": "FAIL",
+      "native_passed": 17,
+      "native_failed": 1,
+      "native_skipped": 0,
+      "authenticated_ui_passed": 9,
+      "cause": "WebKit bridge unit fixture10s startup deadline;measured cold process launch22.6s. Fixture bound corrected to30s;behavior assertions unchanged.",
+      "evidence": "docs/FINAL_RC_COLD_WEBKIT_FIXTURE_FAILURE_CI.json"
+    }
+  ]
 }

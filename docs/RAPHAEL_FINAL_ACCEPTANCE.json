@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
-  "starting_commit": "3ee4eec89e769e8aa1c50883d0c34fb5098d143c",
-  "implementation_commit": "e90c78b3174a76b2d1e235b671ff1d348e9d395e",
+  "starting_commit": "214cc169b9935282b694b557f5400da5dfafde9f",
+  "implementation_commit": "9c885ccd3bbc37ecbf678db73ea4a84a99fa9ae9",
   "release_decisions": {
     "synthetic_local_web_demonstration": "PASS",
     "controlled_synthetic_testflight": "FAIL",
@@ -13,26 +13,26 @@
     {
       "id": "synthetic_web_workflow",
       "status": "PASS",
-      "cause": "Bounded synthetic development scope only.",
-      "attempted_remediation": "269Python/29frontend/7Chromium/5project pass;exact-source remote regression/security pass.",
+      "cause": "Bounded synthetic development scope;311Python/29frontend/7Chromium/5mobile source cases pass.",
+      "attempted_remediation": "Full combined local verification plus9API/1Chromium post-history-cap follow-ups.",
       "responsible_party": "Engineering",
-      "next_verification": "Re-run python -m dev_verify --all --require-browser on exact reviewed source."
+      "next_verification": "Re-run actual current-head CI;no Xcode inference from Linux."
     },
     {
       "id": "real_evidence_workflow",
       "status": "PASS",
-      "cause": "Bounded supported CDC education only;not comprehensive medicine or clinical validation.",
-      "attempted_remediation": "Protocol2fixed paragraph coverage/per-source quotes;strict live acceptance;two separate real physician/patient runs complete with source hash/date/excerpt checks. Final run on4299e13.",
+      "cause": "Actual physician/patientOpenAI/Qdrant educational workflows both complete with strict screens.",
+      "attempted_remediation": "Fresh updated-transport live results;384dimensions;9CDCdocuments/48vectors;original sources/citations checked.",
       "responsible_party": "Engineering",
-      "next_verification": "Preserve prior failure;extend rights-reviewed coverage and independently adjudicated populations/high-risk cases without relaxing gates."
+      "next_verification": "Expand licensed coverage only with rights checks and independent adjudication;bounded success is notclinical validation."
     },
     {
       "id": "authenticated_native",
       "status": "PASS",
-      "cause": "Bounded actual synthetic simulator acceptance;not signed,physical-device,VoiceOver or full OS destination delivery acceptance.",
-      "attempted_remediation": "23actual Xcode cases pass(12unit+11UI),original18 preserved;native authorized JSON copy,share-container cancellation,controlled export503/delay cancellation and owner revocation added.",
+      "cause": "Bounded actual synthetic26case native acceptance;not device/signing/clinical acceptance.",
+      "attempted_remediation": "ActualXcode26pass/0fail/0skip on5be27f7;real independentTOTP enrollment/recovery/login/replay/disable and revocation;20logins16logouts0active sessions0providercalls.",
       "responsible_party": "Engineering",
-      "next_verification": "Physical-device/VoiceOver and protected OS destination delivery;independent native TOTP UI and recovery delivery;no production identity inference."
+      "next_verification": "Run final integrated head CI and physicaldevice/VoiceOver/authorizedstaging/signing acceptance;preserve all failed attempts."
     },
     {
       "id": "mfa_technical_controls",
@@ -117,10 +117,10 @@
     {
       "id": "erasure_retention_holds",
       "status": "FAIL",
-      "cause": "Review requests are not actual erasure;policy-backed retention exceptions/legal holds unimplemented.",
-      "attempted_remediation": "Existing non-destructive review queue and honest notices preserved;encrypted backups do not satisfy erasure.",
+      "cause": "Full legal/account/medical/backup erasure remains incomplete despite verified limited controls.",
+      "attempted_remediation": "Policy/hold/password/MFA/ownerrequest/version-gated limitedcredential/profile erasure;8API and actualbrowser tests.",
       "responsible_party": "Engineering;owner approves retention/identity policy",
-      "next_verification": "Implement approved policy with account deactivation,hold evaluation,artifact/backup handling and verifiable erasure tests."
+      "next_verification": "Complete qualified retention/erasure policy and data/backup/integrations scope;do not count limited erasure as Apple compliance."
     },
     {
       "id": "comprehensive_clinical_knowledge",
@@ -173,10 +173,10 @@
     {
       "id": "dependency_and_source_security_scan",
       "status": "PASS",
-      "cause": "Bounded automated scan only;not independent security certification.",
-      "attempted_remediation": "Fresh83-package advisory audit zero known vulnerabilities;high/high Python scan zero findings/errors,includinglongitudinal and extraction modules.",
+      "cause": "Source-scoped GitHub security gate on5be27f7;new38efcba exact-source CI not yetrun.",
+      "attempted_remediation": "86installedpackage compatibility pass;actual previous security job passed.",
       "responsible_party": "Engineering",
-      "next_verification": "Keep exact-head CI gate and independent penetration testing;retain failed advisory evidence."
+      "next_verification": "Read exact final-head dependency-advisory/Bandit jobs before claiming final-source scan success."
     },
     {
       "id": "longitudinal_review_context",
@@ -197,18 +197,18 @@
     {
       "id": "private_workflow_checks",
       "status": "PASS",
-      "cause": "Own currently authorized last200generations;not clinical accuracy.",
-      "attempted_remediation": "Content-free outcome/missing-screen/checker-token counts with role/owner/revocation tests and actual Chromium refresh.",
+      "cause": "Content-free own-authorized workflow and generationmetrics only.",
+      "attempted_remediation": "5metrics regressions;actualSDK streamingusage2711tokens and n1latency;unknowncost retained.",
       "responsible_party": "Engineering",
-      "next_verification": "Org-wide assurance,complete provider cost accounting and clinical monitoring/adjudication incomplete."
+      "next_verification": "Add governed accounting for missing workflows and realistic capacity testing;small samples are notproduction percentiles."
     },
     {
       "id": "strict_live_verification",
       "status": "PASS",
-      "cause": "A block or missing check is never counted as supported completion.",
-      "attempted_remediation": "2verifier contract tests plus real physician/patient complete/passed support screens;source checks and live missing-evidence0.",
+      "cause": "Actual two supported workflows passed unchanged source/citation/support gates.",
+      "attempted_remediation": "PLATFORM_LIVE_RESULTS.json;both complete/claimscreenpassed;missing evidence0;no mocks.",
       "responsible_party": "Engineering",
-      "next_verification": "Maintain source-scoped real evidence,not mock or skipped-success claims."
+      "next_verification": "Preserve each blocked/failed run;no retry-until-desired-answer or clinical accuracy claim."
     },
     {
       "id": "supported_domain_coverage_map",
@@ -225,78 +225,152 @@
       "attempted_remediation": "Real authenticated copy confirmed through explicit native user Paste after logout;fresh authorization,limits,negative payload/provider,503/cancel/revoke and share-container cancellation regressions pass.",
       "responsible_party": "Engineering",
       "next_verification": "Physical device,OS destination delivery,full VoiceOver,document binaries and policy-backed lifecycle;deliberate copies cannot be recalled."
+    },
+    {
+      "id": "encrypted_conversation_attachments",
+      "status": "PASS",
+      "cause": "Synthetic.txt payloads encrypted;review/consent/source/history controls work.",
+      "attempted_remediation": "11API regressions and real browser lifecycle.",
+      "responsible_party": "Engineering",
+      "next_verification": "PDF/images,scanner,wholePHIencryption and independent review remain."
+    },
+    {
+      "id": "document_key_operations",
+      "status": "BLOCKED",
+      "cause": "StableRAPHAEL_DOCUMENT_ENCRYPTION_KEY absent;tests use ephemeral keys.",
+      "attempted_remediation": "Fail-closed privatefile/key binding implemented;no operator key fabricated.",
+      "responsible_party": "Owner/operator secret management",
+      "next_verification": "Bind stable distinct protected key/escrow in authorized staging and verify restart/restore."
+    },
+    {
+      "id": "limited_account_lifecycle",
+      "status": "PASS",
+      "cause": "Bounded deactivation/reactivation/policy/hold/limitedcredentialerasure implemented.",
+      "attempted_remediation": "8API and realowner/adminbrowser tests;clinical/audit/originalrecordsretained.",
+      "responsible_party": "Engineering",
+      "next_verification": "Qualified fulllegal retention/erasure and Apple acceptance remain distinct."
+    },
+    {
+      "id": "private_development_keys",
+      "status": "PASS",
+      "cause": "Explicit private0600creation/load and distinctsource binding onPOSIX.",
+      "attempted_remediation": "4keyfile regressions plus actual2start protectedlauncher health/readiness/patientpersistence/attachmentdecryption/MFArecovery smoke pass.",
+      "responsible_party": "Engineering",
+      "next_verification": "No productionKMS/rotation/escrow or WindowsACL acceptance."
+    },
+    {
+      "id": "owner_product_feedback",
+      "status": "PASS",
+      "cause": "Internalowner/adminreports and requirement-linked task state machine integrated.",
+      "attempted_remediation": "9API and realChromiumworkflow;idempotency/revisions/privateadminnotes/clinicalresolutionblock.",
+      "responsible_party": "Engineering",
+      "next_verification": "Independent evidence verification,qualified clinical correction,releaseapproval and deployment monitoring absent."
+    },
+    {
+      "id": "native_totp_extended_workflow",
+      "status": "PASS",
+      "cause": "Bounded actual synthetic26case native acceptance;not device/signing/clinical acceptance.",
+      "attempted_remediation": "ActualXcode26pass/0fail/0skip on5be27f7;real independentTOTP enrollment/recovery/login/replay/disable and revocation;20logins16logouts0active sessions0providercalls.",
+      "responsible_party": "Engineering",
+      "next_verification": "Run final integrated head CI and physicaldevice/VoiceOver/authorizedstaging/signing acceptance;preserve all failed attempts."
     }
   ],
   "requirements": {
-    "baseline_preserved": 1151,
-    "original_baseline_preserved": 1136,
-    "current": 1155,
-    "states": {
-      "PARTIAL": 870,
-      "NOT_IMPLEMENTED": 191,
-      "VERIFIED": 72,
+    "baseline_commit": "214cc169b9935282b694b557f5400da5dfafde9f",
+    "baseline_requirements": 1155,
+    "current_requirements": 1161,
+    "removed_ids": [],
+    "changed_original_descriptions": [],
+    "new_ids": [
+      "PLATFORM-001",
+      "PLATFORM-002",
+      "PLATFORM-003",
+      "PLATFORM-004",
+      "PLATFORM-005",
+      "PLATFORM-006"
+    ],
+    "canonical_state_counts": {
+      "PARTIAL": 872,
+      "NOT_IMPLEMENTED": 189,
+      "VERIFIED": 78,
       "IMPLEMENTED_UNVERIFIED": 22
     },
-    "continuation_baseline_preserved": 1154,
-    "continuation_evidence": "docs/NATIVE_EXPORT_REQUIREMENTS.json"
+    "historical_evidence_preserved": "Baseline Git history and archived source-scoped reports;current views do not replace old verification history.",
+    "latest_directive_sha256": "87fc3972c6041a3c6d7155e68656eda9d2f8fcfdd09ae33d6d407b1e99cf068a",
+    "complete_platform": false
   },
   "clinical_validation": false,
   "production_data_used": false,
   "merged": false,
   "deployed": false,
   "apple_submitted": false,
-  "verification_scope": "269Python/29frontend/7Chromium/5project tests and14deterministic safety cases pass;actual Xcode23passed0failed0skipped(12unit+11UI). Real own-account clipboard export and native share-container cancellation;no OS destination delivery assertion. Prior real supported physician/patient conversations on4299e13 and9CDCdocs48vectors384dimensions preserved,not rerun unchanged provider pipeline. No physical-device,VoiceOver,clinical or distribution acceptance.",
-  "native_followup_source": "e90c78b3174a76b2d1e235b671ff1d348e9d395e",
-  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41331977079",
+  "verification_scope": "Bounded synthetic implementations and actual general CDC education only;whole directive remains incomplete. See source-scoped local/live reports and actual CI. No clinical validation.",
+  "native_followup_source": "5be27f7ab9729a4809d9f126e4ba4d0acd690f47",
+  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41349108361",
   "native_followup_status": "PASS",
-  "ci_evidence": "docs/NATIVE_EXPORT_CI_RESULTS.json",
+  "ci_evidence": {
+    "source": "5be27f7ab9729a4809d9f126e4ba4d0acd690f47",
+    "run_id": 41349108361,
+    "regression": "PASS",
+    "dependency_audit": "PASS",
+    "ios_simulator": "PASS",
+    "final_pr_head_checks": "https://github.com/AIGeniusAlien/Raphael-AI/pull/1/checks"
+  },
   "native_tests": {
-    "passed": 23,
+    "status": "PASS",
+    "passed": 26,
     "failed": 0,
     "skipped": 0,
-    "total": 23,
-    "source": "xcresulttool",
-    "commit": "e90c78b3174a76b2d1e235b671ff1d348e9d395e"
+    "unit": 14,
+    "ui": 12,
+    "source": "actualxcresulttool",
+    "commit": "5be27f7ab9729a4809d9f126e4ba4d0acd690f47"
   },
   "native_server_evidence": {
-    "logins": 17,
-    "logouts": 14,
-    "active_sessions_remaining": 0,
+    "active_sessions": 0,
     "expired_sessions_retained": 1,
+    "logins": 20,
+    "logouts": 16,
     "provider_requests": 0,
-    "raw": {
-      "synthetic_sessions_remaining": 0,
-      "expired_sessions_retained": 1,
-      "provider_requests": 0,
-      "backend": "actual_main_app_https",
-      "audit_event_counts_including_provisioning": {
-        "export_own_patient_records": 4,
-        "list_patients": 17,
-        "login": 17,
-        "logout": 14,
-        "read_notes": 14,
-        "read_patient": 13
-      }
-    }
+    "actual_https_main_app": true
   },
   "previous_verified_head": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada",
-  "directive": "docs/directives/FINAL_RC_COMPLETION_2026-11-01.md",
-  "live_evidence": "docs/ULTIMATE_LIVE_RESULTS.json",
+  "directive": "docs/directives/ULTIMATE_MASTER_PLATFORM_2026-11-01.md",
+  "live_evidence": {
+    "report": "docs/PLATFORM_LIVE_RESULTS.json",
+    "uses_mock_services": false,
+    "physician": "complete",
+    "patient": "complete",
+    "claim_screens": "passed",
+    "dimensions": 384,
+    "documents": 9,
+    "vectors": 48,
+    "generation_tokens": 2711,
+    "total_ms_single_sample": 3553.528,
+    "cost": null,
+    "clinical_validation": false
+  },
   "live_scope_panel_evidence": "docs/FINAL_RC_LIVE_COVERAGE_BROWSER.json",
   "live_coverage_evidence": "docs/FINAL_RC_EVIDENCE_COVERAGE.json",
   "historical_ci_evidence": "docs/ULTIMATE_CI_RESULTS.json",
   "native_timeout_evidence": "docs/FINAL_RC_NATIVE_TIMEOUT_CI.json",
   "failed_or_cancelled_current_attempts": [
-    "docs/FINAL_RC_BASELINE_NATIVE_SETUP_FAILURE.json",
-    "docs/FINAL_RC_CANCELLED_NATIVE_ATTEMPT.json",
-    "docs/FINAL_RC_NATIVE_TIMEOUT_CI.json",
-    "docs/FINAL_RC_BOUNDED_NATIVE_FAILURE_CI.json",
-    "docs/FINAL_RC_ISOLATED_LIFECYCLE_FAILURE_CI.json",
-    "docs/FINAL_RC_FOREGROUND_MITIGATION_FAILURE_CI.json",
-    "docs/FINAL_RC_RENDERED_DIAGNOSTIC_FAILURE_CI.json",
-    "docs/NATIVE_EXPORT_CANCELLED_CI.json",
-    "docs/NATIVE_EXPORT_FIRST_FAILURE_CI.json",
-    "docs/NATIVE_EXPORT_HOST_OBSERVER_FAILURE_CI.json"
+    {
+      "run": 41337350610,
+      "result": "25pass1fail:recoverydisclosure"
+    },
+    {
+      "run": 41345149422,
+      "result": "25pass1fail:enroll403"
+    },
+    {
+      "run": 41347137588,
+      "result": "25pass1fail:keyboardfocusafterenroll200"
+    },
+    {
+      "run": 41348569560,
+      "result": "backendreadinesstimeout;Xcodenotrun"
+    }
   ],
   "native_background_recovery": "PASS with one explicit visible user retry after reported stopped WebKit content;actual authenticated web identity,owner revocation,reused-factor rejection and relaunch remain required.",
   "validation_scope_note": "Actual CI sourcee90c78b;later evidence-only commit is separately identified in PR1. First export run22passed1failed and cleanup failure are preserved;not counted as success. Source-scoped provider evidence remains historical,not a fresh live call.",
@@ -352,5 +426,38 @@
     "manual_visual_inspection": false,
     "remaining_action": "Owner inspects GitHub artifact directly or enables artifact-host access;not physical-device or accessibility approval."
   },
-  "configuration_presence_evidence": "docs/NATIVE_EXPORT_CONFIG_PRESENCE.json"
+  "configuration_presence_evidence": {
+    "source": "inherited actualprocess securebindings;no values printed",
+    "LLM_API_KEY": true,
+    "LLM_BASE_URL": true,
+    "LLM_MODEL": true,
+    "QDRANT_URL": true,
+    "QDRANT_API_KEY": true,
+    "RAPHAEL_MFA_ENCRYPTION_KEY": false,
+    "RAPHAEL_DOCUMENT_ENCRYPTION_KEY": false,
+    "RAPHAEL_BACKUP_ENCRYPTION_KEY": false,
+    "setup_start_skill_draft_saved": true,
+    "environment_published_by_this_run": false,
+    "credential_configuration_source": {
+      "LLM_API_KEY": "environment secret binding allowed to api.openai.com;actual authenticated requests passed",
+      "QDRANT_API_KEY": "environment secret binding scoped to configured QdrantCloud cluster;authenticated read-only operations passed",
+      "nonsecret_provider_settings": "Present in actual process;separate editable nonsecret binding metadata not exposed by config draft read."
+    }
+  },
+  "previous_acceptance_snapshot": "docs/PLATFORM_PREVIOUS_ACCEPTANCE.json",
+  "section_reconciliation": "docs/PLATFORM_DIRECTIVE_RECONCILIATION.json",
+  "acceptance_view": "docs/PLATFORM_REQUIREMENT_ACCEPTANCE.json",
+  "previous_native_acceptance_before_platform": {
+    "tests": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0,
+      "total": 23,
+      "source": "xcresulttool",
+      "commit": "e90c78b3174a76b2d1e235b671ff1d348e9d395e"
+    },
+    "ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41331977079",
+    "source": "e90c78b3174a76b2d1e235b671ff1d348e9d395e"
+  },
+  "application_increment_commit": "38efcba7120ea7046bbb96ceb6b2c85a4c1c42bf"
 }

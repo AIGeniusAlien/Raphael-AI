@@ -1,0 +1,24 @@
+{
+  "baseline_commit": "214cc169b9935282b694b557f5400da5dfafde9f",
+  "baseline_requirements": 1155,
+  "current_requirements": 1161,
+  "removed_ids": [],
+  "changed_original_descriptions": [],
+  "new_ids": [
+    "PLATFORM-001",
+    "PLATFORM-002",
+    "PLATFORM-003",
+    "PLATFORM-004",
+    "PLATFORM-005",
+    "PLATFORM-006"
+  ],
+  "canonical_state_counts": {
+    "PARTIAL": 872,
+    "NOT_IMPLEMENTED": 189,
+    "VERIFIED": 78,
+    "IMPLEMENTED_UNVERIFIED": 22
+  },
+  "historical_evidence_preserved": "Baseline Git history and archived source-scoped reports;current views do not replace old verification history.",
+  "latest_directive_sha256": "87fc3972c6041a3c6d7155e68656eda9d2f8fcfdd09ae33d6d407b1e99cf068a",
+  "complete_platform": false
+}

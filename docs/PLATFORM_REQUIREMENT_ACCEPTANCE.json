@@ -5,9 +5,8 @@
   "status_counts": {
     "IN PROGRESS": 872,
     "NOT STARTED": 189,
-    "VERIFIED": 77,
-    "IMPLEMENTED, UNVERIFIED": 22,
-    "FAILED": 1
+    "VERIFIED": 78,
+    "IMPLEMENTED, UNVERIFIED": 22
   },
   "clinical_validation": false,
   "individual_original_source_and_risk_review_complete": false,
@@ -38295,18 +38294,18 @@
     {
       "requirement_id": "PLATFORM-006",
       "description": "Independent native authenticator enrollment entry recovery and disable acceptance",
-      "state": "PARTIAL",
+      "state": "VERIFIED",
       "code_location": "mobile/ios/Raphael/SettingsView.swift;PatientWebSession.swift;RaphaelUITests.swift",
-      "test_coverage": "3failed26case runs preserved;latest follow-up pending",
+      "test_coverage": "ActualXcode26passed/0failed/0skipped on5be27f7;CI41349108361;3UI failures plus startupfailure preserved",
       "external_dependency": "Real synthetic HTTPS app and actual iOS simulator",
-      "remaining_work": "Do not count new workflow passed until actual complete Xcode result;device/VoiceOver/staging/signing remain",
+      "remaining_work": "Actual bounded native workflow passes;physicaldevice/VoiceOver/staging/signing remain;later test-private diagnostics require final-head CI.",
       "acceptance_criteria": "Actual enrollment/code/recovery/login/replay/revoke/disable must all pass;no fixture bypass",
-      "next_implementation_action": "Do not count new workflow passed until actual complete Xcode result;device/VoiceOver/staging/signing remain",
+      "next_implementation_action": "Actual bounded native workflow passes;physicaldevice/VoiceOver/staging/signing remain;later test-private diagnostics require final-head CI.",
       "priority": "P0",
       "milestone": "M1",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim.",
-      "canonical_state": "PARTIAL",
-      "status": "FAILED",
+      "canonical_state": "VERIFIED",
+      "status": "VERIFIED",
       "original_source": {
         "preserved_canonical_matrix": "docs/REQUIREMENTS_MATRIX.md",
         "line": 1241,
@@ -38316,13 +38315,13 @@
       "functional_area": "PLATFORM",
       "exact_required_behavior": "Independent native authenticator enrollment entry recovery and disable acceptance",
       "safety_classification": "UNREVIEWED:qualified intended-use risk assessment required;software verification does not establish clinical safety.",
-      "root_cause_type": "ACCEPTANCE_TEST_FAILURE",
+      "root_cause_type": "NONE_WITHIN_RECORDED_SCOPE",
       "owner_controlled_blockers": {
         "assessment": "Not individually adjudicated;dependencies must not be assumed to be external-only blockers.",
         "recorded_dependencies": "Real synthetic HTTPS app and actual iOS simulator",
         "release_gate_record": "docs/RAPHAEL_FINAL_ACCEPTANCE.json"
       },
-      "verification_evidence": "3failed26case runs preserved;latest follow-up pending",
+      "verification_evidence": "ActualXcode26passed/0failed/0skipped on5be27f7;CI41349108361;3UI failures plus startupfailure preserved",
       "status_scope": "VERIFIED is bounded to the preserved row acceptance/evidence;IN PROGRESS includes historical partial implementation and does not assert an active assigned worker. No scope deferral is inferred."
     }
   ]

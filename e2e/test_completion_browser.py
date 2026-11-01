@@ -126,6 +126,12 @@ class CompletionBrowserTests(unittest.TestCase):
         report.locator('select[id^="action-"]').select_option(kind);report.locator('textarea').fill(note);report.get_by_role('button',name='Apply action to report '+report_id,exact=True).click()
         expect(admin_page.locator('#status')).to_contain_text('Action recorded')
         # Avoid accepting an earlier success before the new revision arrives.
+       if os.getenv('RAPHAEL_VISUAL_OUTPUT'):
+        for name,width,height in [('mobile',390,844),('enlarged',320,900)]:
+         admin_page.set_viewport_size({'width':width,'height':height});admin_page.evaluate('(s)=>document.documentElement.style.fontSize=s+"px"',20 if name=='enlarged' else 16)
+         report.screenshot(path=str(output/('feedback-admin-controls-'+name+'.png')))
+         self.assertLessEqual(admin_page.evaluate('document.documentElement.scrollWidth'),width+1,name+' active feedback controls')
+        admin_page.set_viewport_size({'width':1440,'height':1000});admin_page.evaluate('document.documentElement.style.fontSize="16px"')
        feedback_action('triage','Private synthetic triage note');expect(report).to_contain_text('revision 2')
        report.locator('input[id^="requirement-"]').fill('CORE-007');feedback_action('create_task','Private synthetic linked task');expect(report).to_contain_text('task_created')
        feedback_action('start_task','Private synthetic work started');expect(report).to_contain_text('in_progress')

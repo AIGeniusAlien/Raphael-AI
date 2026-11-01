@@ -55,7 +55,7 @@ def prepare():
     subprocess.run(['xcrun','simctl','boot',identifier],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     subprocess.run(['xcrun','simctl','bootstatus',identifier,'-b'],check=True,timeout=240)
     subprocess.run(['xcrun','simctl','keychain',identifier,'add-root-cert',str(certificate)],check=True)
-    server_environment={**environment,'DATABASE_URL':database,'RAPHAEL_DEV_PORTAL':'1','RAPHAEL_DEV_SYNTHETIC_ONLY':'1','RAPHAEL_MFA_ENCRYPTION_KEY':mfa_key,'PYTHONDONTWRITEBYTECODE':'1','GITHUB_ACTIONS':'true'}
+    server_environment={**environment,'DATABASE_URL':database,'RAPHAEL_DEV_PORTAL':'1','RAPHAEL_DEV_SYNTHETIC_ONLY':'1','RAPHAEL_MFA_ENCRYPTION_KEY':mfa_key,'PYTHONDONTWRITEBYTECODE':'1','GITHUB_ACTIONS':'true','RAPHAEL_SIMULATOR_DESTINATION':destination}
     forwarder=shutil.which('socat')
     if not forwarder:raise RuntimeError('Install socat for the isolated loopback443 TCP forwarder.')
     # Keep the actual application unprivileged. The forwarder carries encrypted

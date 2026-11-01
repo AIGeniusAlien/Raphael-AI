@@ -1,3 +1,7 @@
+> Current remote native/export acceptance is recorded in [the scoped export report](../docs/NATIVE_EXPORT_READINESS.md) and [authoritative readiness](../docs/RAPHAEL_FINAL_LAUNCH_READINESS.md). Earlier setup/test-count wording below is historical; Linux source checks are never Xcode proof. Physical-device, signing and distribution acceptance remain separate.
+
+Current patient settings implement a bounded, explicitly confirmed own-record JSON export with fresh server authorization, local clipboard copy and a revocable system-share provider. No app export file is created. Copies deliberately exported cannot be recalled. See the scoped report for actual clipboard/share-container results and unverified destination/device behavior; arbitrary WebKit downloads remain blocked.
+
 > Current native implementation and actual acceptance evidence: [Final launch readiness](../docs/RAPHAEL_FINAL_LAUNCH_READINESS.md). Historical simulator success below does not prove current authenticated UI acceptance.
 
 Current remote verification:GitHub Actions run40421429685 compiled this project and passed native unit/UI tests on Xcode16.4/iOS18.5. WebKitScriptBridge uses the public Objective-C promise API;unused overlay dylibs are stripped because the simulator lacks libswiftWebKit. Promise success/rejection and unconfigured launch are tested. Physical-device,authenticated HTTPS journey,signing and App Store acceptance remain unverified. This Linux host still has no Xcode.

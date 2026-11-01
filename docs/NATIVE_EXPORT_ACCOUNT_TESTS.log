@@ -1,0 +1,11 @@
+test_deletion_review_persists_is_idempotent_and_never_erases (test_account.AccountTests.test_deletion_review_persists_is_idempotent_and_never_erases) ... ok
+test_export_limits_fail_without_a_partial_attachment (test_account.AccountTests.test_export_limits_fail_without_a_partial_attachment) ... ok
+test_export_only_own_approved_content_no_credentials_or_drafts (test_account.AccountTests.test_export_only_own_approved_content_no_credentials_or_drafts) ... ok
+test_export_rejects_clinicians_and_revoked_owner_session (test_account.AccountTests.test_export_rejects_clinicians_and_revoked_owner_session) ... ok
+test_profile_is_private_and_does_not_overwrite_chart (test_account.AccountTests.test_profile_is_private_and_does_not_overwrite_chart) ... ok
+test_session_revocation_is_own_scoped_and_clears_correct_cookie_path (test_account.AccountTests.test_session_revocation_is_own_scoped_and_clears_correct_cookie_path) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 2.857s
+
+OK

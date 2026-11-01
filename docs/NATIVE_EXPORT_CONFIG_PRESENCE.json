@@ -1,0 +1,16 @@
+{
+  "checked_at": "2026-11-01T17:22:26.506194+00:00",
+  "source": "inherited execution-process environment",
+  "presence_only": {
+    "LLM_API_KEY": true,
+    "LLM_BASE_URL": true,
+    "LLM_MODEL": true,
+    "QDRANT_URL": true,
+    "QDRANT_API_KEY": true,
+    "RAPHAEL_MFA_ENCRYPTION_KEY": false,
+    "RAPHAEL_BACKUP_ENCRYPTION_KEY": false
+  },
+  "values_printed": false,
+  "provider_requests_this_increment": 0,
+  "note": "Native CI uses distinct ephemeral synthetic MFA credentials;this does not bind staging keys or freshly verify live providers."
+}

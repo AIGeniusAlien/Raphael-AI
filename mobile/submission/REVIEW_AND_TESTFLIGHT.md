@@ -1,3 +1,5 @@
+> Current release/export evidence,2026-11-01: [Authoritative release gates](../../docs/RAPHAEL_FINAL_LAUNCH_READINESS.md) and [native JSON export scope](../../docs/NATIVE_EXPORT_READINESS.md). A bounded clipboard export/share container does not establish OS destination,physical-device,full accessibility,signing or Apple acceptance. Earlier native counts and missing-export descriptions below are historical;the current report supersedes them. Policy-backed account deletion and owner distribution approvals remain required.
+
 > Release audit,2026-10-28: [Current source-scoped readiness audit](../../docs/RC_RELEASE_AUDIT.md). Sections below are historical checkpoints;older "current" or "final" wording is not a release approval.
 
 ## Current engineering assessment

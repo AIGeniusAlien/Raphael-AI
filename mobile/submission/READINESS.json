@@ -5,11 +5,11 @@
     "passed": 5
   },
   "xcode_compile": "VERIFIED_REMOTE_CI",
-  "simulator_and_device_tests": "9unit+9UI actual Xcode pass;physical device NOT_RUN",
+  "simulator_and_device_tests": "12unit+11UI actual Xcode pass;physical device NOT_RUN",
   "apple_signing": "BLOCKED_EXTERNAL",
   "privacy_legal_clinical_review": "REQUIRES_CLINICAL_VALIDATION",
   "account_erasure": "NOT_IMPLEMENTED",
-  "native_download_export": "NOT_IMPLEMENTED",
+  "native_download_export": "PARTIAL:own-account bounded JSON clipboard export and share-container cancellation verified;OS destination delivery/document binaries unverified",
   "android_native": "NOT_IMPLEMENTED",
   "staging_deployed": false,
   "app_store_ready": false,
@@ -20,15 +20,15 @@
     "Provide owner Apple team,registered bundle,approved icon and real privacy/support URLs",
     "Approve applicable retention,intended-use and distribution policies"
   ],
-  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41284154400",
+  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41331977079",
   "simulator_unit_ui_tests": "BOUNDED_EXTENDED_AUTHENTICATED_ACCEPTANCE_PASS",
   "simulator_tests": {
-    "passed": 18,
+    "passed": 23,
     "failed": 0,
     "skipped": 0,
-    "total": 18,
+    "total": 23,
     "source": "xcresulttool",
-    "commit": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1"
+    "commit": "e90c78b3174a76b2d1e235b671ff1d348e9d395e"
   },
   "historical_simulator_tests": {
     "passed": 7,
@@ -38,10 +38,10 @@
   },
   "audit_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
   "audit_date": "2026-11-01",
-  "authenticated_native_workflow": "PASS bounded actual synthetic simulator18passed0failed0skipped;memory-only cookie session;recovery UI and owner revocation,expiry,503/slow recovery,Dynamic Type;protected documents via runner HTTPS only.",
-  "native_source_commit": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1",
+  "authenticated_native_workflow": "PASS bounded actual synthetic simulator23passed0failed0skipped;memory-only session;actual JSON clipboard,share-container cancellation and export outage/cancel/owner-revoke;original18preserved.",
+  "native_source_commit": "e90c78b3174a76b2d1e235b671ff1d348e9d395e",
   "remaining_engineering": [
-    "Protected native export and physical-device/VoiceOver acceptance;independent native TOTP UI flow",
+    "Physical-device protected OS destination delivery,VoiceOver and independent native TOTP enrollment/verification",
     "Policy-backed erasure,production identity/guardian and live PHI controls",
     "Independent clinical/security evaluation and broader rights-reviewed knowledge"
   ],
@@ -64,6 +64,16 @@
     "independent_https_runner_contract": "PASS,both roles and protected API operations;not app UI proof"
   },
   "last_completed_native_acceptance": {
+    "source": "e90c78b3174a76b2d1e235b671ff1d348e9d395e",
+    "run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41331977079",
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "scope": "Bounded synthetic simulator and native JSON clipboard export/share-container cancellation;not OS destination/device/VoiceOver acceptance."
+  },
+  "snapshot_scope": "Stored actual acceptance snapshote90c78b;current-head validation is separate inPR1checks. Prior failures retained;no skipped or cancelled attempt is a pass.",
+  "previous_native_acceptance_before_export": {
     "source": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1",
     "run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41284154400",
     "passed": 18,
@@ -71,6 +81,5 @@
     "skipped": 0,
     "status": "PASS",
     "scope": "Bounded synthetic simulator;not native export or physical-device/VoiceOver acceptance."
-  },
-  "snapshot_scope": "Stored acceptance snapshot4fd9116;current-head validation is independent inPR1checks. Later cold-WebKit fixture failure preserved in docs/FINAL_RC_COLD_WEBKIT_FIXTURE_FAILURE_CI.json;no failed run is a pass."
+  }
 }

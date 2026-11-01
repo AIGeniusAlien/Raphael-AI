@@ -1,0 +1,5 @@
+ios-simulator	Select installed iPhone simulator	2026-11-01T17:32:29.3006690Z Xcode 16.4
+ios-simulator	Select installed iPhone simulator	2026-11-01T17:32:29.3008700Z Build version 16F6
+ios-simulator	Compile and test native app	2026-11-01T17:43:55.8434890Z Test Case '-[RaphaelUITests.RaphaelUITests testNativeExportFailureCancellationAndOwnerRevocation]' passed (51.278 seconds).
+ios-simulator	Compile and test native app	2026-11-01T17:44:29.0713990Z Native copy status verified;actual user paste after logout starts.
+ios-simulator	Compile and test native app	2026-11-01T17:45:46.8058330Z Test Case '-[RaphaelUITests.RaphaelUITests testNativePatientExportCopyAndSystemShareCancellation]' passed (110.970 seconds).

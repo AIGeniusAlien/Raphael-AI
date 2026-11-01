@@ -1,5 +1,79 @@
 # Raphael release-candidate implementation and readiness
 
+Current native export checkpoint, 2026-11-01 (America/New_York; raw timestamps UTC). Verified implementation: `e90c78b3174a76b2d1e235b671ff1d348e9d395e`, branch `fix/sqlite-startup-recovery`, draft [PR #1](https://github.com/AIGeniusAlien/Raphael-AI/pull/1). Starting continuation source was `ce27553d6b215c000ad43e571552e16b1f10ab87`. The following evidence-only commit is identified in the PR and final response; this report does not claim its own future CI result.
+
+**The entire master directive is not complete.** This increment implements and demonstrates bounded native patient JSON export. It is a tested continuation checkpoint, not release approval. No merge, deployment, Apple submission, real patient data or clinical communication occurred.
+
+## Implemented and actually verified
+
+- Native patient settings now prepare an own-account record summary, then require explicit confirmation for JSON copy or system sharing. Each disclosure fetches fresh bounded data and rechecks the same server identity. Cancellation, backgrounding, logout and observed revocation invalidate pending transfers; no export file or persistent session cache is added. Copies already deliberately exported cannot be recalled. Clipboard local-only delivery/60-second expiry is an OS request, not forensic erasure.
+- Actual clipboard JSON was deliberately pasted through the existing native Paste menu after logout and checked for format,own account/record and exclusion of an unlinked record,fixture password and password hash. The unsent field was cleared by relaunch before the separate real share workflow. No login containing JSON was submitted. There is no host clipboard endpoint or authentication bypass.
+- Actual native share-container presentation/cancellation, export503, delayed-request cancellation and independent owner-session revocation pass. **No external share destination was selected.** Files/AirDrop/third-party delivery, physical-device behavior and full VoiceOver remain unverified. Document file bytes are excluded.
+- The original18native cases remain. Actual full suite is23passed/0failed/0skipped (12unit+11UI), against the real authenticated synthetic HTTPS application. Backend audit reports 17logins/14logouts/0active sessions/1expired row retained and0provider requests.
+
+[Detailed export evidence and reproducible steps](NATIVE_EXPORT_READINESS.md), [raw CI](NATIVE_EXPORT_CI_RESULTS.json), [native annotations](NATIVE_EXPORT_NATIVE_ANNOTATIONS.json), [local results](NATIVE_EXPORT_LOCAL_RESULTS.json). [CI41331977079](https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41331977079) passed regression, dependency/source security and actual native jobs on the exact implementation above.
+
+| Verification | Actual result |
+|---|---|
+| Python |269passed|
+| Frontend |29passed|
+| Chromium |7passed|
+| Mobile source/project tests |5passed;not Xcode proof|
+| Actual Xcode |23passed/0failed/0skipped;12unit+11UI|
+| Safety/traceability |14deterministic cases and ledger validation pass;not clinical validation|
+| Fresh live provider conversation |Not rerun;unchanged pipeline;prior actual supported physician/patient OpenAI/Qdrant runs preserved on4299e13|
+| Evidence inventory |Prior verified9CDCdocuments/48vectors/384dimensions retained;this increment made no corpus mutation|
+
+## Complete directive reconciliation
+
+All14sections remain reconciled in [the machine section record](FINAL_RC_DIRECTIVE_RECONCILIATION.json). All1,154previous requirement IDs and descriptions are preserved;one narrowly scoped RC-004 is added,for1,155total. [Preservation/count evidence](NATIVE_EXPORT_REQUIREMENTS.json). Broad capabilities are not promoted by a bounded success. The [machine acceptance](RAPHAEL_FINAL_ACCEPTANCE.json) records engineering FAIL separately from owner BLOCKED.
+
+| Section | Status | Current evidence and remainder |
+|---|---|---|
+|1. Project baseline|PASS|Verified3ee4eec baseline;preserved branch,history and draftPR1.|
+|2. Actual acceptance matrix|PASS|1154continuation IDs/descriptions preserved,including1151initial baseline;1155current rows;failures and owner dependencies remain explicit.|
+|3. Extended native iOS acceptance|PARTIAL|23actual Xcode cases pass including bounded native JSON copy,share-container cancellation and export cancellation/revocation;full OS destination delivery,physical device,VoiceOver and independent native TOTP enrollment/entry remain.|
+|4. Patient and physician experiences|PARTIAL|Existing chart,consent,documentation,observation and communication sandbox preserved;actual erasure,guardian identity,full native destination delivery and live clinical integrations incomplete.|
+|5. Medical intelligence|PARTIAL|Live9document/48vector/384dimension supported-domain map verified;prior real supported conversations preserved;comprehensive coverage,retraction surveillance and independent clinical evaluation unfinished.|
+|6. Longitudinal intelligence and structured extraction|PARTIAL|Authorized chronology,exact arithmetic,immutable context and reviewed tabular extraction tested;clinical synthesis,free-text/PDF/OCR and clinical identity matching unfinished.|
+|7. Clinical workflow orchestration|PARTIAL|Explicit edit/approval/publication and bounded repeat-safe imports work;complete durable cross-workflow orchestration,retry and follow-up remain engineering work.|
+|8. Security,privacy and lifecycle|PARTIAL|MFA/recovery,authorization,consent,session and synthetic encrypted backups tested;identity/proxy,erasure/retention,PHI controls and stable keys remain gaps.|
+|9. Production infrastructure and reliability|PARTIAL|Local health/restore/HTTP probes and native outage/retry tests pass;authorized staging,production migrations,KMS,DR,monitoring and sustained load not accepted.|
+|10. Premium product experience|PARTIAL|Brand preserved;actual browser layouts inspected and overflow tested;native captures generated,but artifact access and physical-device/full accessibility review remain blocked.|
+|11. AI efficiency|PARTIAL|Deterministic formatting/extraction,bounded context and partial checker usage exist;complete usage/cost and evaluated multi-model routing unfinished.|
+|12. Final integrated acceptance|PARTIAL|269Python29frontend7Chromium5project23native pass;bounded supported live conversation evidence preserved;account erasure/proxy and full staging/device scenarios not complete.|
+|13. Separate release gates|PASS|A bounded local demoPASS;BsyntheticTestFlightFAIL;CclinicalpilotFAIL;DclinicalproductionFAIL;owner dependencies separatelyBLOCKED.|
+|14. Final output and evidence|PARTIAL|Readiness/machine matrix/ledger,actual results,release instructions and owner actions prepared;no signed archive,physical-device result,Apple submission or independent clinical approval exists.|
+
+## Release gates and exact remaining actions
+
+| Target | Decision | Remaining acceptance |
+|---|---|---|
+| A. Bounded synthetic local demonstration |PASS|Supported historical live evidence and current synthetic regressions/native clipboard workflow;not clinical approval.|
+| B. Controlled synthetic TestFlight beta |FAIL|Independent native TOTP enrollment/verification,full device/VoiceOver and OS destination acceptance;account/privacy acceptance remain engineering work. Staging,signing,physical device,privacy/support materials and distribution authority are owner BLOCKED.|
+| C. Controlled clinical pilot |FAIL|Verified identity/proxy,policy-backed lifecycle/retention,PHI operations and independent clinical/security/privacy/legal/intended-use review incomplete.|
+| D. Clinical production |FAIL|Pilot gaps plus broader evaluated clinical evidence/reasoning,operational maturity and applicable regulatory/vendor/contract acceptance unresolved.|
+
+Next independently achievable engineering work:preserve23native cases and add actual native TOTP enrollment/verification;implement tested,fail-closed account deactivation and configurable retention/erasure/holds mechanisms;activation requires recorded policy decisions;verify full native destination delivery on authorized hardware;continue evaluated evidence lifecycle,workflow recovery,PHI operations and full usage/cost routing. Existing deletion requests remain review-only. No independently achievable gap is disguised as a missing credential.
+
+Owner actions:provide authorized synthetic HTTPS staging;stable separate MFA and backup encryption keys via the secret manager with escrow/rotation ownership;approved retention/intended-use/guardian policy and identity service;Apple team/bundle/profiles,physical iPhone and genuine privacy/support URLs;artifact access or direct GitHub screenshot review;qualified clinical/security/privacy/legal/regulatory/vendor review before clinical use. Never place keys in chat or app configuration. Native CI's ephemeral keys do not configure staging.
+
+Reproduce with Python3.12/Node24:run `python -m dev_verify --all --require-browser --output /tmp/raphael-verification`. The existing `development.yml` workflow provisions the actual disposable HTTPS fixture for all23native tests;local runs without private fixture inputs skip authenticated cases and are not acceptance. Development startup remains `python -m dev_start --setup --without-local-ml --provision --database /absolute/new/synthetic.sqlite`;no production database. Existing full Intel Mac/Xcode16.4,backup/restore,staging,physical-device and separately authorized archive steps are retained below. On device,include actual protected destination delivery/revocation/expiry/backgrounding and deletion of deliberate synthetic copies. Xcode16.4 compatibility does not establish current Apple upload-SDK eligibility;the official requirements page was blocked with ProxyError and must be verified before distribution. No upload or deployment is authorized by these reproduction steps.
+
+## Preserved failure evidence and outdated reports
+
+The first export run was22passed/1failed/0skipped;its clipboard case stalled after the copy-status check and hit240seconds. One active synthetic session remained and cleanup failed correctly. The exact OS prompt state was not captured;an OS paste prompt remains an inference. A bounded host-observation follow-up also failed22passed/1failed because its observation endpoint returned422;the exact underlying cause was not captured. That unnecessary endpoint was removed. The final real native Paste workflow passes without changing production authentication or weakening assertions. [Host-observer failure](NATIVE_EXPORT_HOST_OBSERVER_FAILURE_CI.json) and its annotations are retained. [Raw failure](NATIVE_EXPORT_FIRST_FAILURE_CI.json) and [annotations](NATIVE_EXPORT_FIRST_FAILURE_ANNOTATIONS.json) remain. [Cancelled intermediate run](NATIVE_EXPORT_CANCELLED_CI.json) and the initial/corrected local fixture logs also remain;none count as passes.
+
+Older ce27553/4fd9116 reports with267Python/18native,original14native/257Python and earlier7native/193Python or credential-failure claims are historical source snapshots. The updated inventory,roadmap,mobile readiness and PR point here. Actual provider evidence is retained with its original source rather than presented as freshly rerun. 17native screenshot files were exported in this CI run but not manually inspected in this workspace because artifact-host access remains blocked;prior unchanged browser captures were inspected. Do not infer a signed archive,device or visual/accessibility approval from a simulator pass.
+
+---
+
+## Historical native/evidence checkpoint — retained original source scope
+
+Everything below this marker belongs to the earlier4fd9116/ce27553checkpoint. Its counts,then-current gaps and wording are historical;the current checkpoint and machine acceptance above supersede them. Historical failures and exact release/reproduction instructions remain reviewable.
+
+# Previous release-candidate checkpoint
+
 Authoritative checkpoint for the [final RC directive](directives/FINAL_RC_COMPLETION_2026-11-01.md), 2026-11-01 (America/New_York);machine evidence uses UTC. Starting PR head: `3ee4eec89e769e8aa1c50883d0c34fb5098d143c`. Reviewed implementation: `4fd91160b5b05cc28457cd23f67a89b58fb3d5d1`, branch `fix/sqlite-startup-recovery`, draft [PR #1](https://github.com/AIGeniusAlien/Raphael-AI/pull/1). A following evidence-only commit is identified in the PR. No merge, deployment, Apple submission, real patient data or clinical communications occurred.
 
 This increment implements and tests bounded native lifecycle/resilience controls and a supported-evidence scope panel. It does **not** complete the master platform. All directive sections were reconciled;the independently achievable remainder below is a continuation checkpoint,not a declaration that every engineering requirement is finished. The [machine acceptance matrix](RAPHAEL_FINAL_ACCEPTANCE.json) and [requirements ledger](ENGINEERING_LEDGER.json) retain incomplete engineering and external gates separately.

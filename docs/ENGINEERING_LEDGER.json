@@ -4,10 +4,10 @@
   "state_counts": {
     "PARTIAL": 870,
     "NOT_IMPLEMENTED": 191,
-    "VERIFIED": 71,
+    "VERIFIED": 72,
     "IMPLEMENTED_UNVERIFIED": 22
   },
-  "requirement_count": 1154,
+  "requirement_count": 1155,
   "clinical_validation": false,
   "requirements": [
     {
@@ -15639,11 +15639,11 @@
       "description": "Actual native iOS source project and truthful App Store readiness package",
       "state": "PARTIAL",
       "code_location": "mobile/ios;mobile/submission;mobile/README.md",
-      "test_coverage": "Actual remote compilation and6unit+unconfigured UI pass;authenticated eighth case failed in run40782065504 at5710cb65f8708257504994485a25b6c384418d5f;RC_RELEASE_AUDIT.md records the failure",
+      "test_coverage": "Actual sourcee90c78b/CI41331977079:23Xcode pass0failed0skipped;historical eighth-case failure retained in RC_RELEASE_AUDIT.md;current evidence in NATIVE_EXPORT_READINESS.md",
       "external_dependency": "macOS;Xcode;owner signing;synthetic HTTPS staging;legal review",
-      "remaining_work": "Authenticated user-journey failure unresolved until actual pass;physical device/signing/AppStore gates remain;Android absent",
+      "remaining_work": "Bounded authenticated simulator/export acceptance passed;physical device/signing/full accessibility/OS destination/AppStore gates remain;Android absent",
       "acceptance_criteria": "Real source/config/test targets;secure origin/session policy;actual Xcode/device verification",
-      "next_implementation_action": "Authenticated user-journey failure unresolved until actual pass;physical device/signing/AppStore gates remain;Android absent",
+      "next_implementation_action": "Bounded authenticated simulator/export acceptance passed;physical device/signing/full accessibility/OS destination/AppStore gates remain;Android absent",
       "priority": "P0",
       "milestone": "M1/M5",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
@@ -16131,9 +16131,9 @@
       "code_location": "mobile/ios/Raphael*;mobile/scripts/authenticated_ci.py",
       "test_coverage": "18actual Xcode cases (9unit+9UI),0failed,0skipped;original14 preserved",
       "external_dependency": "Actual synthetic HTTPS backend and authorized CI;real Qdrant read-only where specified",
-      "remaining_work": "Physical device,VoiceOver gestures,independent native TOTP enrollment/entry,protected native export and production identity remain incomplete",
+      "remaining_work": "Physical device,VoiceOver gestures,independent native TOTP enrollment/entry,full native destination acceptance and production identity remain incomplete;bounded JSON copy in RC-004",
       "acceptance_criteria": "Bounded HTTPS recovery-factor UI and owner revocation;server fault injection,expiry,Dynamic Type;protected documents via runner HTTPS,not native export",
-      "next_implementation_action": "Physical device,VoiceOver gestures,independent native TOTP enrollment/entry,protected native export and production identity remain incomplete",
+      "next_implementation_action": "Physical device,VoiceOver gestures,independent native TOTP enrollment/entry,full native destination acceptance and production identity remain incomplete;bounded JSON copy in RC-004",
       "priority": "P0",
       "milestone": "M1/M5",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
@@ -16162,6 +16162,20 @@
       "remaining_work": "No production fault endpoint or real network/clinical/provider outage proof;CI artifacts need owner access for visual review",
       "acceptance_criteria": "Only GHA+exact disposable synthetic database+private token;no normal main install;private registry redacts password,MFA,recovery and control material",
       "next_implementation_action": "No production fault endpoint or real network/clinical/provider outage proof;CI artifacts need owner access for visual review",
+      "priority": "P0",
+      "milestone": "M1/M5",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "RC-004",
+      "description": "Bounded authorized native patient JSON clipboard export and share-container cancellation",
+      "state": "VERIFIED",
+      "code_location": "mobile/ios/Raphael/PatientWebSession.swift;SettingsView.swift;RaphaelUITests.swift",
+      "test_coverage": "Sourcee90c78b/CI41331977079:23actual Xcode passed0failed0skipped;269Python29frontend7Chromium5project pass;real clipboard JSON checked through explicit native user Paste after logout",
+      "external_dependency": "Actual synthetic HTTPS backend and authorized macOS CI;protected device for deliberate copies",
+      "remaining_work": "Physical-device OS destination delivery,document binaries,full VoiceOver and legal portability/erasure acceptance remain unverified;copies cannot be recalled",
+      "acceptance_criteria": "Fresh own-account export and session recheck;5MiB/500row limits;explicit confirmation;cancel/revoke/failure guards;actual copy and share-container cancel",
+      "next_implementation_action": "Physical-device OS destination delivery,document binaries,full VoiceOver and legal portability/erasure acceptance remain unverified;copies cannot be recalled",
       "priority": "P0",
       "milestone": "M1/M5",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."

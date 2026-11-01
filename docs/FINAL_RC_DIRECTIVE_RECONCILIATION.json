@@ -1,7 +1,7 @@
 {
   "directive": "docs/directives/FINAL_RC_COMPLETION_2026-11-01.md",
   "entire_directive_completed": false,
-  "checkpoint_reason": "Completed bounded native/evidence engineering increment;broader independently achievable work and owner-controlled acceptance remain. Do not infer full product completion.",
+  "checkpoint_reason": "Implemented and actually tested bounded native patient JSON copy and share-container cancellation;entire master directive remains incomplete. Exact next engineering and owner actions are in the current readiness report.",
   "sections": [
     {
       "section_id": 1,
@@ -13,19 +13,19 @@
       "section_id": 2,
       "title": "Actual acceptance matrix",
       "status": "PASS",
-      "evidence_and_remaining": "1151prior IDs/descriptions preserved;1154current rows;failures and owner dependencies remain explicit."
+      "evidence_and_remaining": "1154continuation IDs/descriptions preserved,including1151initial directive baseline;1155current rows;failures and owner dependencies remain explicit."
     },
     {
       "section_id": 3,
       "title": "Extended native iOS acceptance",
       "status": "PARTIAL",
-      "evidence_and_remaining": "18actual Xcode cases pass including visible foreground recovery;physical device,full VoiceOver,native export and independent native TOTP enrollment/entry remain unverified or incomplete."
+      "evidence_and_remaining": "23actual Xcode cases pass including bounded native JSON copy,share-container cancellation and export cancellation/revocation;full OS destination delivery,physical device,VoiceOver and independent native TOTP enrollment/entry remain."
     },
     {
       "section_id": 4,
       "title": "Patient and physician experiences",
       "status": "PARTIAL",
-      "evidence_and_remaining": "Existing chart,consent,documentation,observation and communication sandbox preserved;actual erasure,guardian identity,native export and live clinical integrations incomplete."
+      "evidence_and_remaining": "Existing chart,consent,documentation,observation and communication sandbox preserved;actual erasure,guardian identity,full native destination delivery and live clinical integrations incomplete."
     },
     {
       "section_id": 5,
@@ -73,7 +73,7 @@
       "section_id": 12,
       "title": "Final integrated acceptance",
       "status": "PARTIAL",
-      "evidence_and_remaining": "267Python29frontend7Chromium5project18native pass;bounded supported live conversation evidence preserved;account erasure/proxy and full staging/device scenarios not complete."
+      "evidence_and_remaining": "269Python29frontend7Chromium5project23native pass;bounded supported live conversation evidence preserved;account erasure/proxy and full staging/device scenarios not complete."
     },
     {
       "section_id": 13,

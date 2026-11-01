@@ -403,14 +403,34 @@ final class RaphaelUITests: XCTestCase {
         try tapHeader(app.buttons["native-export-confirm-copy"])
         let copied=expectation(for:NSPredicate(format:"label BEGINSWITH %@","Sensitive JSON copied locally"),evaluatedWith:app.staticTexts["native-export-status"])
         await fulfillment(of:[copied],timeout:25)
-        print("Native copy status verified;bounded host observation of actual simulator clipboard starts.")
-        let clipboard=FixtureHTTPS();defer{clipboard.close()}
-        let (checkBytes,checkResponse)=try await clipboard.call("_ci/native-control",body:["operation":"verify_export_clipboard"],control:fixtureControl)
-        XCTAssertEqual(checkResponse.statusCode,200,"Actual simulator pasteboard must contain only the authorized synthetic export.")
-        let checkPayload=try XCTUnwrap(JSONSerialization.jsonObject(with:checkBytes) as? [String:Any])
-        let checks=try XCTUnwrap(checkPayload["checks"] as? [String:Bool])
-        XCTAssertEqual(checks.count,6);XCTAssertTrue(checks.values.allSatisfy{$0})
+        print("Native copy status verified;actual user paste after logout starts.")
+        app.buttons["Done"].tap()
+        try requireUI(app.buttons["Sign out"].waitForExistence(timeout:15),"Patient web sign-out must remain available after copy.")
+        app.buttons["Sign out"].tap()
+        try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30),"Deliberate export must not prevent logout.")
+        let pasteTarget = app.textFields["Username"]
+        try requireUI(pasteTarget.waitForExistence(timeout:10),"Native paste target must be available after logout.")
+        pasteTarget.tap();pasteTarget.press(forDuration:1.1)
+        let pasteMenu=app.menuItems["Paste"],pasteButton=app.buttons["Paste"]
+        if pasteMenu.waitForExistence(timeout:3) { pasteMenu.tap() }
+        else { try requireUI(pasteButton.waitForExistence(timeout:5),"Explicit native Paste action must be available.");pasteButton.tap() }
+        let allowPaste=app.alerts.buttons["Allow Paste"]
+        if allowPaste.waitForExistence(timeout:2) { allowPaste.tap() }
+        let pasted=expectation(for:NSPredicate(format:"value BEGINSWITH %@","{"),evaluatedWith:pasteTarget)
+        await fulfillment(of:[pasted],timeout:10)
+        let text=try XCTUnwrap(pasteTarget.value as? String,"Real user paste must deliver the exported JSON.")
+        let payload=try XCTUnwrap(JSONSerialization.jsonObject(with:Data(text.utf8)) as? [String:Any])
+        XCTAssertEqual(payload["format"] as? String,"raphael-synthetic-patient-export-v1")
+        let account=try XCTUnwrap(payload["account"] as? [String:Any])
+        XCTAssertEqual(account["username"] as? String,"native-patient");XCTAssertEqual(account["tenant"] as? String,"native-ci");XCTAssertEqual(account["role"] as? String,"patient")
+        let records=try XCTUnwrap(payload["patients"] as? [[String:Any]])
+        XCTAssertEqual(records.count,1);XCTAssertEqual(records.first?["name"] as? String,"Synthetic native patient")
+        XCTAssertFalse(text.contains("Synthetic native unlinked record"));XCTAssertFalse(text.contains("password_hash"));XCTAssertFalse(text.contains(fixturePassword))
         UIPasteboard.general.items=[]
+        // No sign-in is submitted with the pasted synthetic JSON. Relaunch
+        // clears the unsent field before the separate real share workflow.
+        app.terminate();app.launch();try signIn(app,username:"native-patient")
+        try tapHeader(app.buttons["Privacy and session settings"])
         try tapHeader(visibleExportAction(app,"native-export-prepare"))
         try requireUI(app.staticTexts["native-export-summary"].waitForExistence(timeout:25),"A new export must be prepared before another delivery.")
         try tapHeader(visibleExportAction(app,"native-export-share"))

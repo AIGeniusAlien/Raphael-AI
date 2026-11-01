@@ -31,6 +31,7 @@ def prepare():
     (private/'control-token').write_text(control_token);(private/'control-token').chmod(0o600)
     from cryptography.fernet import Fernet
     mfa_key=Fernet.generate_key().decode()
+    (private/'redactions.json').write_text(json.dumps([password,control_token,mfa_key]));(private/'redactions.json').chmod(0o600)
     (private/'password').write_text(password)
     (private/'password').chmod(0o600)
     # No inherited provider credentials or database may reach this local backend.
@@ -43,7 +44,7 @@ def prepare():
     engine=create_engine(database)
     try:
         migrate(engine)
-        for name,role in (('native-patient','patient'),('native-clinician','clinician'),('native-mfa-patient','patient'),('native-expiry-patient','patient'),('native-consent-patient','patient'),('native-consultant','clinician'),('native-export-patient','patient')):
+        for name,role in (('native-patient','patient'),('native-clinician','clinician'),('native-mfa-patient','patient'),('native-expiry-patient','patient'),('native-consent-patient','patient'),('native-consultant','clinician'),('native-export-patient','patient'),('native-totp-patient','patient')):
             create_dev_user(engine,'native-ci',name,password,role)
     finally:engine.dispose()
     certificate=private/'certificate.pem';key=private/'key.pem';config=private/'openssl.cnf'
@@ -95,7 +96,7 @@ def prepare():
         note=client.post(f"/api/dev/patients/{record.json()['id']}/notes",json={'content':'Synthetic native approved note. No real clinical findings.'});note.raise_for_status()
         client.post(f"/api/dev/notes/{note.json()['id']}/approve",json={}).raise_for_status()
         client.post('/api/dev/patients',json={'name':'Synthetic native unlinked record'}).raise_for_status()
-        for suffix in ('mfa','expiry','consent','export'):
+        for suffix in ('mfa','expiry','consent','export','totp'):
             client.post('/api/dev/patients',json={'name':'Synthetic native '+suffix+' patient','patient_username':'native-'+suffix+'-patient'}).raise_for_status()
         client.post('/api/dev/logout',json={}).raise_for_status()
         client.post('/api/dev/login',json={'tenant':'native-ci','username':'native-mfa-patient','password':password}).raise_for_status()

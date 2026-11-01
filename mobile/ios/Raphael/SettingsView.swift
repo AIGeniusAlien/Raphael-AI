@@ -7,6 +7,7 @@ struct SettingsView: View {
     let dismiss: () -> Void
     @State private var confirmSignOut = false
     @State private var exportAction: String?
+    @State private var showMFA = false
     @Environment(\.scenePhase) private var scenePhase
     @State private var serviceStatus = "Not checked"
     @State private var checkingService = false
@@ -32,6 +33,10 @@ struct SettingsView: View {
                     Text("The account page provides profile, consent, sessions and web export. Requesting deletion review is not completed medical-record erasure; retention and identity review remain required.")
                         .font(.footnote)
                     Button("Sign out and clear local session", role: .destructive) { confirmSignOut = true }.disabled(session.authenticating)
+                }
+                Section("Authenticator protection") {
+                    Button("Manage authenticator") { showMFA = true }.accessibilityIdentifier("native-mfa-manage")
+                    Text("Enroll an authenticator,confirm a code and save one-time recovery codes privately. This verifies an account factor,not clinical or legal identity.").font(.footnote)
                 }
                 if session.identity?.role == "patient" {
                     Section("Protected record export") {
@@ -116,6 +121,7 @@ struct SettingsView: View {
                     NativeExportActivity(session:session,ticket:ticket)
                 }.padding().privacySensitive()
             }
+            .sheet(isPresented:$showMFA) { NativeMFAView(session:session,dismiss:{showMFA = false}) }
             .onDisappear { session.cancelNativeExport() }
             .onChange(of:scenePhase) { _,phase in
                 if phase != .active { exportAction = nil;session.cancelNativeExport() }
@@ -202,4 +208,108 @@ struct NativeExportActivity: UIViewControllerRepresentable {
         return provider
     }
     func updateUIViewController(_ controller:UIActivityViewController,context:Context) {}
+}
+
+struct NativeMFAView: View {
+    @ObservedObject var session:PatientWebSession
+    let dismiss:()->Void
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var enabled:Bool?
+    @State private var available = false
+    @State private var remaining = 0
+    @State private var password = ""
+    @State private var code = ""
+    @State private var setupKey:String?
+    @State private var recovery:[String] = []
+    @State private var status = "Checking authenticator status…"
+    @State private var busy = false
+    @State private var confirmDisable = false
+    @State private var epoch = 0
+    @State private var operationTask:Task<Void,Never>?
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Account protection") {
+                    Text(status).accessibilityIdentifier("native-mfa-status")
+                    if let enabled { Text(enabled ? "Authenticator enabled · \(remaining) recovery codes remaining" : "Authenticator not enabled") }
+                    Button("Refresh authenticator status") { perform(.status) }.disabled(busy).accessibilityIdentifier("native-mfa-refresh")
+                    Text("Keep your authenticator and recovery codes on a protected device. Raphael cannot recover a lost setup key. These controls do not verify professional credentials or patient identity.").font(.footnote)
+                }
+                Section("Verify credentials") {
+                    NativeSecretEntry(text:$password,title:"Current password",identifier:"native-mfa-password").frame(minHeight:44)
+                    NativeSecretEntry(text:$code,title:"Authenticator or unused recovery code",oneTimeCode:true,identifier:"native-mfa-code").frame(minHeight:44)
+                    Button("Start authenticator enrollment") { perform(.enroll) }
+                        .disabled(busy || enabled != false || !available || password.isEmpty).accessibilityIdentifier("native-mfa-enroll")
+                    if setupKey != nil {
+                        Button("Confirm authenticator enrollment") { perform(.confirm) }
+                            .disabled(busy || password.isEmpty || code.isEmpty).accessibilityIdentifier("native-mfa-confirm")
+                    }
+                    if enabled == true {
+                        Button("Disable authenticator",role:.destructive) { confirmDisable = true }
+                            .disabled(busy || password.isEmpty || code.isEmpty).accessibilityIdentifier("native-mfa-disable")
+                    }
+                }
+                if let key = setupKey {
+                    Section("Private setup key") {
+                        Text("Enter this key in your own authenticator. It expires after ten minutes. Then reenter your password and a generated code. Do not share or screenshot the key.").font(.footnote)
+                        Text(key).font(.system(.body,design:.monospaced)).accessibilityIdentifier("native-mfa-setup-key")
+                    }
+                }
+                if !recovery.isEmpty {
+                    Section("One-time recovery codes") {
+                        Text("Record these privately now. Each works once with your password. Other sessions have been revoked. Wait for the next authenticator code before a new sign-in.").font(.footnote)
+                        Text(recovery.joined(separator:"\n")).font(.system(.body,design:.monospaced)).accessibilityIdentifier("native-mfa-recovery-codes")
+                    }
+                }
+                if setupKey != nil || !recovery.isEmpty {
+                    Button("Clear private authenticator data") { clearPrivate() }.accessibilityIdentifier("native-mfa-clear")
+                }
+                Section("Interruption and privacy") {
+                    Text("Closing or backgrounding clears displayed secrets and cancels pending access. A server change may already have completed;refresh status after interruption. No key or recovery code is copied to the clipboard or saved by this screen. Protect against screenshots and shoulder surfing.").font(.footnote)
+                }
+            }
+            .privacySensitive().accessibilityHidden(scenePhase != .active)
+            .overlay { if scenePhase != .active { ZStack {Color(.systemBackground).ignoresSafeArea();Text("Private authenticator data hidden")} } }
+            .navigationTitle("Authenticator")
+            .toolbar { ToolbarItem(placement:.confirmationAction) { Button("Done") { clearPrivate();dismiss() }.accessibilityIdentifier("native-mfa-done") } }
+            .confirmationDialog("Disable authenticator protection?",isPresented:$confirmDisable,titleVisibility:.visible) {
+                Button("Disable and revoke other sessions",role:.destructive) { perform(.disable) }.accessibilityIdentifier("native-mfa-confirm-disable")
+                Button("Cancel",role:.cancel) { password = "";code = "" }
+            } message: { Text("This reduces account protection. Your password and an unused factor are required. Other signed-in sessions will be revoked.") }
+            .task { perform(.status) }
+            .onDisappear { clearPrivate() }
+            .onChange(of:scenePhase) { _,phase in if phase != .active { clearPrivate();status = "Private data cleared. Refresh status before continuing.";enabled = nil } }
+            .onChange(of:session.identity) { _,_ in clearPrivate();dismiss() }
+        }
+    }
+    private func clearPrivate() {
+        epoch += 1;operationTask?.cancel();operationTask = nil
+        password = "";code = "";setupKey = nil;recovery = [];busy = false;confirmDisable = false
+    }
+    private func perform(_ operation:NativeMFAOperation) {
+        guard !busy else { return }
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),to:nil,from:nil,for:nil)
+        let capturedPassword = password,capturedCode = code
+        password = "";code = ""
+        if operation == .status { setupKey = nil;recovery = [] }
+        epoch += 1;let attempt = epoch
+        busy = true;status = "Verifying with the configured secure service…"
+        operationTask = Task { @MainActor in
+            do {
+                let reply = try await session.manageMFA(operation,password:capturedPassword,code:capturedCode)
+                guard attempt == epoch,!Task.isCancelled else { return }
+                switch operation {
+                case .status:enabled = reply.enabled;available = reply.enrollment_available == true;remaining = reply.recovery_codes_remaining ?? 0;status = available ? "Authenticator status verified." : "Enrollment unavailable. Operator key configuration is required."
+                case .enroll:setupKey = reply.secret;recovery = [];status = "Enrollment pending. Confirm a code before protection is enabled."
+                case .confirm:setupKey = nil;recovery = reply.recovery_codes ?? [];enabled = true;remaining = recovery.count;status = "Authenticator enabled. Save recovery codes privately now."
+                case .disable:setupKey = nil;recovery = [];enabled = false;remaining = 0;status = "Authenticator disabled. Other sessions revoked."
+                }
+                busy = false
+            } catch {
+                guard attempt == epoch else { return }
+                setupKey = nil;recovery = [];busy = false;enabled = nil
+                status = (error as? NativeMFAError)?.localizedDescription ?? "Connection or response unavailable. Refresh status before retrying;the server may already have completed a change."
+            }
+        }
+    }
 }

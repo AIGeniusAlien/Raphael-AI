@@ -6972,3 +6972,7 @@ At the end, provide:
 Raphael must combine sophisticated medical intelligence with beautiful consumer-grade software and the accountability expected of healthcare technology.
 
 Begin immediately from the verified latest repository state. Implement, test, debug, refine and verify. Do not stop at planning.
+
+# Definitive full-platform directive — additive 2026-11-01
+
+The complete owner directive in [FULL_PLATFORM_COMPLETION_2026-11-01.md](directives/FULL_PLATFORM_COMPLETION_2026-11-01.md) is incorporated by reference without retiring or weakening any earlier requirement or identifier. It is an implementation target,not evidence of completion. The dependency-aware active queue is [PLATFORM_COMPLETION_QUEUE.md](PLATFORM_COMPLETION_QUEUE.md);external release/clinical approvals remain separate from independently achievable engineering.

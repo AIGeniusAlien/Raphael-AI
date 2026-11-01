@@ -6,6 +6,29 @@ import UniformTypeIdentifiers
 @testable import Raphael
 
 final class ServerConfigurationTests: XCTestCase {
+    func testNativeMFARejectsMalformedSecretRecoveryAndStatusResponses() throws {
+        func reply(_ value:[String:Any]) throws -> NativeMFAReply { try JSONDecoder().decode(NativeMFAReply.self,from:JSONSerialization.data(withJSONObject:value)) }
+        XCTAssertTrue(try reply(["enabled":false,"enrollment_available":true,"recovery_codes_remaining":0]).valid(for:.status))
+        XCTAssertTrue(try reply(["enabled":false,"secret":String(repeating:"A",count:32),"expires_in_seconds":600]).valid(for:.enroll))
+        XCTAssertFalse(try reply(["enabled":true,"secret":"not-a-key","expires_in_seconds":600]).valid(for:.enroll))
+        XCTAssertFalse(try reply(["enabled":false,"enrollment_available":true,"recovery_codes_remaining":11]).valid(for:.status))
+        let codes=(0..<10).map{String(format:"%020x",$0)}
+        XCTAssertTrue(try reply(["enabled":true,"recovery_codes":codes]).valid(for:.confirm))
+        XCTAssertFalse(try reply(["enabled":true,"recovery_codes":Array(repeating:codes[0],count:10)]).valid(for:.confirm))
+        XCTAssertFalse(try reply(["enabled":true,"recovery_codes":codes,"secret":"unexpected"]).valid(for:.confirm))
+        XCTAssertTrue(try reply(["enabled":false,"other_sessions_revoked":true]).valid(for:.disable))
+        XCTAssertFalse(try reply(["enabled":false]).valid(for:.disable))
+        XCTAssertFalse(try reply(["enabled":true]).valid(for:.disable))
+    }
+    @MainActor func testNativeMFAManagementRequiresAuthenticatedIdentity() async throws {
+        let configuration=try XCTUnwrap(ServerConfiguration(urlString:"https://raphael.example.org",boundHost:"raphael.example.org"))
+        let session=PatientWebSession(configuration:configuration)
+        for operation in [NativeMFAOperation.status,.enroll,.confirm,.disable] {
+            do { _ = try await session.manageMFA(operation,password:"synthetic-only",code:"000000");XCTFail("Unauthenticated management must fail before networking.") }
+            catch NativeMFAError.session {} catch { XCTFail("Unexpected unauthenticated management failure type.") }
+        }
+        XCTAssertNil(session.identity)
+    }
     @MainActor
     func testDiscardedWorkspaceGetsFreshEphemeralStoreWithoutWebKitCallback() throws {
         let configuration = try XCTUnwrap(ServerConfiguration(urlString: "https://raphael.example.org", boundHost: "raphael.example.org"))

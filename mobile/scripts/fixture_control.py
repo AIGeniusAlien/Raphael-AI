@@ -48,4 +48,28 @@ class FixtureControl:
         if scope['type']=='http' and scope.get('path') in ('/readyz','/api/dev/session','/api/dev/account/export'):
             if self.readiness=='unavailable':return await JSONResponse({'status':'not_ready','scope':'synthetic-development'},503)(scope,receive,send)
             if self.readiness=='slow':await asyncio.sleep(16)
+        if scope['type']=='http' and scope.get('path') in ('/api/dev/account/mfa/enroll','/api/dev/account/mfa/confirm'):
+            # Register dynamic test-only secrets BEFORE exposing the actual
+            # response to UIKit/XCTest. Never log or return registry contents.
+            messages=[];size=0
+            async def hold(message):
+                nonlocal size
+                messages.append(message)
+                size+=len(message.get('body',b''))
+                if size>65536:raise ValueError('Bounded private fixture response required.')
+            await self.app(scope,receive,hold)
+            try:
+                if messages[0].get('status')==200:
+                    value=json.loads(b''.join(m.get('body',b'') for m in messages))
+                    private_values=([value['secret']] if 'secret' in value else value.get('recovery_codes',[]))
+                    if not private_values or any(not isinstance(v,str) or not 6<=len(v)<=128 for v in private_values):raise ValueError()
+                    registry=self.private/'redactions.json'
+                    values=json.loads(registry.read_text())
+                    if not isinstance(values,list):raise ValueError()
+                    updated=self.private/'redactions.next'
+                    updated.write_text(json.dumps(list(dict.fromkeys(values+private_values))));updated.chmod(0o600);updated.replace(registry)
+            except (ValueError,KeyError,TypeError,OSError):
+                return await JSONResponse({'detail':'Private fixture response withheld.'},503)(scope,receive,send)
+            for message in messages:await send(message)
+            return
         await self.app(scope,receive,send)

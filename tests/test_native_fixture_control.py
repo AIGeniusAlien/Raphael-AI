@@ -1,5 +1,6 @@
 """CI harness restrictions;these fixture tests are not live-provider evidence."""
 import importlib.util
+import json
 import os
 from pathlib import Path
 import sqlite3
@@ -20,6 +21,7 @@ class NativeFixtureControlTests(unittest.TestCase):
         with sqlite3.connect(self.private/'synthetic.db') as c:
             c.executescript("CREATE TABLE dev_users(id INTEGER,tenant TEXT,username TEXT); CREATE TABLE dev_sessions(user_id INTEGER,expires_at TEXT); INSERT INTO dev_users VALUES(1,'native-ci','native-expiry-patient'),(2,'native-ci','other'); INSERT INTO dev_sessions VALUES(1,'2099-01-01'),(2,'2099-01-01');")
         app=FastAPI()
+        self.app=app
         @app.get('/readyz')
         def ready():return {'status':'ready'}
         self.client=TestClient(FixtureControl(app,self.private));self.addCleanup(self.client.close)
@@ -50,3 +52,23 @@ class NativeFixtureControlTests(unittest.TestCase):
             self.assertEqual(c.execute('SELECT count(*) FROM dev_sessions').fetchone()[0],2)
             self.assertEqual(c.execute('SELECT expires_at FROM dev_sessions WHERE user_id=2').fetchone()[0],'2099-01-01')
             self.assertTrue(c.execute('SELECT expires_at FROM dev_sessions WHERE user_id=1').fetchone()[0].startswith('2000'))
+
+    def test_actual_sensitive_response_is_registered_before_delivery(self):
+        secret='A'*32;codes=[format(i,'020x') for i in range(10)]
+        (self.private/'redactions.json').write_text(json.dumps([self.token]))
+        @self.app.post('/api/dev/account/mfa/enroll')
+        def enroll():return {'secret':secret,'enabled':False}
+        @self.app.post('/api/dev/account/mfa/confirm')
+        def confirm():return {'enabled':True,'recovery_codes':codes}
+        self.assertEqual(self.client.post('/api/dev/account/mfa/enroll',json={}).json()['secret'],secret)
+        self.assertIn(secret,json.loads((self.private/'redactions.json').read_text()))
+        self.assertEqual(self.client.post('/api/dev/account/mfa/confirm',json={}).json()['recovery_codes'],codes)
+        values=json.loads((self.private/'redactions.json').read_text());self.assertTrue(set(codes).issubset(values));self.assertIn(self.token,values)
+        self.assertEqual((self.private/'redactions.json').stat().st_mode & 0o777,0o600)
+
+    def test_missing_registry_withholds_sensitive_response_without_auth_bypass(self):
+        secret='A'*32
+        @self.app.post('/api/dev/account/mfa/enroll')
+        def enroll():return {'secret':secret,'enabled':False}
+        result=self.client.post('/api/dev/account/mfa/enroll',json={})
+        self.assertEqual(result.status_code,503);self.assertNotIn(secret,result.text)

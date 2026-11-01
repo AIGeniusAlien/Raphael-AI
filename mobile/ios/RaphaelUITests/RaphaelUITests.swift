@@ -1,6 +1,7 @@
 import XCTest
 import UIKit
 import Vision
+import CryptoKit
 
 final class RaphaelUITests: XCTestCase {
     private let fixturePassword = "__CI_SYNTHETIC_PASSWORD__"
@@ -388,6 +389,80 @@ final class RaphaelUITests: XCTestCase {
         }
         try requireUI(button.exists && button.isHittable,"Native export action must be reachable.")
         return button
+    }
+
+    // An independent authenticator implementation in the UI TEST target only.
+    // It uses the actual setup key delivered to the enrolled user,never a
+    // pre-enabled factor or an authentication bypass.
+    private func authenticatorCode(_ secret:String,step:Int) throws -> String {
+        let alphabet=Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"),characters=Array(secret)
+        var bytes=[UInt8](),buffer:UInt32=0,bits=0
+        for character in characters {
+            guard let value=alphabet.firstIndex(of:character) else { throw FixtureFailure.requiredUIState }
+            buffer=(buffer<<5)|UInt32(value);bits+=5
+            if bits>=8 {bits-=8;bytes.append(UInt8((buffer>>bits)&255));buffer &= (1<<bits)-1}
+        }
+        var counter=UInt64(step).bigEndian
+        let input=withUnsafeBytes(of:&counter){Data($0)}
+        let digest=Array(HMAC<Insecure.SHA1>.authenticationCode(for:input,using:SymmetricKey(data:Data(bytes))))
+        let offset=Int(digest.last! & 15)
+        let number=(UInt32(digest[offset]&127)<<24)|(UInt32(digest[offset+1])<<16)|(UInt32(digest[offset+2])<<8)|UInt32(digest[offset+3])
+        return String(format:"%06u",number%1000000)
+    }
+    @MainActor
+    func testNativeTOTPEnrollmentVerificationRecoveryAndDisable() async throws {
+        try configuredFixture();continueAfterFailure=true
+        XCTAssertEqual(try authenticatorCode("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ",step:1),"287082")
+        let app=XCUIApplication();app.launch();try signIn(app,username:"native-totp-patient")
+        try tapHeader(app.buttons["Privacy and session settings"])
+        try tapHeader(visibleExportAction(app,"native-mfa-manage"))
+        try requireUI(app.buttons["native-mfa-enroll"].waitForExistence(timeout:20),"Native authenticator management must be accessible.")
+        let ready=expectation(for:NSPredicate(format:"label == %@","Authenticator status verified."),evaluatedWith:app.staticTexts["native-mfa-status"])
+        await fulfillment(of:[ready],timeout:20)
+        let password=app.secureTextFields["native-mfa-password"]
+        password.tap();password.typeText(fixturePassword+"\n")
+        try tapHeader(app.buttons["native-mfa-enroll"])
+        let key=app.staticTexts["native-mfa-setup-key"]
+        try requireUI(key.waitForExistence(timeout:20),"Actual private enrollment key must be delivered.")
+        let secret=key.label;try requireUI(secret.count==32,"Private setup key must have the expected bounded format.")
+        let enrolledStep=Int(Date().timeIntervalSince1970)/30
+        password.tap();password.typeText(fixturePassword)
+        let factor=app.secureTextFields["native-mfa-code"]
+        factor.tap();factor.typeText(try authenticatorCode(secret,step:enrolledStep)+"\n")
+        try tapHeader(visibleExportAction(app,"native-mfa-confirm"))
+        let privateCodes=app.staticTexts["native-mfa-recovery-codes"]
+        try requireUI(privateCodes.waitForExistence(timeout:20),"Actual one-time recovery codes must be shown once.")
+        let codes=privateCodes.label.split(separator:"\n").map(String.init)
+        try requireUI(codes.count==10,"All ten private recovery codes must be available.")
+        try tapHeader(visibleExportAction(app,"native-mfa-clear"))
+        XCTAssertFalse(key.exists);XCTAssertFalse(privateCodes.exists)
+        try tapHeader(app.buttons["native-mfa-done"]);app.buttons["Done"].tap()
+        app.buttons["Sign out"].tap()
+        try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30),"Enrollment must preserve normal logout.")
+        let http=FixtureHTTPS();defer{http.close()}
+        let (_,passwordOnly)=try await http.call("api/dev/login",body:["tenant":"native-ci","username":"native-totp-patient","password":fixturePassword])
+        XCTAssertEqual(passwordOnly.statusCode,401)
+        // Enrollment consumes its step. Wait at most one bounded30s period;
+        // never reset server replay state or inject a synthetic session.
+        let next=TimeInterval((enrolledStep+1)*30+1)-Date().timeIntervalSince1970
+        if next>0 {try await Task.sleep(nanoseconds:UInt64(next*1_000_000_000))}
+        let loginCode=try authenticatorCode(secret,step:Int(Date().timeIntervalSince1970)/30)
+        try signIn(app,username:"native-totp-patient",factor:loginCode)
+        let (_,replayed)=try await http.call("api/dev/login",body:["tenant":"native-ci","username":"native-totp-patient","password":fixturePassword,"otp":loginCode])
+        XCTAssertEqual(replayed.statusCode,401)
+        let other=try await http.login("native-totp-patient",password:fixturePassword,factor:codes[1])
+        try tapHeader(app.buttons["Privacy and session settings"])
+        try tapHeader(visibleExportAction(app,"native-mfa-manage"))
+        try requireUI(app.buttons["native-mfa-disable"].waitForExistence(timeout:20),"Enabled authenticator must offer protected management.")
+        password.tap();password.typeText(fixturePassword)
+        factor.tap();factor.typeText(codes[0]+"\n")
+        try tapHeader(visibleExportAction(app,"native-mfa-disable"))
+        try tapHeader(app.buttons["native-mfa-confirm-disable"])
+        let disabled=expectation(for:NSPredicate(format:"label == %@","Authenticator disabled. Other sessions revoked."),evaluatedWith:app.staticTexts["native-mfa-status"])
+        await fulfillment(of:[disabled],timeout:20)
+        let (_,revoked)=try await http.call("api/dev/session",cookie:other);XCTAssertEqual(revoked.statusCode,401)
+        try tapHeader(app.buttons["native-mfa-done"]);app.buttons["Done"].tap();app.buttons["Sign out"].tap()
+        try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30),"MFA management must preserve final session invalidation.")
     }
 
     @MainActor

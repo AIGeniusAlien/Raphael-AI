@@ -8,6 +8,18 @@ import unittest
 
 
 class NativeLogRedactionTests(unittest.TestCase):
+    def test_late_enrollment_and_unregistered_totp_are_withheld_during_stream(self):
+        script=Path(__file__).resolve().parents[1]/'.github/scripts/redact_native_log.py'
+        with tempfile.TemporaryDirectory() as folder:
+            private=Path(folder);password='SYNTHETIC-PRIVATE-NATIVE-PASSWORD';late='SYNTHETIC-NEW-ENROLLMENT-KEY'
+            (private/'password').write_text(password);(private/'redactions.json').write_text(json.dumps([password]))
+            runner=private/'runner.py'
+            runner.write_text('import runpy,sys,json\nfrom pathlib import Path\ndef lines():\n yield "Before enrollment\\n"\n Path("redactions.json").write_text(json.dumps('+repr([password,late])+'))\n yield '+repr(late+' 135790\n')+'\nsys.stdin=lines()\nrunpy.run_path('+repr(str(script))+',run_name="__main__")\n')
+            result=subprocess.run([sys.executable,str(runner)],cwd=folder,env={'RAPHAEL_NATIVE_CI_PRIVATE':folder},text=True,capture_output=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stderr)
+            for output in (result.stdout,(private/'native-build.log').read_text()):
+                self.assertIn('Before enrollment',output);self.assertNotIn(late,output);self.assertNotIn('135790',output)
+
     def test_all_dynamic_fixture_credentials_are_redacted_in_stdout_and_artifact(self):
         script=Path(__file__).resolve().parents[1]/'.github/scripts/redact_native_log.py'
         with tempfile.TemporaryDirectory() as folder:

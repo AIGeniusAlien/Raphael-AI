@@ -226,13 +226,14 @@ struct NativeSecretEntry: UIViewRepresentable {
     @Binding var text: String
     let title: String
     var oneTimeCode = false
+    var identifier:String? = nil
     func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
     func makeInput(coordinator: Coordinator) -> UITextField {
         let input = UITextField()
         input.isSecureTextEntry = true
         input.placeholder = title
         input.accessibilityLabel = title
-        input.accessibilityIdentifier = oneTimeCode ? "native-otp" : "native-password"
+        input.accessibilityIdentifier = identifier ?? (oneTimeCode ? "native-otp" : "native-password")
         input.textContentType = oneTimeCode ? .oneTimeCode : .password
         input.autocapitalizationType = .none
         input.autocorrectionType = .no
@@ -251,7 +252,7 @@ struct NativeSecretEntry: UIViewRepresentable {
         // Form rows may be reused:refresh both the binding and its semantic identity.
         input.placeholder = title
         input.accessibilityLabel = title
-        input.accessibilityIdentifier = oneTimeCode ? "native-otp" : "native-password"
+        input.accessibilityIdentifier = identifier ?? (oneTimeCode ? "native-otp" : "native-password")
         let kind: UITextContentType = oneTimeCode ? .oneTimeCode : .password
         if input.textContentType != kind { input.textContentType = kind }
         coordinator.text = $text

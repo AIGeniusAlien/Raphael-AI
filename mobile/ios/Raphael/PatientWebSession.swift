@@ -341,6 +341,39 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
 
     // One memory-only cookie store is shared explicitly by native HTTP and WebKit.
     // No password/token is evaluated as JavaScript or written to UserDefaults/disk.
+    /// Fixed MFA operations reuse the private HTTPS session,never WebKit JS.
+    /// Cancelling UI work cannot undo a server mutation: refresh status after
+    /// interruption rather than claiming that enrollment/disable was rolled back.
+    func manageMFA(_ operation: NativeMFAOperation, password: String = "", code: String = "") async throws -> NativeMFAReply {
+        guard let expected = identity, !authenticating else { throw NativeMFAError.session }
+        let epoch = authenticationEpoch
+        var body: Data?
+        if operation != .status {
+            guard !password.isEmpty, password.count <= 128, code.count <= 100 else { throw NativeMFAError.credentials }
+            var values = ["password":password]
+            if operation != .enroll {
+                guard !code.isEmpty else { throw NativeMFAError.credentials }
+                values["code"] = code
+            }
+            body = try JSONEncoder().encode(values)
+        }
+        let (data,response) = try await request("api/dev/account/mfa" + operation.path,body:body)
+        try Task.checkCancellation()
+        guard identity == expected, epoch == authenticationEpoch else { throw NativeMFAError.session }
+        if response.statusCode == 401 { await clearAuthentication();throw NativeMFAError.session }
+        guard response.statusCode == 200 else { throw NativeMFAError.http(response.statusCode) }
+        let (checked,checkResponse) = try await request("api/dev/session")
+        try Task.checkCancellation()
+        guard identity == expected, epoch == authenticationEpoch else { throw NativeMFAError.session }
+        guard checkResponse.statusCode == 200, (try? JSONDecoder().decode(NativeIdentity.self,from:checked)) == expected else {
+            if checkResponse.statusCode == 401 || checkResponse.statusCode == 200 { await clearAuthentication() }
+            throw NativeMFAError.session
+        }
+        let reply = try JSONDecoder().decode(NativeMFAReply.self,from:data)
+        guard reply.valid(for:operation) else { throw NativeMFAError.response }
+        return reply
+    }
+
     private func request(_ path: String, body: Data? = nil, maximumBytes: Int = 65536) async throws -> (Data, HTTPURLResponse) {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpShouldSetCookies = false
@@ -686,4 +719,45 @@ final class NativeExportTicket: Identifiable, @unchecked Sendable {
     init(identity:NativeIdentity,epoch:Int) { self.identity = identity;self.epoch = epoch }
     var isValid:Bool { lock.lock();defer{lock.unlock()};return valid && Date() < expires }
     func invalidate() { lock.lock();valid = false;lock.unlock() }
+}
+
+// Response validation is deliberately independent of display strings. Never
+// render arbitrary server errors or provider data in credential-management UI.
+enum NativeMFAOperation:Equatable { case status,enroll,confirm,disable
+    var path:String { switch self {case .status:return "";case .enroll:return "/enroll";case .confirm:return "/confirm";case .disable:return "/disable"} }
+}
+struct NativeMFAReply: Decodable {
+    let enabled:Bool?
+    let enrollment_available:Bool?
+    let recovery_codes_remaining:Int?
+    let secret:String?
+    let expires_in_seconds:Int?
+    let recovery_codes:[String]?
+    let other_sessions_revoked:Bool?
+    func valid(for operation:NativeMFAOperation) -> Bool {
+        switch operation {
+        case .status:return enabled != nil && enrollment_available != nil && (0...10).contains(recovery_codes_remaining ?? -1) && secret == nil && recovery_codes == nil
+        case .enroll:return enabled == false && expires_in_seconds == 600 && secret?.range(of:"^[A-Z2-7]{32}$",options:.regularExpression) != nil && recovery_codes == nil
+        case .confirm:return enabled == true && recovery_codes?.count == 10 && Set(recovery_codes ?? []).count == 10 && (recovery_codes ?? []).allSatisfy{$0.range(of:"^[a-f0-9]{20}$",options:.regularExpression) != nil} && secret == nil
+        case .disable:return enabled == false && other_sessions_revoked == true && secret == nil && recovery_codes == nil
+        }
+    }
+}
+enum NativeMFAError: LocalizedError {
+    case session,credentials,response,http(Int)
+    var errorDescription:String? {
+        switch self {
+        case .session:return "Session verification failed. Sign in again or refresh when connected. A completed server change cannot be undone by closing this screen."
+        case .credentials:return "Enter your password and,when required,an authenticator or unused recovery code."
+        case .response:return "Unexpected authenticator response. Private data was withheld. Refresh status before retrying."
+        case .http(let status):
+            switch status {
+            case 403:return "Password or factor was not accepted,or enrollment expired. No success is confirmed."
+            case 409:return "Authenticator state changed. Refresh status before continuing."
+            case 429:return "Too many authenticator changes. Wait five minutes before retrying."
+            case 503:return "Authenticator unavailable. The operator must restore the protected MFA encryption key."
+            default:return "Authenticator request failed. Refresh status before retrying."
+            }
+        }
+    }
 }

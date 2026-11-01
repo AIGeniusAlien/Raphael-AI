@@ -1,5 +1,6 @@
 """Synthetic CI logging protocol checks;no native execution or real credentials."""
 import os
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -14,10 +15,11 @@ class NativeCILoggingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             password='Synthetic-ephemeral-test-password-123'
             Path(directory,'password').write_text(password)
+            Path(directory,'redactions.json').write_text(json.dumps([password]))
             result=subprocess.run([sys.executable,str(ROOT/'.github/scripts/redact_native_log.py')],input='Synthetic typed value '+password+'\n',capture_output=True,text=True,cwd=directory,env={**os.environ,'RAPHAEL_NATIVE_CI_PRIVATE':directory},timeout=10)
             self.assertEqual(result.returncode,0,result.stderr)
             for output in (result.stdout,Path(directory,'native-build.log').read_text()):
-                self.assertNotIn(password,output);self.assertIn('[SYNTHETIC PASSWORD REDACTED]',output)
+                self.assertNotIn(password,output);self.assertIn('[PRIVATE CI INPUT REDACTED]',output)
 
     def test_missing_redaction_binding_withholds_raw_output(self):
         with tempfile.TemporaryDirectory() as directory:

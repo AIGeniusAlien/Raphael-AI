@@ -53,9 +53,6 @@ def prepare():
     key.chmod(0o600)
     subprocess.run(['sudo','sh','-c','echo "127.0.0.1 raphael-ci.test" >> /etc/hosts'],check=True)
     subprocess.run(['defaults','write','com.apple.iphonesimulator','ConnectHardwareKeyboard','-bool','NO'],check=True,timeout=15)
-    subprocess.run(['xcrun','simctl','boot',identifier],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-    subprocess.run(['xcrun','simctl','bootstatus',identifier,'-b'],check=True,timeout=240)
-    subprocess.run(['xcrun','simctl','keychain',identifier,'add-root-cert',str(certificate)],check=True)
     server_environment={**environment,'DATABASE_URL':database,'RAPHAEL_DEV_PORTAL':'1','RAPHAEL_DEV_SYNTHETIC_ONLY':'1','RAPHAEL_MFA_ENCRYPTION_KEY':mfa_key,'PYTHONDONTWRITEBYTECODE':'1','GITHUB_ACTIONS':'true'}
     forwarder=shutil.which('socat')
     if not forwarder:raise RuntimeError('Install socat for the isolated loopback443 TCP forwarder.')
@@ -108,6 +105,12 @@ def prepare():
         client.post('/api/dev/logout',json={}).raise_for_status()
         sensitive=[password,control_token,mfa_key,enrollment.json()['secret'],factor,*recovery]
         (private/'redactions.json').write_text(json.dumps(sensitive));(private/'redactions.json').chmod(0o600)
+    # Complete bounded application readiness before cold simulator boot.
+    # The prior runner stalled in Python imports while boot competed for CPU;
+    # retain the same60s backend deadline and240s simulator bound.
+    subprocess.run(['xcrun','simctl','boot',identifier],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    subprocess.run(['xcrun','simctl','bootstatus',identifier,'-b'],check=True,timeout=240)
+    subprocess.run(['xcrun','simctl','keychain',identifier,'add-root-cert',str(certificate)],check=True)
     test=ROOT/'mobile/ios/RaphaelUITests/RaphaelUITests.swift'
     source=test.read_text()
     if source.count('__CI_SYNTHETIC_PASSWORD__')!=1:raise RuntimeError('Expected exactly one private UI-test placeholder.')

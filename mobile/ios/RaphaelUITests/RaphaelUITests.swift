@@ -76,6 +76,13 @@ final class RaphaelUITests: XCTestCase {
                 let progress = app.staticTexts["native-authentication-status"]
                 XCTFail(problem.exists ? problem.label : "Authenticated web identity did not appear. Native status: " + (progress.exists ? progress.label : "No in-flight request"))
             }
+            if username == "native-clinician" {
+                // This role has two authorized records. The portal deliberately
+                // requires a real patient selection before displaying notes.
+                let record = app.webViews.buttons["Synthetic native patient"]
+                XCTAssertTrue(record.waitForExistence(timeout: 15))
+                record.tap()
+            }
             XCTAssertTrue(app.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout: 15))
         }
         login("native-patient", workspace: "Patient workspace")

@@ -15,6 +15,7 @@ final class RaphaelUITests: XCTestCase {
             finalState.lifetime = .keepAlways
             add(finalState)
         }
+        if app.state != .notRunning { app.terminate() }
         try super.tearDownWithError()
     }
 
@@ -224,20 +225,32 @@ final class RaphaelUITests: XCTestCase {
         if fixturePassword.hasPrefix("__CI_") || fixtureControl.hasPrefix("__CI_") { throw XCTSkip("Private actual HTTPS fixture required;no extended acceptance implied.") }
     }
 
-    private func signIn(_ app: XCUIApplication, username: String, factor: String? = nil) {
+    private enum FixtureFailure: Error { case requiredUIState }
+    private func requireUI(_ condition: Bool, _ message: String, file: StaticString = #filePath, line: UInt = #line) throws {
+        guard condition else {
+            // Async XCTest must finish through Swift error propagation. With
+            // continueAfterFailure=false XCTest can advance while its suspended
+            // async body keeps operating on the next test's application.
+            XCTFail(message, file:file, line:line)
+            throw FixtureFailure.requiredUIState
+        }
+    }
+    private func signIn(_ app: XCUIApplication, username: String, factor: String? = nil) throws {
         let organization = app.textFields["Development organization"]
-        XCTAssertTrue(organization.waitForExistence(timeout:30))
+        try requireUI(organization.waitForExistence(timeout:30),"Native organization input must appear.")
         organization.tap(); organization.typeText("native-ci")
+        try requireUI(app.textFields["Username"].waitForExistence(timeout:10),"Native username input must appear.")
         app.textFields["Username"].tap(); app.textFields["Username"].typeText(username)
         let password = app.secureTextFields["native-password"]
+        try requireUI(password.waitForExistence(timeout:10),"Native secure password input must appear.")
         password.tap(); password.typeText(fixturePassword)
         if let factor {
             app.buttons["Use an authenticator or recovery code"].tap()
             let field = app.secureTextFields["native-otp"]
-            XCTAssertTrue(field.waitForExistence(timeout:10));field.tap();field.typeText(factor)
+            try requireUI(field.waitForExistence(timeout:10),"Native second-factor input must appear.");field.tap();field.typeText(factor)
         }
         app.buttons["Sign in"].tap()
-        XCTAssertTrue(app.staticTexts[username+" · Patient workspace · native-ci"].waitForExistence(timeout:45))
+        try requireUI(app.staticTexts[username+" · Patient workspace · native-ci"].waitForExistence(timeout:45),"Actual authenticated patient web workspace must appear.")
     }
 
     private func tapHeader(_ element: XCUIElement) {
@@ -248,13 +261,16 @@ final class RaphaelUITests: XCTestCase {
 
     @MainActor
     func testMFARecoveryBackgroundForegroundAndOwnerSessionRevocation() async throws {
-        try configuredFixture();continueAfterFailure=false
+        try configuredFixture();continueAfterFailure=true
         let http=FixtureHTTPS();defer {http.close()}
         let (_,denied)=try await http.call("api/dev/login",body:["tenant":"native-ci","username":"native-mfa-patient","password":fixturePassword])
         XCTAssertEqual(denied.statusCode,401)
-        let app=XCUIApplication();app.launch();signIn(app,username:"native-mfa-patient",factor:recoveryFirst)
-        XCUIDevice.shared.press(.home);app.activate()
-        XCTAssertTrue(app.staticTexts["native-mfa-patient · Patient workspace · native-ci"].waitForExistence(timeout:30))
+        let app=XCUIApplication();app.launch();try signIn(app,username:"native-mfa-patient",factor:recoveryFirst)
+        XCUIDevice.shared.press(.home)
+        try requireUI(app.wait(for:.runningBackground,timeout:10) || app.state == .runningBackgroundSuspended,"App must reach the background before activation.")
+        app.activate()
+        try requireUI(app.wait(for:.runningForeground,timeout:20),"App must return to foreground.")
+        try requireUI(app.staticTexts["native-mfa-patient · Patient workspace · native-ci"].waitForExistence(timeout:30),"Actual authenticated web workspace must survive background and foreground.")
         let owner=try await http.login("native-mfa-patient",password:fixturePassword,factor:recoverySecond)
         let (sessionData,status)=try await http.call("api/dev/account/sessions",cookie:owner)
         XCTAssertEqual(status.statusCode,200)
@@ -266,19 +282,19 @@ final class RaphaelUITests: XCTestCase {
             let (_,revoked)=try await http.call("api/dev/account/sessions/\(id)/revoke",cookie:owner,body:[:])
             XCTAssertEqual(revoked.statusCode,200)
         }
-        XCTAssertTrue(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30))
+        try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30),"Owner revocation must return native sign-in.")
         let (_,reused)=try await http.call("api/dev/login",body:["tenant":"native-ci","username":"native-mfa-patient","password":fixturePassword,"otp":recoveryFirst])
         XCTAssertEqual(reused.statusCode,401)
         let logoutStatus=try await http.logout(owner);XCTAssertEqual(logoutStatus,200)
         app.terminate();app.launch()
-        XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout:20))
+        try requireUI(app.textFields["Username"].waitForExistence(timeout:20),"Relaunch must require fresh native sign-in.")
     }
 
     @MainActor
     func testReadinessFailureSlowTimeoutRetryAndAuthoritativeSessionExpiry() async throws {
-        try configuredFixture();continueAfterFailure=false
+        try configuredFixture();continueAfterFailure=true
         let http=FixtureHTTPS();defer {http.close()}
-        let app=XCUIApplication();app.launch();signIn(app,username:"native-expiry-patient")
+        let app=XCUIApplication();app.launch();try signIn(app,username:"native-expiry-patient")
         tapHeader(app.buttons["Privacy and session settings"])
         try await http.control("unavailable",token:fixtureControl)
         app.buttons["Check backend connection"].tap()

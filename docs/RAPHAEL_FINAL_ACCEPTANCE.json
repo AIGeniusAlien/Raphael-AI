@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
-  "starting_commit": "a7e79cb792121b794af6aca110816cd6d123843c",
-  "implementation_commit": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada",
+  "starting_commit": "3ee4eec89e769e8aa1c50883d0c34fb5098d143c",
+  "implementation_commit": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1",
   "release_decisions": {
     "synthetic_local_web_demonstration": "PASS",
     "controlled_synthetic_testflight": "FAIL",
@@ -14,7 +14,7 @@
       "id": "synthetic_web_workflow",
       "status": "PASS",
       "cause": "Bounded synthetic development scope only.",
-      "attempted_remediation": "257Python/29frontend/7Chromium/5structural pass;includes approved tabular observations and patient-visible chronology.",
+      "attempted_remediation": "267Python/29frontend/7Chromium/5project checks passed;current exact-source CI regression/security pass.",
       "responsible_party": "Engineering",
       "next_verification": "Re-run python -m dev_verify --all --require-browser on exact reviewed source."
     },
@@ -29,10 +29,10 @@
     {
       "id": "authenticated_native",
       "status": "PASS",
-      "cause": "Bounded actual synthetic simulator core workflow;broader native release acceptance remains incomplete.",
-      "attempted_remediation": "Actual14Xcode cases pass on4299e13,including typed/paste patient+clinician chart/note/native+web logout/relaunch;7logins7logouts0sessions. New Python/chart features preserve core native acceptance;extended mobile checks remain separate.",
+      "cause": "Bounded actual synthetic simulator acceptance;not signed,physical-device,VoiceOver or download/export acceptance.",
+      "attempted_remediation": "18actual Xcode cases pass,original14 preserved;MFA recovery UI,owner revocation,background/relaunch,503/slow timeout/recovery,expiry,largest Dynamic Type and real HTTPS private-document consent contract.",
       "responsible_party": "Engineering",
-      "next_verification": "Separate physical-device,expiry/outage,VoiceOver/Dynamic Type and protected export acceptance;no clinical or signed-build inference."
+      "next_verification": "Physical-device/VoiceOver;native protected export;independent TOTP UI and secure account-recovery delivery;no production identity inference."
     },
     {
       "id": "mfa_technical_controls",
@@ -133,8 +133,8 @@
     {
       "id": "native_export_accessibility_outages",
       "status": "FAIL",
-      "cause": "Protected native export,physical VoiceOver/Dynamic Type,expiry and outage acceptance not completed.",
-      "attempted_remediation": "Memory-only sessions,foreground verification,explicit network errors and WebView error handling implemented.",
+      "cause": "Native protected export and physical-device/VoiceOver acceptance remain incomplete;bounded simulator outage,expiry and largest Dynamic Type now pass.",
+      "attempted_remediation": "18actual Xcode cases;runner HTTPS document bytes/consent revocation do not prove native download/export.",
       "responsible_party": "Engineering",
       "next_verification": "Execute actual native file/export and lifecycle/accessibility/outage tests on simulator and authorized device."
     },
@@ -209,16 +209,24 @@
       "attempted_remediation": "2verifier contract tests plus real physician/patient complete/passed support screens;source checks and live missing-evidence0.",
       "responsible_party": "Engineering",
       "next_verification": "Maintain source-scoped real evidence,not mock or skipped-success claims."
+    },
+    {
+      "id": "supported_domain_coverage_map",
+      "status": "PASS",
+      "cause": "Explicit bounded index inventory;not clinical competence.",
+      "attempted_remediation": "Read-only clinician panel;unauthorized access denied;local unchecked scope and provider503 sanitized;real9documents48vectors384dimensions.",
+      "responsible_party": "Engineering",
+      "next_verification": "Rights-reviewed corpus growth and independent clinical evaluation."
     }
   ],
   "requirements": {
-    "baseline_preserved": 1146,
+    "baseline_preserved": 1151,
     "original_baseline_preserved": 1136,
-    "current": 1151,
+    "current": 1154,
     "states": {
       "PARTIAL": 870,
       "NOT_IMPLEMENTED": 191,
-      "VERIFIED": 68,
+      "VERIFIED": 71,
       "IMPLEMENTED_UNVERIFIED": 22
     }
   },
@@ -227,27 +235,55 @@
   "merged": false,
   "deployed": false,
   "apple_submitted": false,
-  "verification_scope": "Application4299e13 regression/security/actual native CI all PASS;257Python/29frontend/7Chromium/5structural plus14protocol fixtures,project audit and ledger passed locally. Actual native14passed0failed0skipped;7logins7logouts0sessions. Real physician/patient workflows complete with protocol2 screens and original CDC checks on4299e13;9documents48vectors384dimensions unchanged. No independent clinical or physical-device validation.",
-  "native_followup_source": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada",
-  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41273265490",
+  "verification_scope": "267Python/29frontend/7Chromium/5project tests and14deterministic safety cases pass;actual Xcode18passed0failed0skipped. Prior real supported physician/patient conversations preserved on4299e13;not rerun unchanged provider pipeline. Current real read-only Qdrant9docs48vectors384dims. No clinical,device,VoiceOver or distribution acceptance.",
+  "native_followup_source": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1",
+  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41284154400",
   "native_followup_status": "PASS",
-  "ci_evidence": "docs/ULTIMATE_CI_RESULTS.json",
+  "ci_evidence": "docs/FINAL_RC_CI_RESULTS.json",
   "native_tests": {
-    "passed": 14,
+    "passed": 18,
     "failed": 0,
     "skipped": 0,
-    "total": 14,
+    "total": 18,
     "source": "xcresulttool",
-    "commit": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada"
+    "commit": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1"
   },
   "native_server_evidence": {
-    "logins": 7,
-    "logouts": 7,
-    "session_401_responses": 4,
+    "logins": 13,
+    "logouts": 11,
+    "session_401_responses": 6,
     "active_sessions_remaining": 0,
-    "provider_requests": 0
+    "expired_sessions_retained": 1,
+    "provider_requests": 0,
+    "raw": {
+      "synthetic_sessions_remaining": 0,
+      "expired_sessions_retained": 1,
+      "provider_requests": 0,
+      "backend": "actual_main_app_https",
+      "audit_event_counts_including_provisioning": {
+        "list_patients": 14,
+        "login": 13,
+        "logout": 11,
+        "read_notes": 11,
+        "read_patient": 10
+      }
+    }
   },
-  "previous_verified_head": "de485cc58d6f2e6987f86ba8a40a9069f61ff87d",
-  "directive": "docs/directives/ULTIMATE_COMPLETION_2026-11-01.md",
-  "live_evidence": "docs/ULTIMATE_LIVE_RESULTS.json"
+  "previous_verified_head": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada",
+  "directive": "docs/directives/FINAL_RC_COMPLETION_2026-11-01.md",
+  "live_evidence": "docs/ULTIMATE_LIVE_RESULTS.json",
+  "live_scope_panel_evidence": "docs/FINAL_RC_LIVE_COVERAGE_BROWSER.json",
+  "live_coverage_evidence": "docs/FINAL_RC_EVIDENCE_COVERAGE.json",
+  "historical_ci_evidence": "docs/ULTIMATE_CI_RESULTS.json",
+  "native_timeout_evidence": "docs/FINAL_RC_NATIVE_TIMEOUT_CI.json",
+  "failed_or_cancelled_current_attempts": [
+    "docs/FINAL_RC_BASELINE_NATIVE_SETUP_FAILURE.json",
+    "docs/FINAL_RC_CANCELLED_NATIVE_ATTEMPT.json",
+    "docs/FINAL_RC_NATIVE_TIMEOUT_CI.json",
+    "docs/FINAL_RC_BOUNDED_NATIVE_FAILURE_CI.json",
+    "docs/FINAL_RC_ISOLATED_LIFECYCLE_FAILURE_CI.json",
+    "docs/FINAL_RC_FOREGROUND_MITIGATION_FAILURE_CI.json",
+    "docs/FINAL_RC_RENDERED_DIAGNOSTIC_FAILURE_CI.json"
+  ],
+  "native_background_recovery": "PASS with one explicit visible user retry after reported stopped WebKit content;actual authenticated web identity,owner revocation,reused-factor rejection and relaunch remain required."
 }

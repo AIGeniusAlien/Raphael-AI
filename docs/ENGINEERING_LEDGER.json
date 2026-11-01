@@ -4,10 +4,10 @@
   "state_counts": {
     "PARTIAL": 870,
     "NOT_IMPLEMENTED": 191,
-    "VERIFIED": 68,
+    "VERIFIED": 71,
     "IMPLEMENTED_UNVERIFIED": 22
   },
-  "requirement_count": 1151,
+  "requirement_count": 1154,
   "clinical_validation": false,
   "requirements": [
     {
@@ -16120,6 +16120,48 @@
       "remaining_work": "Small CDC general-education demonstration;not clinical validation or comprehensive coverage",
       "acceptance_criteria": "A block,missing screen or failure never counts as completed integration;preserve failed evidence",
       "next_implementation_action": "Small CDC general-education demonstration;not clinical validation or comprehensive coverage",
+      "priority": "P0",
+      "milestone": "M1/M5",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "RC-001",
+      "description": "Extended authenticated native simulator lifecycle,failures and protected-document contract acceptance",
+      "state": "VERIFIED",
+      "code_location": "mobile/ios/Raphael*;mobile/scripts/authenticated_ci.py",
+      "test_coverage": "18actual Xcode cases (9unit+9UI),0failed,0skipped;original14 preserved",
+      "external_dependency": "Actual synthetic HTTPS backend and authorized CI;real Qdrant read-only where specified",
+      "remaining_work": "Physical device,VoiceOver gestures,independent native TOTP enrollment/entry,protected native export and production identity remain incomplete",
+      "acceptance_criteria": "Bounded HTTPS recovery-factor UI and owner revocation;server fault injection,expiry,Dynamic Type;protected documents via runner HTTPS,not native export",
+      "next_implementation_action": "Physical device,VoiceOver gestures,independent native TOTP enrollment/entry,protected native export and production identity remain incomplete",
+      "priority": "P0",
+      "milestone": "M1/M5",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "RC-002",
+      "description": "Read-only indexed supported-domain coverage map with explicit clinical limitations",
+      "state": "VERIFIED",
+      "code_location": "curated_evidence.py;dev_intelligence.py;static/intelligence.*",
+      "test_coverage": "2local-Qdrant regressions;clinician/patient/error API test;actual Chromium refresh;real read-only9documents48vectors384dimensions",
+      "external_dependency": "Actual synthetic HTTPS backend and authorized CI;real Qdrant read-only where specified",
+      "remaining_work": "Broader rights-reviewed coverage,fresh-source/retraction surveillance and expert clinical/population evaluation remain incomplete",
+      "acceptance_criteria": "Counts only current matching-corpus catalog evidence;no writes;missing local index explicitly unchecked;no competence claim",
+      "next_implementation_action": "Broader rights-reviewed coverage,fresh-source/retraction surveillance and expert clinical/population evaluation remain incomplete",
+      "priority": "P0",
+      "milestone": "M1/M5",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "RC-003",
+      "description": "Restricted synthetic native CI fault controls and fail-closed extended credential log redaction",
+      "state": "VERIFIED",
+      "code_location": "mobile/scripts/fixture_control.py;.github/scripts/redact_native_log.py",
+      "test_coverage": "4control tests,6old/new log tests;actual Linux HTTPS composition;actual Xcode CI",
+      "external_dependency": "Actual synthetic HTTPS backend and authorized CI;real Qdrant read-only where specified",
+      "remaining_work": "No production fault endpoint or real network/clinical/provider outage proof;CI artifacts need owner access for visual review",
+      "acceptance_criteria": "Only GHA+exact disposable synthetic database+private token;no normal main install;private registry redacts password,MFA,recovery and control material",
+      "next_implementation_action": "No production fault endpoint or real network/clinical/provider outage proof;CI artifacts need owner access for visual review",
       "priority": "P0",
       "milestone": "M1/M5",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."

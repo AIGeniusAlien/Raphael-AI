@@ -1,11 +1,11 @@
 {
-  "ios_source": "PARTIAL;compiled;core authenticated simulator acceptance PASS;broader release gates incomplete",
+  "ios_source": "PARTIAL;compiled;bounded extended authenticated simulator acceptance PASS;broader release gates incomplete",
   "linux_structural_audit": "VERIFIED",
   "linux_project_tests": {
     "passed": 5
   },
   "xcode_compile": "VERIFIED_REMOTE_CI",
-  "simulator_and_device_tests": "9unit+5UI passed actual Xcode;physical device NOT_RUN",
+  "simulator_and_device_tests": "9unit+9UI actual Xcode pass;physical device NOT_RUN",
   "apple_signing": "BLOCKED_EXTERNAL",
   "privacy_legal_clinical_review": "REQUIRES_CLINICAL_VALIDATION",
   "account_erasure": "NOT_IMPLEMENTED",
@@ -15,19 +15,20 @@
   "app_store_ready": false,
   "testflight_uploaded": false,
   "owner_actions": [
-    "Publish saved native-artifact hostname addition",
+    "Allow productionresultssa4.blob.core.windows.net in the environment network domains and publish,or inspect native xcresult/screenshots directly in GitHub;workspace artifact download was forbidden.",
     "Provide authorized synthetic HTTPS staging and physical-device access",
     "Provide owner Apple team,registered bundle,approved icon and real privacy/support URLs",
     "Approve applicable retention,intended-use and distribution policies"
   ],
-  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41273265490",
-  "simulator_unit_ui_tests": "CORE_AUTHENTICATED_ACCEPTANCE_PASS",
+  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41284154400",
+  "simulator_unit_ui_tests": "BOUNDED_EXTENDED_AUTHENTICATED_ACCEPTANCE_PASS",
   "simulator_tests": {
-    "passed": 14,
+    "passed": 18,
     "failed": 0,
     "skipped": 0,
-    "total": 14,
-    "source": "xcresulttool"
+    "total": 18,
+    "source": "xcresulttool",
+    "commit": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1"
   },
   "historical_simulator_tests": {
     "passed": 7,
@@ -37,21 +38,22 @@
   },
   "audit_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
   "audit_date": "2026-11-01",
-  "authenticated_native_workflow": "PASS actual current4299e13:14passed0failed0skipped;typed/paste patient+clinician chart/note/logout/relaunch;7logins7logouts0sessions. Extended acceptance and distribution remain incomplete.",
-  "native_source_commit": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada",
+  "authenticated_native_workflow": "PASS bounded actual synthetic simulator18passed0failed0skipped;memory-only cookie session;recovery UI and owner revocation,expiry,503/slow recovery,Dynamic Type;protected documents via runner HTTPS only.",
+  "native_source_commit": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1",
   "remaining_engineering": [
-    "Complete native expiry/outage/accessibility and protected export acceptance",
-    "Implement policy-backed erasure,production identity/guardian and live PHI controls",
-    "Complete independent clinical/security evaluation and broader rights-reviewed knowledge"
+    "Protected native export and physical-device/VoiceOver acceptance;independent native TOTP UI flow",
+    "Policy-backed erasure,production identity/guardian and live PHI controls",
+    "Independent clinical/security evaluation and broader rights-reviewed knowledge"
   ],
   "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
-  "product_completion_native_followup": {
+  "historical_product_completion_native_followup": {
     "source": "0e9570645749c00ccf44cdb5174b03d6578acda2",
     "run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40793424632",
     "result": "PENDING_ACTUAL_CI;not_a_pass",
-    "implemented": "Native controls,independent real-HTTPS contract,private ephemeral cookie sharing,stable hidden WebView lifecycle"
+    "implemented": "Native controls,independent real-HTTPS contract,private ephemeral cookie sharing,stable hidden WebView lifecycle",
+    "interpretation": "Historical pending snapshot;superseded by later completed actual results;original result text retained."
   },
-  "last_completed_native_acceptance": {
+  "historical_last_completed_native_acceptance": {
     "source": "f5a7d9fa7f64237884646119d09be09101f5aa53",
     "run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40792127330",
     "passed": 9,
@@ -60,5 +62,14 @@
     "status": "FAIL",
     "cause": "GUI login401;preauth WebView accessibility exposure. Navigation startup crash fixed;7unit cases run.",
     "independent_https_runner_contract": "PASS,both roles and protected API operations;not app UI proof"
+  },
+  "last_completed_native_acceptance": {
+    "source": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1",
+    "run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41284154400",
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "scope": "Bounded synthetic simulator;not native export or physical-device/VoiceOver acceptance."
   }
 }

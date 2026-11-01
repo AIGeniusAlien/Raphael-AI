@@ -1,0 +1,148 @@
+{
+  "status": "passed",
+  "uses_mock_services": false,
+  "read_only": true,
+  "index_checked": true,
+  "collection": "raphael_evidence_v1",
+  "embedding_model": "text-embedding-3-small",
+  "dimensions": 384,
+  "active_documents": 9,
+  "active_vectors": 48,
+  "sources": [
+    {
+      "url": "https://www.cdc.gov/antibiotic-use/about/index.html",
+      "population": "general",
+      "domain": "primary_care",
+      "scope_note": "General patient education;individual recommendations may still be age-specific.",
+      "indexed_documents": 1,
+      "indexed_vectors": 4,
+      "source_dates": [
+        "2025-09-23"
+      ],
+      "titles": [
+        "Healthy Habits: Antibiotic Do's and Don'ts"
+      ]
+    },
+    {
+      "url": "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/adult-outpatient.html",
+      "population": "adult",
+      "domain": "primary_care",
+      "scope_note": "Source explicitly addresses adult outpatient care.",
+      "indexed_documents": 1,
+      "indexed_vectors": 6,
+      "source_dates": [
+        "2024-04-16"
+      ],
+      "titles": [
+        "Outpatient Clinical Care for Adults"
+      ]
+    },
+    {
+      "url": "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/pediatric-outpatient.html",
+      "population": "pediatric",
+      "domain": "pediatrics",
+      "scope_note": "Source explicitly addresses pediatric outpatient care.",
+      "indexed_documents": 1,
+      "indexed_vectors": 10,
+      "source_dates": [
+        "2024-04-22"
+      ],
+      "titles": [
+        "Outpatient Clinical Care for Pediatric Populations"
+      ]
+    },
+    {
+      "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+      "population": "adult",
+      "domain": "neurology_emergency",
+      "scope_note": "Reviewed source describes stroke signs in men and women;no pediatric applicability review is claimed.",
+      "indexed_documents": 1,
+      "indexed_vectors": 3,
+      "source_dates": [
+        "2026-05-19"
+      ],
+      "titles": [
+        "Signs and Symptoms of Stroke"
+      ]
+    },
+    {
+      "url": "https://www.cdc.gov/diabetes/signs-symptoms/index.html",
+      "population": "general",
+      "domain": "endocrinology",
+      "scope_note": "Source explicitly discusses diabetes across ages and pregnancy;subsection applicability requires clinician review.",
+      "indexed_documents": 1,
+      "indexed_vectors": 3,
+      "source_dates": [
+        "2024-05-15"
+      ],
+      "titles": [
+        "Symptoms of Diabetes"
+      ]
+    },
+    {
+      "url": "https://www.cdc.gov/asthma/about/index.html",
+      "population": "general",
+      "domain": "pulmonology",
+      "scope_note": "Source explicitly discusses asthma in children and adults;subsection applicability requires clinician review.",
+      "indexed_documents": 1,
+      "indexed_vectors": 5,
+      "source_dates": [
+        "2026-08-28"
+      ],
+      "titles": [
+        "About Asthma"
+      ]
+    },
+    {
+      "url": "https://www.cdc.gov/heart-disease/about/heart-attack.html",
+      "population": "adult",
+      "domain": "cardiology_emergency",
+      "scope_note": "Source describes heart attack signs in men and women;no pediatric applicability review is claimed.",
+      "indexed_documents": 1,
+      "indexed_vectors": 5,
+      "source_dates": [
+        "2024-10-24"
+      ],
+      "titles": [
+        "About Heart Attack Symptoms, Risk, and Recovery"
+      ]
+    },
+    {
+      "url": "https://www.cdc.gov/sepsis/about/index.html",
+      "population": "general",
+      "domain": "infectious_disease_emergency",
+      "scope_note": "CDC education explicitly discusses adults and children;not a patient-specific sepsis protocol.",
+      "indexed_documents": 1,
+      "indexed_vectors": 7,
+      "source_dates": [
+        "2026-08-17"
+      ],
+      "titles": [
+        "About Sepsis"
+      ]
+    },
+    {
+      "url": "https://www.cdc.gov/flu/signs-symptoms/index.html",
+      "population": "general",
+      "domain": "infectious_disease",
+      "scope_note": "Source explicitly separates child and adult warning signs;subsection applicability must be preserved.",
+      "indexed_documents": 1,
+      "indexed_vectors": 5,
+      "source_dates": [
+        "2024-08-26"
+      ],
+      "titles": [
+        "Signs and Symptoms of Flu"
+      ]
+    }
+  ],
+  "unrecognized_active_vectors": 0,
+  "supported_use": "Inspect retrieved public-source excerpts for general education or provisional clinician review only. Counts do not establish sufficient evidence for any clinical question.",
+  "not_validated": [
+    "Individual diagnosis or treatment decisions",
+    "Comprehensive prescribing or drug interactions",
+    "Comprehensive specialty,pediatric or pregnancy guidance"
+  ],
+  "freshness": "Indexed publication dates only;this inventory does not refetch pages or establish automated retraction surveillance.",
+  "clinical_validation": false
+}

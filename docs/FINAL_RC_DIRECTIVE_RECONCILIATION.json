@@ -1,0 +1,91 @@
+{
+  "directive": "docs/directives/FINAL_RC_COMPLETION_2026-11-01.md",
+  "entire_directive_completed": false,
+  "checkpoint_reason": "Completed bounded native/evidence engineering increment;broader independently achievable work and owner-controlled acceptance remain. Do not infer full product completion.",
+  "sections": [
+    {
+      "section_id": 1,
+      "title": "Project baseline",
+      "status": "PASS",
+      "evidence_and_remaining": "Verified3ee4eec baseline;preserved branch,history and draftPR1."
+    },
+    {
+      "section_id": 2,
+      "title": "Actual acceptance matrix",
+      "status": "PASS",
+      "evidence_and_remaining": "1151prior IDs/descriptions preserved;1154current rows;failures and owner dependencies remain explicit."
+    },
+    {
+      "section_id": 3,
+      "title": "Extended native iOS acceptance",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "18actual Xcode cases pass including visible foreground recovery;physical device,full VoiceOver,native export and independent native TOTP enrollment/entry remain unverified or incomplete."
+    },
+    {
+      "section_id": 4,
+      "title": "Patient and physician experiences",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "Existing chart,consent,documentation,observation and communication sandbox preserved;actual erasure,guardian identity,native export and live clinical integrations incomplete."
+    },
+    {
+      "section_id": 5,
+      "title": "Medical intelligence",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "Live9document/48vector/384dimension supported-domain map verified;prior real supported conversations preserved;comprehensive coverage,retraction surveillance and independent clinical evaluation unfinished."
+    },
+    {
+      "section_id": 6,
+      "title": "Longitudinal intelligence and structured extraction",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "Authorized chronology,exact arithmetic,immutable context and reviewed tabular extraction tested;clinical synthesis,free-text/PDF/OCR and clinical identity matching unfinished."
+    },
+    {
+      "section_id": 7,
+      "title": "Clinical workflow orchestration",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "Explicit edit/approval/publication and bounded repeat-safe imports work;complete durable cross-workflow orchestration,retry and follow-up remain engineering work."
+    },
+    {
+      "section_id": 8,
+      "title": "Security,privacy and lifecycle",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "MFA/recovery,authorization,consent,session and synthetic encrypted backups tested;identity/proxy,erasure/retention,PHI controls and stable keys remain gaps."
+    },
+    {
+      "section_id": 9,
+      "title": "Production infrastructure and reliability",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "Local health/restore/HTTP probes and native outage/retry tests pass;authorized staging,production migrations,KMS,DR,monitoring and sustained load not accepted."
+    },
+    {
+      "section_id": 10,
+      "title": "Premium product experience",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "Brand preserved;actual browser layouts inspected and overflow tested;native captures generated,but artifact access and physical-device/full accessibility review remain blocked."
+    },
+    {
+      "section_id": 11,
+      "title": "AI efficiency",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "Deterministic formatting/extraction,bounded context and partial checker usage exist;complete usage/cost and evaluated multi-model routing unfinished."
+    },
+    {
+      "section_id": 12,
+      "title": "Final integrated acceptance",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "267Python29frontend7Chromium5project18native pass;bounded supported live conversation evidence preserved;account erasure/proxy and full staging/device scenarios not complete."
+    },
+    {
+      "section_id": 13,
+      "title": "Separate release gates",
+      "status": "PASS",
+      "evidence_and_remaining": "A bounded local demoPASS;BsyntheticTestFlightFAIL;CclinicalpilotFAIL;DclinicalproductionFAIL;owner dependencies separatelyBLOCKED."
+    },
+    {
+      "section_id": 14,
+      "title": "Final output and evidence",
+      "status": "PARTIAL",
+      "evidence_and_remaining": "Readiness/machine matrix/ledger,actual results,release instructions and owner actions prepared;no signed archive,physical-device result,Apple submission or independent clinical approval exists."
+    }
+  ]
+}

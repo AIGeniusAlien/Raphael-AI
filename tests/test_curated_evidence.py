@@ -12,6 +12,32 @@ from rag import hosted_embeddings as he
 
 
 class CuratedEvidenceTests(unittest.TestCase):
+    def test_coverage_counts_only_active_indexed_sources_without_claiming_domain_validation(self):
+        with tempfile.TemporaryDirectory() as path:
+            with patch.object(ce,'client',side_effect=lambda:QdrantClient(path=path)),patch.object(ce,'encode',side_effect=lambda texts:np.ones((len(texts),384),dtype=np.float32)):
+                source=self.source();indexed=ce.ingest([source]);result=ce.coverage_status()
+                self.assertTrue(result['read_only']);self.assertFalse(result['clinical_validation'])
+                self.assertEqual(result['active_documents'],1);self.assertEqual(result['active_vectors'],indexed['active_vectors'])
+                self.assertEqual(result['sources'][0]['indexed_documents'],1)
+                self.assertTrue(all(row['indexed_documents']==0 for row in result['sources'][1:]))
+                ce.withdraw_source(source['url'],'Synthetic reviewed withdrawal')
+                result=ce.coverage_status();self.assertEqual(result['active_documents'],0)
+                c=QdrantClient(path=path)
+                try:self.assertEqual(c.count(ce.collection()).count,indexed['vectors_after'])
+                finally:c.close()
+
+    def test_coverage_refuses_incompatible_vector_schema_without_recreating_data(self):
+        with tempfile.TemporaryDirectory() as path:
+            c=QdrantClient(path=path)
+            try:
+                c.create_collection(ce.collection(),vectors_config=qm.VectorParams(size=8,distance=qm.Distance.COSINE))
+                c.upsert(ce.collection(),[qm.PointStruct(id=1,vector=[1.0]*8,payload={})])
+            finally:c.close()
+            with patch.object(ce,'client',side_effect=lambda:QdrantClient(path=path)),self.assertRaises(ValueError):ce.coverage_status()
+            c=QdrantClient(path=path)
+            try:self.assertEqual(c.count(ce.collection()).count,1)
+            finally:c.close()
+
     def test_hybrid_rerank_promotes_lexical_support_and_excludes_instruction_only_matches(self):
         def hit(identifier,body):return NS(payload={'chunk_id':identifier,'text':body},score=.7)
         hits=[hit('first','Antibiotics storage fixture.'),hit('second','Antibiotics do not work against viruses. Viruses fixture.'),hit('third','General education requires clinician review. Source date fixture.')]

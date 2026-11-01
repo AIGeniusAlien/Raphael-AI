@@ -3,6 +3,9 @@ import UIKit
 
 final class RaphaelUITests: XCTestCase {
     private let fixturePassword = "__CI_SYNTHETIC_PASSWORD__"
+    private let fixtureControl = "__CI_CONTROL_TOKEN__"
+    private let recoveryFirst = "__CI_RECOVERY_CODE__"
+    private let recoverySecond = "__CI_RECOVERY_SECOND__"
     override func tearDownWithError() throws {
         if !fixturePassword.hasPrefix("__CI_") { UIPasteboard.general.items = [] }
         let app = XCUIApplication()
@@ -215,6 +218,157 @@ final class RaphaelUITests: XCTestCase {
         screenshot.name = "Unconfigured development app"
         screenshot.lifetime = .keepAlways
         add(screenshot)
+    }
+
+    private func configuredFixture() throws {
+        if fixturePassword.hasPrefix("__CI_") || fixtureControl.hasPrefix("__CI_") { throw XCTSkip("Private actual HTTPS fixture required;no extended acceptance implied.") }
+    }
+
+    private func signIn(_ app: XCUIApplication, username: String, factor: String? = nil) {
+        let organization = app.textFields["Development organization"]
+        XCTAssertTrue(organization.waitForExistence(timeout:30))
+        organization.tap(); organization.typeText("native-ci")
+        app.textFields["Username"].tap(); app.textFields["Username"].typeText(username)
+        let password = app.secureTextFields["native-password"]
+        password.tap(); password.typeText(fixturePassword)
+        if let factor {
+            app.buttons["Use an authenticator or recovery code"].tap()
+            let field = app.secureTextFields["native-otp"]
+            XCTAssertTrue(field.waitForExistence(timeout:10));field.tap();field.typeText(factor)
+        }
+        app.buttons["Sign in"].tap()
+        XCTAssertTrue(app.staticTexts[username+" · Patient workspace · native-ci"].waitForExistence(timeout:45))
+    }
+
+    private func tapHeader(_ element: XCUIElement) {
+        XCTAssertTrue(element.waitForExistence(timeout:10))
+        XCTAssertFalse(element.frame.isEmpty)
+        element.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.5)).tap()
+    }
+
+    @MainActor
+    func testMFARecoveryBackgroundForegroundAndOwnerSessionRevocation() async throws {
+        try configuredFixture();continueAfterFailure=false
+        let http=FixtureHTTPS();defer {http.close()}
+        let (_,denied)=try await http.call("api/dev/login",body:["tenant":"native-ci","username":"native-mfa-patient","password":fixturePassword])
+        XCTAssertEqual(denied.statusCode,401)
+        let app=XCUIApplication();app.launch();signIn(app,username:"native-mfa-patient",factor:recoveryFirst)
+        XCUIDevice.shared.press(.home);app.activate()
+        XCTAssertTrue(app.staticTexts["native-mfa-patient · Patient workspace · native-ci"].waitForExistence(timeout:30))
+        let owner=try await http.login("native-mfa-patient",password:fixturePassword,factor:recoverySecond)
+        let (sessionData,status)=try await http.call("api/dev/account/sessions",cookie:owner)
+        XCTAssertEqual(status.statusCode,200)
+        let sessions=try XCTUnwrap(JSONSerialization.jsonObject(with:sessionData) as? [[String:Any]])
+        let appSessions=sessions.filter { ($0["current"] as? Bool)==false }
+        XCTAssertEqual(appSessions.count,1)
+        for session in appSessions {
+            let id=try XCTUnwrap(session["id"] as? String)
+            let (_,revoked)=try await http.call("api/dev/account/sessions/\(id)/revoke",cookie:owner,body:[:])
+            XCTAssertEqual(revoked.statusCode,200)
+        }
+        XCTAssertTrue(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30))
+        let (_,reused)=try await http.call("api/dev/login",body:["tenant":"native-ci","username":"native-mfa-patient","password":fixturePassword,"otp":recoveryFirst])
+        XCTAssertEqual(reused.statusCode,401)
+        let logoutStatus=try await http.logout(owner);XCTAssertEqual(logoutStatus,200)
+        app.terminate();app.launch()
+        XCTAssertTrue(app.textFields["Username"].waitForExistence(timeout:20))
+    }
+
+    @MainActor
+    func testReadinessFailureSlowTimeoutRetryAndAuthoritativeSessionExpiry() async throws {
+        try configuredFixture();continueAfterFailure=false
+        let http=FixtureHTTPS();defer {http.close()}
+        let app=XCUIApplication();app.launch();signIn(app,username:"native-expiry-patient")
+        tapHeader(app.buttons["Privacy and session settings"])
+        try await http.control("unavailable",token:fixtureControl)
+        app.buttons["Check backend connection"].tap()
+        let status=app.staticTexts["native-readiness-status"]
+        let unavailable=expectation(for:NSPredicate(format:"label BEGINSWITH %@","Backend unavailable"),evaluatedWith:status)
+        await fulfillment(of:[unavailable],timeout:15)
+        try await http.control("slow",token:fixtureControl)
+        app.buttons["Check backend connection"].tap()
+        let timeout=expectation(for:NSPredicate(format:"label BEGINSWITH %@","Connection unavailable"),evaluatedWith:status)
+        await fulfillment(of:[timeout],timeout:20)
+        try await http.control("healthy",token:fixtureControl)
+        app.buttons["Check backend connection"].tap()
+        let ready=expectation(for:NSPredicate(format:"label BEGINSWITH %@","Synthetic backend database ready."),evaluatedWith:status)
+        await fulfillment(of:[ready],timeout:15)
+        app.buttons["Done"].tap()
+        try await http.control("unavailable",token:fixtureControl)
+        let verificationProblem=app.staticTexts["native-workspace-problem"]
+        XCTAssertTrue(verificationProblem.waitForExistence(timeout:30))
+        XCTAssertTrue(verificationProblem.label.hasPrefix("Session verification unavailable."))
+        try await http.control("healthy",token:fixtureControl)
+        let recovered=expectation(for:NSPredicate(format:"exists == false"),evaluatedWith:verificationProblem)
+        await fulfillment(of:[recovered],timeout:30)
+        try await http.control("expire_fixture_session",token:fixtureControl)
+        XCTAssertTrue(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30))
+        XCTAssertFalse(app.staticTexts["native-expiry-patient · Patient workspace · native-ci"].exists)
+    }
+
+    func testSignInLargestDynamicTypeHasScrollableAccessibleControls() throws {
+        try configuredFixture();continueAfterFailure=false
+        let app=XCUIApplication();app.launch()
+        let heading=app.staticTexts["Welcome to Raphael"]
+        XCTAssertTrue(heading.waitForExistence(timeout:20));let normalHeight=heading.frame.height
+        app.terminate();app.launchArguments=["-UIPreferredContentSizeCategoryName","UICTContentSizeCategoryAccessibilityXXXL"];app.launch()
+        XCTAssertTrue(heading.waitForExistence(timeout:20));XCTAssertGreaterThan(heading.frame.height,normalHeight)
+        let password=app.secureTextFields["native-password"]
+        for _ in 0..<6 { if password.exists && password.isHittable {break};app.swipeUp() }
+        XCTAssertTrue(password.exists);XCTAssertTrue(password.isHittable)
+        let screenshot=XCTAttachment(screenshot:app.screenshot());screenshot.name="Actual largest Dynamic Type synthetic sign-in";screenshot.lifetime = .keepAlways;add(screenshot)
+    }
+
+    func testProtectedDocumentConsentAndFullChartRevocationOverActualHTTPS() async throws {
+        try configuredFixture()
+        let http=FixtureHTTPS();defer {http.close()}
+        let patient=try await http.login("native-consent-patient",password:fixturePassword)
+        let consultant=try await http.login("native-consultant",password:fixturePassword)
+        let (records,_)=try await http.call("api/dev/patients",cookie:patient)
+        let rows=try XCTUnwrap(JSONSerialization.jsonObject(with:records) as? [[String:Any]])
+        let id=try XCTUnwrap(rows.first?["id"] as? Int)
+        let (grant,granted)=try await http.call("api/dev/patients/\(id)/chart-access",cookie:patient,body:["clinician_username":"native-consultant","expires_in_minutes":60,"purpose":"Synthetic native consent test","authorize_full_chart":true])
+        XCTAssertEqual(granted.statusCode,200)
+        let grantValue=try XCTUnwrap(JSONSerialization.jsonObject(with:grant) as? [String:Any])
+        let clinician=try XCTUnwrap(grantValue["clinician_id"] as? Int)
+        let doc=try await http.upload(patient: id,cookie:patient)
+        let (_,privateDenied)=try await http.call("api/dev/documents/\(doc)/content",cookie:consultant);XCTAssertEqual(privateDenied.statusCode,404)
+        let (_,allowed)=try await http.call("api/dev/patients/\(id)/document-consents",cookie:patient,body:["clinician_username":"native-consultant","granted":true]);XCTAssertEqual(allowed.statusCode,200)
+        let (bytes,visible)=try await http.call("api/dev/documents/\(doc)/content",cookie:consultant);XCTAssertEqual(visible.statusCode,200);XCTAssertEqual(String(decoding:bytes,as:UTF8.self),"Synthetic protected native document.")
+        let (_,revoked)=try await http.call("api/dev/patients/\(id)/document-consents",cookie:patient,body:["clinician_username":"native-consultant","granted":false]);XCTAssertEqual(revoked.statusCode,200)
+        let (_,hidden)=try await http.call("api/dev/documents/\(doc)/content",cookie:consultant);XCTAssertEqual(hidden.statusCode,404)
+        let (_,chartRevoked)=try await http.call("api/dev/patients/\(id)/chart-access/\(clinician)/revoke",cookie:patient,body:[:]);XCTAssertEqual(chartRevoked.statusCode,200)
+        let (_,chartHidden)=try await http.call("api/dev/patients/\(id)/chart",cookie:consultant);XCTAssertEqual(chartHidden.statusCode,404)
+        let patientLogout=try await http.logout(patient),consultantLogout=try await http.logout(consultant)
+        XCTAssertEqual(patientLogout,200);XCTAssertEqual(consultantLogout,200)
+    }
+}
+
+private final class FixtureHTTPS {
+    private let origin=URL(string:"https://raphael-ci.test")!
+    private let client:URLSession
+    init() {let c=URLSessionConfiguration.ephemeral;c.httpCookieStorage=nil;c.httpShouldSetCookies=false;c.urlCache=nil;c.timeoutIntervalForRequest=15;c.timeoutIntervalForResource=20;client=URLSession(configuration:c,delegate:ContractRedirectPolicy(),delegateQueue:nil)}
+    func close(){client.invalidateAndCancel()}
+    func call(_ path:String,cookie:HTTPCookie?=nil,body:[String:Any]?=nil,control:String?=nil,multipart:Data?=nil,boundary:String?=nil) async throws -> (Data,HTTPURLResponse) {
+        var request=URLRequest(url:origin.appendingPathComponent(path));request.setValue(origin.absoluteString,forHTTPHeaderField:"Origin")
+        if let cookie {for (k,v) in HTTPCookie.requestHeaderFields(with:[cookie]){request.setValue(v,forHTTPHeaderField:k)}}
+        if let control {request.setValue(control,forHTTPHeaderField:"X-Raphael-CI-Control")}
+        if let body {request.httpMethod="POST";request.setValue("application/json",forHTTPHeaderField:"Content-Type");request.httpBody=try JSONSerialization.data(withJSONObject:body)}
+        if let multipart,let boundary {request.httpMethod="POST";request.setValue("multipart/form-data; boundary="+boundary,forHTTPHeaderField:"Content-Type");request.httpBody=multipart}
+        let (data,response)=try await client.data(for:request);return(data,try XCTUnwrap(response as? HTTPURLResponse))
+    }
+    func login(_ username:String,password:String,factor:String="") async throws -> HTTPCookie {
+        let (_,response)=try await call("api/dev/login",body:["tenant":"native-ci","username":username,"password":password,"otp":factor]);XCTAssertEqual(response.statusCode,200)
+        let headers=response.allHeaderFields.reduce(into:[String:String]()){out,pair in if let key=pair.key as? String,let value=pair.value as? String {out[key]=value}}
+        return try XCTUnwrap(HTTPCookie.cookies(withResponseHeaderFields:headers,for:origin).first{$0.name=="raphael_dev_session"})
+    }
+    func logout(_ cookie:HTTPCookie) async throws -> Int {let (_,r)=try await call("api/dev/logout",cookie:cookie,body:[:]);return r.statusCode}
+    func control(_ operation:String,token:String) async throws {let (_,r)=try await call("_ci/native-control",body:["operation":operation],control:token);XCTAssertEqual(r.statusCode,200)}
+    func upload(patient:Int,cookie:HTTPCookie) async throws -> Int {
+        let boundary="RaphaelSyntheticBoundary"
+        let text="--\(boundary)\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nSynthetic native document\r\n--\(boundary)\r\nContent-Disposition: form-data; name=\"visibility\"\r\n\r\nprivate\r\n--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"synthetic.txt\"\r\nContent-Type: text/plain\r\n\r\nSynthetic protected native document.\r\n--\(boundary)--\r\n"
+        let (data,r)=try await call("api/dev/patients/\(patient)/documents",cookie:cookie,multipart:Data(text.utf8),boundary:boundary);XCTAssertEqual(r.statusCode,200)
+        return try XCTUnwrap((JSONSerialization.jsonObject(with:data) as? [String:Any])?["id"] as? Int)
     }
 }
 

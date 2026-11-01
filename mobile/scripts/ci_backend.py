@@ -27,7 +27,7 @@ def main():
             body=await request.json()
             expected=(Path(args.key).parent/'password').read_text()
             # Only match booleans for ephemeral CI inputs,never credential values.
-            print('RAPHAEL_CI_INPUT '+json.dumps({'tenant_matches_fixture':body.get('tenant')=='native-ci','username_matches_fixture':body.get('username') in ('native-patient','native-clinician'),'password_matches_fixture':hmac.compare_digest(str(body.get('password','')).encode(),expected.encode()),'password_is_empty':body.get('password')=='','password_matches_casefold':hmac.compare_digest(str(body.get('password','')).casefold().encode(),expected.casefold().encode()),'password_matches_trimmed':hmac.compare_digest(str(body.get('password','')).strip().encode(),expected.encode()),'otp_present':bool(body.get('otp')),'password_and_otp_match_fixture':hmac.compare_digest((str(body.get('password',''))+str(body.get('otp',''))).encode(),expected.encode())}),flush=True)
+            print('RAPHAEL_CI_INPUT '+json.dumps({'tenant_matches_fixture':body.get('tenant')=='native-ci','username_matches_fixture':body.get('username') in ('native-patient','native-clinician','native-mfa-patient','native-expiry-patient','native-consent-patient','native-consultant'),'password_matches_fixture':hmac.compare_digest(str(body.get('password','')).encode(),expected.encode()),'password_is_empty':body.get('password')=='','password_matches_casefold':hmac.compare_digest(str(body.get('password','')).casefold().encode(),expected.casefold().encode()),'password_matches_trimmed':hmac.compare_digest(str(body.get('password','')).strip().encode(),expected.encode()),'otp_present':bool(body.get('otp')),'password_and_otp_match_fixture':hmac.compare_digest((str(body.get('password',''))+str(body.get('otp',''))).encode(),expected.encode())}),flush=True)
         response=await call_next(request)
         if request.url.path=='/static/chart.html':
             print('RAPHAEL_CI_NAVIGATION '+json.dumps({'path':'/static/chart.html','status':response.status_code,'patient_context_present':'patient_id' in request.query_params}),flush=True)
@@ -36,7 +36,8 @@ def main():
             path=re.sub(r'/\d+', '/:id', request.url.path)
             print('RAPHAEL_CI_HTTP '+json.dumps({'method':request.method,'path':path,'status':response.status_code}),flush=True)
         return response
-    uvicorn.run(app,host='127.0.0.1',port=8443,ssl_keyfile=args.key,ssl_certfile=args.cert,access_log=False)
+    from fixture_control import FixtureControl
+    uvicorn.run(FixtureControl(app,Path(args.key).parent),host='127.0.0.1',port=8443,ssl_keyfile=args.key,ssl_certfile=args.cert,access_log=False)
 
 
 if __name__=='__main__':main()

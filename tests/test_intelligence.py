@@ -68,6 +68,13 @@ class IntelligenceTests(unittest.TestCase):
         self.assertIn('Every cited excerpt must directly support the adjacent claim',seen[0])
         self.assertNotIn('Citation syntax examples:',seen[0])
 
+    def test_coverage_requires_clinician_and_never_counts_configuration_as_indexed_evidence(self):
+        with patch.dict(os.environ,{'RAPHAEL_STREAM_EVIDENCE_BACKEND':'sqlite'}):
+            self.assertFalse(self.client.get('/api/dev/intelligence/coverage').json()['index_checked'])
+        with patch.dict(os.environ,{'RAPHAEL_STREAM_EVIDENCE_BACKEND':'qdrant'}),patch('curated_evidence.coverage_status',side_effect=RuntimeError('PRIVATE-CONNECTION-PAYLOAD')):
+            response=self.client.get('/api/dev/intelligence/coverage');self.assertEqual(response.status_code,503);self.assertNotIn('PRIVATE-CONNECTION-PAYLOAD',response.text)
+        self.login('patient');self.assertEqual(self.client.get('/api/dev/intelligence/coverage').status_code,403)
+
     def test_context_snapshot_is_minimized_immutable_and_denied_after_chart_revocation(self):
         path=f"/api/dev/patients/{self.patient['id']}"
         first=self.client.post(path+'/entries',json={'kind':'history','label':'Needle','text':'Synthetic reported fact','recorded_at':'2020-01-01T00:00:00+00:00'}).json()

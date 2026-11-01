@@ -27,6 +27,10 @@ def prepare():
     identifier=destination.split('id=',1)[1]
     private=Path(tempfile.mkdtemp(prefix='raphael-native-ci-'))
     password=secrets.token_urlsafe(32)
+    control_token=secrets.token_urlsafe(32)
+    (private/'control-token').write_text(control_token);(private/'control-token').chmod(0o600)
+    from cryptography.fernet import Fernet
+    mfa_key=Fernet.generate_key().decode()
     (private/'password').write_text(password)
     (private/'password').chmod(0o600)
     # No inherited provider credentials or database may reach this local backend.
@@ -39,7 +43,7 @@ def prepare():
     engine=create_engine(database)
     try:
         migrate(engine)
-        for name,role in (('native-patient','patient'),('native-clinician','clinician')):
+        for name,role in (('native-patient','patient'),('native-clinician','clinician'),('native-mfa-patient','patient'),('native-expiry-patient','patient'),('native-consent-patient','patient'),('native-consultant','clinician')):
             create_dev_user(engine,'native-ci',name,password,role)
     finally:engine.dispose()
     certificate=private/'certificate.pem';key=private/'key.pem';config=private/'openssl.cnf'
@@ -51,7 +55,7 @@ def prepare():
     subprocess.run(['xcrun','simctl','boot',identifier],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     subprocess.run(['xcrun','simctl','bootstatus',identifier,'-b'],check=True,timeout=240)
     subprocess.run(['xcrun','simctl','keychain',identifier,'add-root-cert',str(certificate)],check=True)
-    server_environment={**environment,'DATABASE_URL':database,'RAPHAEL_DEV_PORTAL':'1','RAPHAEL_DEV_SYNTHETIC_ONLY':'1','PYTHONDONTWRITEBYTECODE':'1','GITHUB_ACTIONS':'true'}
+    server_environment={**environment,'DATABASE_URL':database,'RAPHAEL_DEV_PORTAL':'1','RAPHAEL_DEV_SYNTHETIC_ONLY':'1','RAPHAEL_MFA_ENCRYPTION_KEY':mfa_key,'PYTHONDONTWRITEBYTECODE':'1','GITHUB_ACTIONS':'true'}
     forwarder=shutil.which('socat')
     if not forwarder:raise RuntimeError('Install socat for the isolated loopback443 TCP forwarder.')
     # Keep the actual application unprivileged. The forwarder carries encrypted
@@ -66,7 +70,9 @@ def prepare():
     import ssl
     import httpx
     tls=ssl.create_default_context(cafile=str(certificate))
-    with httpx.Client(base_url='https://raphael-ci.test',verify=tls,trust_env=False,timeout=10) as client:
+    # Cold simulator boots can starve provisioning. One bounded30s request;
+    # never retry a possibly committed authenticated mutation.
+    with httpx.Client(base_url='https://raphael-ci.test',verify=tls,trust_env=False,timeout=30) as client:
         deadline=time.monotonic()+60
         last_status,last_transport_error=None,None
         while True:
@@ -89,11 +95,27 @@ def prepare():
         note=client.post(f"/api/dev/patients/{record.json()['id']}/notes",json={'content':'Synthetic native approved note. No real clinical findings.'});note.raise_for_status()
         client.post(f"/api/dev/notes/{note.json()['id']}/approve",json={}).raise_for_status()
         client.post('/api/dev/patients',json={'name':'Synthetic native unlinked record'}).raise_for_status()
+        for suffix in ('mfa','expiry','consent'):
+            client.post('/api/dev/patients',json={'name':'Synthetic native '+suffix+' patient','patient_username':'native-'+suffix+'-patient'}).raise_for_status()
         client.post('/api/dev/logout',json={}).raise_for_status()
+        client.post('/api/dev/login',json={'tenant':'native-ci','username':'native-mfa-patient','password':password}).raise_for_status()
+        enrollment=client.post('/api/dev/account/mfa/enroll',json={'password':password});enrollment.raise_for_status()
+        from dev_mfa import totp
+        factor=totp(enrollment.json()['secret'],int(time.time())//30)
+        confirmation=client.post('/api/dev/account/mfa/confirm',json={'password':password,'code':factor});confirmation.raise_for_status()
+        recovery=confirmation.json()['recovery_codes']
+        client.post('/api/dev/logout',json={}).raise_for_status()
+        sensitive=[password,control_token,mfa_key,enrollment.json()['secret'],factor,*recovery]
+        (private/'redactions.json').write_text(json.dumps(sensitive));(private/'redactions.json').chmod(0o600)
     test=ROOT/'mobile/ios/RaphaelUITests/RaphaelUITests.swift'
     source=test.read_text()
     if source.count('__CI_SYNTHETIC_PASSWORD__')!=1:raise RuntimeError('Expected exactly one private UI-test placeholder.')
     test.write_text(source.replace('__CI_SYNTHETIC_PASSWORD__',password))
+    source=test.read_text()
+    for marker,value in [('__CI_CONTROL_TOKEN__',control_token),('__CI_RECOVERY_CODE__',recovery[0]),('__CI_RECOVERY_SECOND__',recovery[1])]:
+        if source.count(marker)!=1:raise RuntimeError('Expected one private extended-test placeholder.')
+        source=source.replace(marker,value)
+    test.write_text(source)
     with open(os.environ['GITHUB_ENV'],'a') as output:
         output.write('RAPHAEL_AUTHENTICATED_CI=1\nRAPHAEL_NATIVE_CI_PRIVATE='+str(private)+'\n')
     print('Actual synthetic main:app HTTPS ready;simulator trust installed;no provider requests.')
@@ -107,7 +129,9 @@ def cleanup():
     except ProcessLookupError:pass
     import sqlite3
     with sqlite3.connect('file:'+str(private/'synthetic.db')+'?mode=ro',uri=True) as connection:
-        remaining=connection.execute('SELECT count(*) FROM dev_sessions').fetchone()[0]
+        from datetime import datetime,timezone
+        total=connection.execute('SELECT count(*) FROM dev_sessions').fetchone()[0]
+        remaining=connection.execute('SELECT count(*) FROM dev_sessions WHERE expires_at>?',(datetime.now(timezone.utc).isoformat(),)).fetchone()[0]
         events={event:count for event,count in connection.execute("SELECT event,count(*) FROM dev_audit WHERE event IN ('login','logout','read_patient','read_notes','list_patients') GROUP BY event")}
     routes=Counter()
     for line in (private/'backend.log').read_text(errors='replace').splitlines():
@@ -119,7 +143,7 @@ def cleanup():
     print('::notice title=Raphael chart navigation::'+json.dumps(navigation),flush=True)
     matches=[json.loads(line.split(' ',1)[1]) for line in (private/'backend.log').read_text(errors='replace').splitlines() if line.startswith('RAPHAEL_CI_INPUT ')]
     print('::notice title=Raphael synthetic input matching::'+json.dumps(matches),flush=True)
-    print('::notice title=Raphael native backend verification::'+json.dumps({'synthetic_sessions_remaining':remaining,'provider_requests':0,'backend':'actual_main_app_https','audit_event_counts_including_provisioning':events}),flush=True)
+    print('::notice title=Raphael native backend verification::'+json.dumps({'synthetic_sessions_remaining':remaining,'expired_sessions_retained':total-remaining,'provider_requests':0,'backend':'actual_main_app_https','audit_event_counts_including_provisioning':events}),flush=True)
     if remaining!=0:raise RuntimeError('Native workflow left an active synthetic server session;logout was not verified.')
     print('Ephemeral synthetic backend stopped. Runner destroys its private database and test certificate.')
 

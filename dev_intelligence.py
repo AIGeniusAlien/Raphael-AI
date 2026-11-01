@@ -188,6 +188,15 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                 'claim_screening': os.getenv('RAPHAEL_VERIFY_CLAIMS')=='1',
                 'evidence_notice': 'Source: CDC. Original material is available free on CDC websites. Raphael is not endorsed by CDC,HHS or the U.S. Government.' if os.getenv('RAPHAEL_STREAM_EVIDENCE_BACKEND')=='qdrant' else ''}
 
+    @router.get('/coverage')
+    def evidence_coverage(user=Depends(ctx.clinician)):
+        if os.getenv('RAPHAEL_STREAM_EVIDENCE_BACKEND')!='qdrant':
+            return {'index_checked':False,'sources':[],'supported_use':'Live curated coverage has not been checked. Local test sources are not proof of medical coverage.','clinical_validation':False}
+        try:
+            from curated_evidence import coverage_status
+            return coverage_status()
+        except Exception:raise HTTPException(503,'Evidence inventory unavailable. The configured catalog alone does not prove indexed coverage.') from None
+
     @router.get('/workflow-checks')
     def workflow_checks(user=Depends(ctx.clinician)):
         counts={key:0 for key in ('complete','blocked','failed','cancelled','abstained','streaming')}

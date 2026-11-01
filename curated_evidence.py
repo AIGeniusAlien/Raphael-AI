@@ -266,6 +266,23 @@ def current_filter(population='unknown'):
     return result
 
 
+def coverage_status():
+    """Read-only indexed coverage,not a claim of clinical-domain competence."""
+    c=client()
+    try:
+        vectors=c.get_collection(collection()).config.params.vectors
+        if not hasattr(vectors,'size') or vectors.size!=DIMENSIONS:raise ValueError('Incompatible evidence space;no changes made.')
+        if c.count(collection(),exact=True).count>1000:raise ValueError('Coverage inventory exceeds this bounded development view.')
+        points=inventory(c)
+        active=[p.payload for p in points if p.payload.get('corpus')==CORPUS and p.payload.get('is_current') is True]
+        sources=[]
+        for url,(population,specialty,note) in CATALOG.items():
+            rows=[p for p in active if p.get('url')==url]
+            sources.append({'url':url,'population':population,'domain':specialty,'scope_note':note,'indexed_documents':len({p['doc_id'] for p in rows}),'indexed_vectors':len(rows),'source_dates':sorted({p.get('source_date','unknown') for p in rows}),'titles':sorted({p.get('title','Untitled') for p in rows})})
+        return {'read_only':True,'index_checked':True,'collection':collection(),'embedding_model':MODEL,'dimensions':vectors.size,'active_documents':len({p['doc_id'] for p in active}),'active_vectors':len(active),'sources':sources,'unrecognized_active_vectors':sum(p.get('url') not in CATALOG for p in active),'supported_use':'Inspect retrieved public-source excerpts for general education or provisional clinician review only. Counts do not establish sufficient evidence for any clinical question.','not_validated':['Individual diagnosis or treatment decisions','Comprehensive prescribing or drug interactions','Comprehensive specialty,pediatric or pregnancy guidance'],'freshness':'Indexed publication dates only;this inventory does not refetch pages or establish automated retraction surveillance.','clinical_validation':False}
+    finally:c.close()
+
+
 def hybrid_rerank(query,hits,top_k):
     """BM25/RRF over a bounded, already population/semantic-filtered pool.
 

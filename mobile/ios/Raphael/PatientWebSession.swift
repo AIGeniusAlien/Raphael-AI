@@ -138,10 +138,14 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             request.httpBody = body
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
-        let (data, response) = try await client.data(for: request)
+        let (bytes, response) = try await client.bytes(for: request)
         guard let http = response as? HTTPURLResponse,
-              http.url?.host == self.configuration.origin.host,
-              data.count <= 65536 else { throw URLError(.badServerResponse) }
+              http.url?.host == self.configuration.origin.host else { throw URLError(.badServerResponse) }
+        var data = Data()
+        for try await byte in bytes {
+            guard data.count < 65536 else { throw URLError(.dataLengthExceedsMaximum) }
+            data.append(byte)
+        }
         return (data, http)
     }
 
@@ -202,6 +206,10 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             if response.statusCode == 401 {
                 await clearAuthentication()
                 authenticationProblem = "Your session ended. Sign in again."
+            } else if response.statusCode != 200 {
+                problem = "Session verification unavailable. Check your connection and retry."
+            } else if problem == "Session verification unavailable. Check your connection and retry." {
+                problem = nil
             }
         } catch {
             guard !Task.isCancelled, epoch == authenticationEpoch, !authenticating else { return }

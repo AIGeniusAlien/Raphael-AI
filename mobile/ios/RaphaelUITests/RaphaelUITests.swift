@@ -391,6 +391,21 @@ final class RaphaelUITests: XCTestCase {
         return button
     }
 
+    private func enterPrivateMFAValue(_ app:XCUIApplication,_ identifier:String,_ value:String) throws {
+        let field=app.secureTextFields[identifier]
+        try requireUI(field.waitForExistence(timeout:10),"Private authenticator input must exist.")
+        // A partially visible Form row can be hittable while its center is
+        // covered by the keyboard. Scroll the actual row above that region.
+        for _ in 0..<5 {
+            if field.isHittable && field.frame.maxY<app.frame.height*0.55 {break}
+            app.swipeUp()
+        }
+        try requireUI(field.isHittable,"Private authenticator input must be reachable.")
+        field.tap()
+        try requireUI(app.keyboards.firstMatch.waitForExistence(timeout:10),"Actual software keyboard is required.")
+        field.typeText(value)
+    }
+
     // An independent authenticator implementation in the UI TEST target only.
     // It uses the actual setup key delivered to the enrolled user,never a
     // pre-enabled factor or an authentication bypass.
@@ -411,7 +426,7 @@ final class RaphaelUITests: XCTestCase {
     }
     @MainActor
     func testNativeTOTPEnrollmentVerificationRecoveryAndDisable() async throws {
-        try configuredFixture();continueAfterFailure=true
+        try configuredFixture();continueAfterFailure=false
         XCTAssertEqual(try authenticatorCode("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ",step:1),"287082")
         let app=XCUIApplication();app.launch();try signIn(app,username:"native-totp-patient")
         try tapHeader(app.buttons["Privacy and session settings"])
@@ -419,16 +434,14 @@ final class RaphaelUITests: XCTestCase {
         try requireUI(app.buttons["native-mfa-enroll"].waitForExistence(timeout:20),"Native authenticator management must be accessible.")
         let ready=expectation(for:NSPredicate(format:"label == %@","Authenticator status verified."),evaluatedWith:app.staticTexts["native-mfa-status"])
         await fulfillment(of:[ready],timeout:20)
-        let password=app.secureTextFields["native-mfa-password"]
-        password.tap();password.typeText(fixturePassword)
+        try enterPrivateMFAValue(app,"native-mfa-password",fixturePassword)
         try tapHeader(visibleExportAction(app,"native-mfa-enroll"))
         let key=app.staticTexts["native-mfa-setup-key"]
         try requireUI(key.waitForExistence(timeout:20),"Actual private enrollment key must be delivered.")
         let secret=key.label;try requireUI(secret.count==32,"Private setup key must have the expected bounded format.")
         let enrolledStep=Int(Date().timeIntervalSince1970)/30
-        password.tap();password.typeText(fixturePassword)
-        let factor=app.secureTextFields["native-mfa-code"]
-        factor.tap();factor.typeText(try authenticatorCode(secret,step:enrolledStep))
+        try enterPrivateMFAValue(app,"native-mfa-password",fixturePassword)
+        try enterPrivateMFAValue(app,"native-mfa-code",try authenticatorCode(secret,step:enrolledStep))
         try tapHeader(visibleExportAction(app,"native-mfa-confirm"))
         let privateCodes=app.descendants(matching:.any).matching(identifier:"native-mfa-recovery-codes").firstMatch
         var disclosureScrolls=0
@@ -466,8 +479,8 @@ final class RaphaelUITests: XCTestCase {
         try tapHeader(app.buttons["Privacy and session settings"])
         try tapHeader(visibleExportAction(app,"native-mfa-manage"))
         try requireUI(app.buttons["native-mfa-disable"].waitForExistence(timeout:20),"Enabled authenticator must offer protected management.")
-        password.tap();password.typeText(fixturePassword)
-        factor.tap();factor.typeText(codes[0])
+        try enterPrivateMFAValue(app,"native-mfa-password",fixturePassword)
+        try enterPrivateMFAValue(app,"native-mfa-code",codes[0])
         try tapHeader(visibleExportAction(app,"native-mfa-disable"))
         try tapHeader(app.buttons["native-mfa-confirm-disable"])
         let disabled=expectation(for:NSPredicate(format:"label == %@","Authenticator disabled. Other sessions revoked."),evaluatedWith:app.staticTexts["native-mfa-status"])

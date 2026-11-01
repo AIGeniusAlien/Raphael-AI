@@ -39,6 +39,14 @@
       "cause": "Launcher parent exited before uvicorn graceful shutdown;readiness could briefly reach the old listener.",
       "correction": "Bounded read-only wait for owned oldlistener closure before restart;no authenticated mutation retry.",
       "verification": "Corrected actual2start persistence/MFA/decryption smoke pass."
+    },
+    {
+      "kind": "NATIVE_TEST_ASSUMPTION_DEFECT",
+      "check": "def5e65 exact-head native run41350847958",
+      "outcome": "25pass1fail0skip",
+      "cause": "Test-only secure accessibility mask-length assertion;real enrollment had returned200. Mask is not authoritative credential input proof.",
+      "correction": "Remove mask-length inspection;retain keyboard visibility/actual typing and full real server password/TOTP/recovery/replay/disable/revocation checks.",
+      "verification": "Fresh corrected-head actual native CI required;earlier5be27f7full26pass remains separate."
     }
   ],
   "failures_count_as_passes": false

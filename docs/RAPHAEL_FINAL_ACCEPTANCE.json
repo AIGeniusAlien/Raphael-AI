@@ -370,6 +370,11 @@
     {
       "run": 41348569560,
       "result": "backendreadinesstimeout;Xcodenotrun"
+    },
+    {
+      "run": 41350847958,
+      "source": "def5e652d95e719fda7b6a9eccc205aeccbabeae",
+      "result": "regression/securityPASS;native25pass1fail0skip at test-only secure accessibility mask length assertion after enrollment200;removed unreliable assertion,authoritative server checks preserved;corrected-head CI required"
     }
   ],
   "native_background_recovery": "PASS with one explicit visible user retry after reported stopped WebKit content;actual authenticated web identity,owner revocation,reused-factor rejection and relaunch remain required.",
@@ -459,5 +464,23 @@
     "ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41331977079",
     "source": "e90c78b3174a76b2d1e235b671ff1d348e9d395e"
   },
-  "application_increment_commit": "38efcba7120ea7046bbb96ceb6b2c85a4c1c42bf"
+  "application_increment_commit": "38efcba7120ea7046bbb96ceb6b2c85a4c1c42bf",
+  "supplemental_live_attachment": {
+    "source": "def5e652d95e719fda7b6a9eccc205aeccbabeae",
+    "report": "docs/PLATFORM_LIVE_ATTACHMENT_RESULTS.json",
+    "status": "PASS",
+    "uses_mock_services": false,
+    "generation_tokens": 3001,
+    "total_ms_single_sample": 4419.595,
+    "clinical_validation": false
+  },
+  "supplemental_concurrency": {
+    "source": "def5e652d95e719fda7b6a9eccc205aeccbabeae",
+    "report": "docs/PLATFORM_CONCURRENCY_RESULTS.json",
+    "status": "PASS",
+    "operations": 40,
+    "workers": 4,
+    "persisted_records": 20,
+    "production_capacity_validated": false
+  }
 }

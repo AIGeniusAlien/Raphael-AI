@@ -405,7 +405,9 @@ final class RaphaelUITests: XCTestCase {
         field.tap()
         try requireUI(app.keyboards.firstMatch.waitForExistence(timeout:10),"Actual software keyboard is required.")
         field.typeText(value)
-        try requireUI((field.value as? String)?.count==value.count,"Private input must accept the complete value;no value is logged.")
+        // Secure accessibility values are masked representations,not a
+        // credential-length oracle. Real endpoint acceptance below verifies
+        // the exact password/factor;never inspect or log the private value.
     }
 
     // An independent authenticator implementation in the UI TEST target only.

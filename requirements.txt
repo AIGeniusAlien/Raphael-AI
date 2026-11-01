@@ -17,7 +17,7 @@ openai==2.6.1
 qdrant-client==1.9.1
 sentence-transformers==6.2.0
 numpy==1.26.4
-pypdf==6.21.2
+pypdf==6.21.4
 
 # Auth (JWT and encrypted TOTP enrollment)
 cryptography==50.0.2
@@ -36,3 +36,5 @@ starlette==1.10.0
 transformers==5.20.2
 filelock==4.2.4
 setuptools==84.2.1
+
+pyasn1==0.6.5

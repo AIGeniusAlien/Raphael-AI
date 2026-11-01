@@ -100,6 +100,17 @@ class IntelligenceTests(unittest.TestCase):
         message=self.client.get(path).json()['messages'][-1]
         self.assertEqual(message['status'],'failed');self.assertEqual(message['failure_code'],'provider_cleanup:RuntimeError')
 
+    def test_claim_checker_unavailability_preserves_safe_subphase_without_provider_payload(self):
+        from rag.claim_support import ClaimScreenUnavailable
+        identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}'
+        with patch.dict(os.environ,{'RAPHAEL_VERIFY_CLAIMS':'1'}),patch('rag.claim_support.screen_claims',side_effect=ClaimScreenUnavailable('SECRET-PROVIDER-PAYLOAD',failure_code='protocol_validation:ValueError')):
+            response=self.client.post(path+'/stream',json={'content':'Synthetic question'})
+        self.assertNotIn('event: complete',response.text)
+        self.assertNotIn('SECRET-PROVIDER-PAYLOAD',response.text)
+        message=self.client.get(path).json()['messages'][-1]
+        self.assertEqual(message['status'],'failed')
+        self.assertEqual(message['failure_code'],'claim_support:protocol_validation:ValueError')
+
     def test_claim_support_blocks_persists_and_session_revocation_prevents_completion(self):
         identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}'
         with patch.dict(os.environ,{'RAPHAEL_VERIFY_CLAIMS':'1'}):

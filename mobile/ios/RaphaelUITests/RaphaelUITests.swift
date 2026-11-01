@@ -99,14 +99,16 @@ final class RaphaelUITests: XCTestCase {
         expectation(for: ready, evaluatedWith: app.staticTexts["native-readiness-status"])
         waitForExpectations(timeout: 15)
         app.buttons["Sign out and clear local session"].tap()
-        app.buttons["Sign out"].tap()
+        let confirmLogout = app.buttons["native-confirm-sign-out"]
+        XCTAssertTrue(confirmLogout.waitForExistence(timeout: 10))
+        confirmLogout.tap()
         waitForNativeSessionClear(confirmedLogout: true)
         app.terminate(); app.launch()
         login("native-clinician", workspace: "Physician workspace")
         let clinician = XCTAttachment(screenshot: app.screenshot())
         clinician.name = "Authenticated synthetic clinician over trusted HTTPS"
         clinician.lifetime = .keepAlways; add(clinician)
-        app.buttons["Sign out"].tap()
+        app.webViews.buttons["Sign out"].tap()
         // Native welcome appears only after the model independently observes
         // the revoked web session and clears its private cookie/workspace.
         waitForNativeSessionClear(confirmedLogout: false)

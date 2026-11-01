@@ -356,7 +356,8 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
                 status = 'cancelled'
                 raise
             except Exception as error:
-                failure_code=phase+':'+type(error).__name__
+                from rag.claim_support import ClaimScreenUnavailable
+                failure_code=phase+':'+(error.failure_code if isinstance(error,ClaimScreenUnavailable) else type(error).__name__)
                 yield event('error', {'detail': 'Generation failed or citation membership was invalid. Provisional text is not approved.','failure_code':failure_code})
             finally:
                 if source is not None and hasattr(source, 'close'):

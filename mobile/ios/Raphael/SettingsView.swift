@@ -61,6 +61,7 @@ struct SettingsView: View {
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: dismiss) } }
             .confirmationDialog("Sign out of this Raphael session?", isPresented: $confirmSignOut, titleVisibility: .visible) {
                 Button("Sign out", role: .destructive) { dismiss(); session.signOut() }
+                    .accessibilityIdentifier("native-confirm-sign-out")
                 Button("Cancel", role: .cancel) {}
             } message: { Text("Unsaved edits will be lost. The app attempts server revocation and clears its local web session even if offline.") }
         }

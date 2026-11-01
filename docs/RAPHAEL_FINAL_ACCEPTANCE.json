@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
   "starting_commit": "a7e79cb792121b794af6aca110816cd6d123843c",
-  "implementation_commit": "0ccc49be8be5942b084ee71718c4d4c0c26e2bde",
+  "implementation_commit": "ebe5628ff0a1b5d35a8f81d3b113e25bd6dfab71",
   "release_decisions": {
     "synthetic_local_web_demonstration": "FAIL",
     "controlled_synthetic_testflight": "FAIL",
@@ -28,11 +28,11 @@
     },
     {
       "id": "authenticated_native",
-      "status": "FAIL",
-      "cause": "Source0ccc49b:11passed/2failed/0skipped,total13;patient sign-in/chart/readiness/native logout/relaunch and clinician login succeed;clinician note requires explicit record selection.",
-      "attempted_remediation": "Added real UI selection for clinician with two authorized records;source9539c07 actual Xcode follow-up running.",
+      "status": "PASS",
+      "cause": "Bounded actual synthetic simulator core workflow;broader native release acceptance remains incomplete.",
+      "attempted_remediation": "14actual Xcode cases pass:typed/paste patient+clinician protected chart/note,native/web logout,revocation and relaunch;7logins/7logouts/zero sessions. Fresh-store reset and phase-keyed polling fix lifecycle stalls.",
       "responsible_party": "Engineering",
-      "next_verification": "Complete actual clinician note and web logout/server401/relaunch assertions;zero-session cleanup guard retained."
+      "next_verification": "Separate physical-device,expiry/outage,VoiceOver/Dynamic Type and protected export acceptance;no clinical or signed-build inference."
     },
     {
       "id": "mfa_technical_controls",
@@ -62,7 +62,7 @@
       "id": "evidence_lifecycle",
       "status": "PASS",
       "cause": "Local real-Qdrant protocol tests;no live withdrawal/mutation performed.",
-      "attempted_remediation": "Stage complete versions,interrupt/retry safely,prevent stale rollback,withdraw without deletion,read-only refresh planning.",
+      "attempted_remediation": "Stage complete versions,interrupt/retry safely,prevent stale rollback,withdraw without deletion,read-only refresh planning. Fresh read-only live compatibility/inventory9documents/48vectors/384dimensions passed;no remote lifecycle mutation tested.",
       "responsible_party": "Engineering",
       "next_verification": "Run tests.test_curated_evidence;explicitly authorize a separate staging collection before live withdrawal testing."
     },
@@ -194,7 +194,24 @@
   "merged": false,
   "deployed": false,
   "apple_submitted": false,
-  "verification_scope": "Source0ccc49b:237Python/29frontend/7Chromium/5structural,project audit,traceability and14protocol cases PASS.83locked packages advisory audit zero known vulnerabilities;source high/high scan zero findings/errors. Fresh full live workflow FAIL;one checker replay PASS is separate. Source0ccc49b native11pass/2fail;source9539c07 actual Xcode follow-up pending.",
-  "native_followup_source": "9539c0715a5b0037cbb1914487e69c0255f0120d",
-  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41261417412"
+  "verification_scope": "Application sourceebe5628ff0a1b5d35a8f81d3b113e25bd6dfab71:regression,security and actual native CI PASS.237Python/29frontend/7Chromium/5structural plus project audit,traceability and14safety protocol fixtures pass locally;actual native14pass0fail0skip with7logins7logouts0sessions. Fresh full live medical conversation FAIL;one checker-only replay PASS is separate. Fresh read-only real inventory9documents/48vectors/384dimensions PASS. Clinical validation and physical signing/device acceptance absent.",
+  "native_followup_source": "ebe5628ff0a1b5d35a8f81d3b113e25bd6dfab71",
+  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41264520128",
+  "native_followup_status": "PASS",
+  "ci_evidence": "docs/PRODUCT_COMPLETION_CURRENT_CI.json",
+  "native_tests": {
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0,
+    "total": 14,
+    "source": "xcresulttool",
+    "commit": "ebe5628ff0a1b5d35a8f81d3b113e25bd6dfab71"
+  },
+  "native_server_evidence": {
+    "logins": 7,
+    "logouts": 7,
+    "session_401_responses": 4,
+    "active_sessions_remaining": 0,
+    "provider_requests": 0
+  }
 }

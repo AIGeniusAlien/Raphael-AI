@@ -1,3 +1,5 @@
+> Historical source-scoped report. For the 2026-11-01 product increment, current test results, live failures, native acceptance and release gates, use [RAPHAEL_FINAL_LAUNCH_READINESS.md](RAPHAEL_FINAL_LAUNCH_READINESS.md). Older wording below is preserved and does not establish current approval.
+
 > Release audit,2026-10-28: [Current source-scoped readiness audit](RC_RELEASE_AUDIT.md). Sections below are historical checkpoints;older "current" or "final" wording is not a release approval.
 
 ## Expanded-corpus live conversation acceptance

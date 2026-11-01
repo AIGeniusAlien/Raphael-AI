@@ -43,6 +43,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     func open(_ section: PatientSection) {
         guard identity != nil else { return }
         finishConfirmation(false)
+        navigationEpoch += 1
         cancelRecordSelection()
         currentSection = section
         problem = nil
@@ -83,6 +84,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         loadSection(section, patientID: record.id)
     }
     func cancelRecordSelection() {
+        guard pendingRecordSection != nil || !recordChoices.isEmpty else { return }
         navigationEpoch += 1
         recordChoices = []
         pendingRecordSection = nil

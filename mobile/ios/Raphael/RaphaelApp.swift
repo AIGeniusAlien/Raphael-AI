@@ -66,7 +66,7 @@ struct PatientApplication: View {
                 }
                 .padding(.horizontal).padding(.vertical, 8)
         .confirmationDialog("Choose an authorized record", isPresented: Binding(
-            get: { session.pendingRecordSection != nil },
+            get: { session.pendingRecordSection != nil && scenePhase == .active },
             set: { if !$0 { session.cancelRecordSelection() } }
         ), titleVisibility: .visible) {
             ForEach(session.recordChoices) { record in
@@ -87,7 +87,7 @@ struct PatientApplication: View {
                 }
                 if let problem = session.problem {
                     VStack(spacing: 8) {
-                        Text(problem).font(.callout).accessibilityAddTraits(.updatesFrequently)
+                        Text(problem).font(.callout).accessibilityAddTraits(.updatesFrequently).accessibilityIdentifier("native-workspace-problem")
                         Button("Retry this section") { session.retry() }
                     }
                     .padding().frame(maxWidth: .infinity).background(Color.orange.opacity(0.15))

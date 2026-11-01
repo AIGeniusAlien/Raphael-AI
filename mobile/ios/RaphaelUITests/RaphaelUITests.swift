@@ -84,7 +84,10 @@ final class RaphaelUITests: XCTestCase {
         patient.lifetime = .keepAlways; add(patient)
         tapNativeHeader(app.buttons["Patient sections"])
         app.buttons["Medical record"].tap()
-        XCTAssertTrue(app.staticTexts["Synthetic native patient"].waitForExistence(timeout: 15))
+        if !app.staticTexts["Synthetic native patient"].waitForExistence(timeout: 20) {
+            let issue = app.staticTexts["native-workspace-problem"]
+            XCTFail(issue.exists ? issue.label : "Protected chart heading did not appear after authorized navigation.")
+        }
         tapNativeHeader(app.buttons["Patient sections"])
         app.buttons["Dashboard"].tap()
         XCTAssertTrue(app.buttons["Sign out"].waitForExistence(timeout: 15))

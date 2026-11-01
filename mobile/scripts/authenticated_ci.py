@@ -115,6 +115,8 @@ def cleanup():
             event=json.loads(line.split(' ',1)[1])
             routes[event['method']+' '+event['path']+' '+str(event['status'])]+=1
     print('::notice title=Raphael native HTTP trace::'+json.dumps(dict(routes)),flush=True)
+    navigation=[json.loads(line.split(' ',1)[1]) for line in (private/'backend.log').read_text(errors='replace').splitlines() if line.startswith('RAPHAEL_CI_NAVIGATION ')]
+    print('::notice title=Raphael chart navigation::'+json.dumps(navigation),flush=True)
     matches=[json.loads(line.split(' ',1)[1]) for line in (private/'backend.log').read_text(errors='replace').splitlines() if line.startswith('RAPHAEL_CI_INPUT ')]
     print('::notice title=Raphael synthetic input matching::'+json.dumps(matches),flush=True)
     print('::notice title=Raphael native backend verification::'+json.dumps({'synthetic_sessions_remaining':remaining,'provider_requests':0,'backend':'actual_main_app_https','audit_event_counts_including_provisioning':events}),flush=True)

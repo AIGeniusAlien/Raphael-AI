@@ -29,7 +29,9 @@ def main():
             # Only match booleans for ephemeral CI inputs,never credential values.
             print('RAPHAEL_CI_INPUT '+json.dumps({'tenant_matches_fixture':body.get('tenant')=='native-ci','username_matches_fixture':body.get('username') in ('native-patient','native-clinician'),'password_matches_fixture':hmac.compare_digest(str(body.get('password','')).encode(),expected.encode()),'password_is_empty':body.get('password')=='','password_matches_casefold':hmac.compare_digest(str(body.get('password','')).casefold().encode(),expected.casefold().encode()),'password_matches_trimmed':hmac.compare_digest(str(body.get('password','')).strip().encode(),expected.encode()),'otp_present':bool(body.get('otp')),'password_and_otp_match_fixture':hmac.compare_digest((str(body.get('password',''))+str(body.get('otp',''))).encode(),expected.encode())}),flush=True)
         response=await call_next(request)
-        if re.fullmatch(r'/api/dev/(?:login|session|logout|patients(?:/\d+(?:/notes)?)?)',request.url.path):
+        if request.url.path=='/static/chart.html':
+            print('RAPHAEL_CI_NAVIGATION '+json.dumps({'path':'/static/chart.html','status':response.status_code,'patient_context_present':'patient_id' in request.query_params}),flush=True)
+        if re.fullmatch(r'/api/dev/(?:login|session|logout|patients(?:/\d+(?:/(?:notes|chart))?)?)',request.url.path):
             # Fixed route/status metadata only: no queries,headers,cookies or bodies.
             path=re.sub(r'/\d+', '/:id', request.url.path)
             print('RAPHAEL_CI_HTTP '+json.dumps({'method':request.method,'path':path,'status':response.status_code}),flush=True)

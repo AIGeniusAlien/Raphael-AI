@@ -1,11 +1,11 @@
 {
-  "ios_source": "PARTIAL;compiled;bounded26case authenticated native acceptance PASS;broaderdevice/releasegates incomplete",
+  "ios_source": "PARTIAL;latestnative25pass1fail;stableMFAediting remediation pending27caseactualacceptance",
   "linux_structural_audit": "VERIFIED",
   "linux_project_tests": {
     "passed": 5
   },
   "xcode_compile": "VERIFIED_REMOTE_CI",
-  "simulator_and_device_tests": "14unit+12UI actualXcodePASS on5be27f7;physicaldevice/VoiceOverNOT_RUN",
+  "simulator_and_device_tests": "Historical5be26pass;latest40625pass1fail;stableeditor27caseacceptance pending;physicaldevice/VoiceOverNOT_RUN",
   "apple_signing": "BLOCKED_EXTERNAL",
   "privacy_legal_clinical_review": "REQUIRES_CLINICAL_VALIDATION",
   "account_erasure": "PARTIAL:deactivation/policyholds/limitedcredential-profileerasure verified;fullaccount/medical/backup erasure and Apple acceptance absent",
@@ -20,15 +20,16 @@
     "Provide owner Apple team,registered bundle,approved icon and real privacy/support URLs",
     "Approve applicable retention,intended-use and distribution policies"
   ],
-  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41349108361",
-  "simulator_unit_ui_tests": "BOUNDED_EXTENDED_AUTHENTICATED_ACCEPTANCE_PASS",
+  "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41352788712",
+  "simulator_unit_ui_tests": "FAILED_LATEST_NATIVE_MFA",
   "simulator_tests": {
-    "passed": 26,
-    "failed": 0,
+    "passed": 25,
+    "failed": 1,
     "skipped": 0,
     "total": 26,
     "source": "xcresulttool",
-    "commit": "5be27f7ab9729a4809d9f126e4ba4d0acd690f47"
+    "commit": "4069057407174def4c419641dbd23a9cd35a9b24",
+    "expected_corrected_suite": 27
   },
   "historical_simulator_tests": {
     "passed": 7,
@@ -93,5 +94,5 @@
     },
     "native_ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41331977079"
   },
-  "native_mfa": "Actual native enrollment,independentauthenticator,recovery,TOTPlogin,replaydenial,disable and other-sessionrevocationPASS"
+  "native_mfa": "FAIL_LATEST_ENROLLMENT_INPUT_MISMATCH;stableUIKitpair pendingverification"
 }

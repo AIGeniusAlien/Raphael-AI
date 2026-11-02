@@ -89,7 +89,7 @@ def storage_status(engine):
     with engine.connect() as c:
         version=c.exec_driver_sql('PRAGMA cipher_version').scalar() if encrypted else None
         memory=c.exec_driver_sql('PRAGMA temp_store').scalar()==2 if encrypted else False
-    return {'sqlite_pages_encrypted':bool(encrypted and version),'cipher_version':version,'temporary_tables_in_memory':memory,'scope':'Synthetic SQLite database pages,including stored original-document bytes and clinical text.' if encrypted else 'This database uses plaintext SQLite;attachment payload encryption is a separate control.','limitations':'Existing source copies,exports,upload spooling,OS caches and separately restored files are outside database-page protection. Operator key escrow,rotation,retention,secure erasure and independent production review remain required. No HIPAA compliance claim.'}
+    return {'sqlite_pages_encrypted':bool(encrypted and version),'cipher_version':version,'temporary_tables_in_memory':memory,'scope':'Synthetic SQLite database pages, including stored original-document bytes and clinical text.' if encrypted else 'This database uses plaintext SQLite;attachment payload encryption is a separate control.','limitations':'Existing source copies, exports, upload spooling, OS caches and separately restored files are outside database-page protection. Operator key escrow, rotation, retention, secure erasure and independent production review remain required. No HIPAA compliance claim.'}
 
 
 def quoted(name):return '"'+name.replace('"','""')+'"'

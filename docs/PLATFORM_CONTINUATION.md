@@ -1,3 +1,5 @@
+> CI follow-up:initial13a1628Linux browser width check failed;DejaVu Sans20px at320px reproduced339px document width. Scoped wrapping/readable spacing and a stronger fallback-font browser regression are fixed;corrected full local326/29/8/5and9checks pass. Read FOUNDATION_FIRST_CI_RESULTS.json and the draft PR for actual follow-up CI outcome;do not treat initial local success as CI acceptance. Source digest manifest records the exercised bytes.
+
 # Latest continuation after two verified foundation slices
 
 Read `FOUNDATION_IMPLEMENTATION_CHECKPOINT.md` and `FOUNDATION_LOCAL_RESULTS.json` first. 326Python/29frontend/8Chromium/5mobile-source tests and9localchecks passed. Current code includes encrypted synthetic SQLite and source-version-bound reviewed terminology/opt-in alias search. 1164requirements;all1161prior descriptions/criteria preserved. Current-head CI remains independently scoped. Keep draftPR1,no merge/deploy/Apple/realPHI/new paid requests.

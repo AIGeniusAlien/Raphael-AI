@@ -15,8 +15,8 @@ def build():
     for row in ledger['requirements']:
         identifier=row['requirement_id']
         rows.append({**row,'canonical_state':row['state'],'status':('FAILED' if identifier=='PLATFORM-006' and row['state']!='VERIFIED' else row['verification_status']),
-            'original_source':{'preserved_canonical_matrix':'docs/REQUIREMENTS_MATRIX.md','line':lines[identifier],'requirement_id':identifier,'historical_directive_attribution':'See preserved master directives;individual original-upload attribution has not been independently reconciled.'},
-            'functional_area':identifier.split('-')[0],
+            'original_source':{**row['original_source'],'preserved_canonical_matrix':'docs/REQUIREMENTS_MATRIX.md','line':lines[identifier],'requirement_id':identifier,'historical_directive_attribution':'See preserved master directives;individual original-upload attribution has not been independently reconciled.'},
+            'functional_area':row['functional_area'],
             'exact_required_behavior':row['description'],
             'safety_classification':'UNREVIEWED:qualified intended-use risk assessment required;software verification does not establish clinical safety.',
             'root_cause_type':('ACCEPTANCE_TEST_FAILURE' if identifier=='PLATFORM-006' and row['state']!='VERIFIED' else CAUSE[row['state']]),

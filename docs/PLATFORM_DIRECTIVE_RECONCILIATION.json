@@ -50,9 +50,9 @@
     {
       "section": 6,
       "title": "COMPREHENSIVE MEDICAL PROCEDURE INTELLIGENCE",
-      "status": "IN PROGRESS",
+      "status": "NOT STARTED",
       "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
-      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+      "remaining": "Comprehensive procedure catalog and reviewed patient/clinician pathway engine are not implemented;generic documentation is not procedure competence."
     },
     {
       "section": 7,

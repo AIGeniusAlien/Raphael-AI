@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-02T04:27:02.276669+00:00",
+  "generated_at": "2026-11-02T04:38:41.192567+00:00",
   "platform": "Linux",
   "python": "3.12.14",
   "status": "passed",
@@ -10,92 +10,92 @@
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 95.619,
+      "duration_seconds": 96.029,
       "counts": {
         "tests": 326
       },
-      "log": "/workspace/.raphael/storage-terms-full/python.log"
+      "log": "/workspace/.raphael/foundation-layout-final/python.log"
     },
     {
       "name": "frontend",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.168,
+      "duration_seconds": 0.167,
       "counts": {
         "tests": 29,
         "pass": 29,
         "fail": 0,
         "skipped": 0
       },
-      "log": "/workspace/.raphael/storage-terms-full/frontend.log"
+      "log": "/workspace/.raphael/foundation-layout-final/frontend.log"
     },
     {
       "name": "chromium",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 48.255,
+      "duration_seconds": 46.219,
       "counts": {
         "tests": 8
       },
-      "log": "/workspace/.raphael/storage-terms-full/chromium.log"
+      "log": "/workspace/.raphael/foundation-layout-final/chromium.log"
     },
     {
       "name": "mobile-structure",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.065,
+      "duration_seconds": 0.064,
       "counts": {},
-      "log": "/workspace/.raphael/storage-terms-full/mobile-structure.log"
+      "log": "/workspace/.raphael/foundation-layout-final/mobile-structure.log"
     },
     {
       "name": "mobile-tests",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.115,
+      "duration_seconds": 0.114,
       "counts": {
         "tests": 5
       },
-      "log": "/workspace/.raphael/storage-terms-full/mobile-tests.log"
+      "log": "/workspace/.raphael/foundation-layout-final/mobile-tests.log"
     },
     {
       "name": "traceability",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.115,
+      "duration_seconds": 0.114,
       "counts": {},
-      "log": "/workspace/.raphael/storage-terms-full/traceability.log"
+      "log": "/workspace/.raphael/foundation-layout-final/traceability.log"
     },
     {
       "name": "platform-acceptance",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.165,
+      "duration_seconds": 0.114,
       "counts": {},
-      "log": "/workspace/.raphael/storage-terms-full/platform-acceptance.log"
+      "log": "/workspace/.raphael/foundation-layout-final/platform-acceptance.log"
     },
     {
       "name": "protected-runtime",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 6.14,
+      "duration_seconds": 5.937,
       "counts": {},
-      "log": "/workspace/.raphael/storage-terms-full/protected-runtime.log"
+      "log": "/workspace/.raphael/foundation-layout-final/protected-runtime.log"
     },
     {
       "name": "safety-evaluation",
       "status": "passed",
       "exit_code": 0,
       "timeout": false,
-      "duration_seconds": 0.717,
+      "duration_seconds": 0.667,
       "counts": {},
-      "log": "/workspace/.raphael/storage-terms-full/safety-evaluation.log"
+      "log": "/workspace/.raphael/foundation-layout-final/safety-evaluation.log"
     },
     {
       "name": "ios-native",

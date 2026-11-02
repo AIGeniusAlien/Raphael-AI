@@ -53,9 +53,10 @@ class CompletionBrowserTests(unittest.TestCase):
         output=Path(os.environ['RAPHAEL_VISUAL_OUTPUT']);output.mkdir(parents=True,exist_ok=True)
         for name,width,height in [('desktop',1440,1000),('tablet',768,1024),('mobile',390,844),('enlarged',320,900)]:
          page.set_viewport_size({'width':width,'height':height});page.evaluate('(s)=>document.documentElement.style.fontSize=s+"px"',20 if name=='enlarged' else 16)
+         page.evaluate('(font)=>document.documentElement.style.fontFamily=font', 'DejaVu Sans, sans-serif' if name=='enlarged' else 'system-ui, sans-serif')
          page.screenshot(path=str(output/('account-'+name+'.png')),full_page=True)
          self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1,name)
-       page.set_viewport_size({'width':1440,'height':1000});page.evaluate('document.documentElement.style.fontSize="16px"')
+       page.set_viewport_size({'width':1440,'height':1000});page.evaluate('document.documentElement.style.fontSize="16px";document.documentElement.style.fontFamily="system-ui, sans-serif"')
        context.request.post('/api/dev/logout',data={});page.goto('/')
        page.locator('#tenant').fill('synthetic');page.locator('#username').fill('doctor');page.locator('#password').fill(password);page.locator('#otp').fill(recovery);page.locator('#login-form button').click();expect(page.locator('#workspace')).to_be_visible()
        page.goto('/static/intelligence.html?patient='+str(patient['id']));expect(page.locator('#intelligence')).to_be_visible()

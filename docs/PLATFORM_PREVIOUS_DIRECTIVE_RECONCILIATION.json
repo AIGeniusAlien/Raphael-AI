@@ -1,0 +1,253 @@
+{
+  "directive": "docs/directives/ULTIMATE_MASTER_PLATFORM_2026-11-01.md",
+  "sections_expected": 35,
+  "sections_reconciled": 35,
+  "all_requirements_satisfied": false,
+  "sections": [
+    {
+      "section": 0,
+      "title": "Directive execution",
+      "status": "IN PROGRESS",
+      "implemented": "Six integrated increments continued beyond initial green suites.",
+      "remaining": "The complete platform remains unfinished;no scope deferral or full-completion claim."
+    },
+    {
+      "section": 1,
+      "title": "Engineering disciplines",
+      "status": "IN PROGRESS",
+      "implemented": "Security,privacy,clinical-safety and operational perspectives applied to code and tests.",
+      "remaining": "No independent human clinical,privacy,security or regulatory signoff."
+    },
+    {
+      "section": 2,
+      "title": "Recovery and requirements",
+      "status": "IN PROGRESS",
+      "implemented": "1155originalIDs/descriptions preserved;1161current rows;additive acceptance vocabulary view.",
+      "remaining": "Individual original-upload attribution,risk classification and owner assignment remain unreviewed for broad legacy rows."
+    },
+    {
+      "section": 3,
+      "title": "Fundamental architecture",
+      "status": "IN PROGRESS",
+      "implemented": "Existing modularportal,chart,consent,RAG,documentation,account,messaging/runtime reused.",
+      "remaining": "Enterprise workflow boundaries and all platform layers not complete."
+    },
+    {
+      "section": 4,
+      "title": "Medical intelligence and evidence",
+      "status": "IN PROGRESS",
+      "implemented": "Actual physician/patientOpenAI/Qdrant CDC education;384dimensions;9documents/48vectors;source/citation checks.",
+      "remaining": "Comprehensive licensed medicine,terminology,coverage,independent evidence appraisal and clinical reasoning validation absent."
+    },
+    {
+      "section": 5,
+      "title": "Every specialty/subspecialty",
+      "status": "IN PROGRESS",
+      "implemented": "Population/specialty metadata and supported educational scope retained.",
+      "remaining": "No comprehensive specialty or subspecialty competence or specialist adjudication."
+    },
+    {
+      "section": 6,
+      "title": "Complete procedure intelligence",
+      "status": "NOT STARTED",
+      "implemented": "Existing provisional documentation only;no new procedure engine.",
+      "remaining": "Procedure catalog,selection,scheduling,preop/postop,guideline and human-factors validation missing."
+    },
+    {
+      "section": 7,
+      "title": "Ambient clinical intelligence",
+      "status": "IN PROGRESS",
+      "implemented": "Existing browser speech/transcript consent/session/note controls preserved.",
+      "remaining": "Real microphone/diarization/medicalASR/ambient diagnostic/emergency performance unvalidated."
+    },
+    {
+      "section": 8,
+      "title": "Medical calculators",
+      "status": "IN PROGRESS",
+      "implemented": "Existing deterministic contracts/protocol tests retained.",
+      "remaining": "No comprehensive clinically validated calculator library or independent reference adjudication."
+    },
+    {
+      "section": 9,
+      "title": "Preventive/longitudinal medicine",
+      "status": "IN PROGRESS",
+      "implemented": "Authorized chart timeline,exact-unit trends and reviewed synthetic observation extraction retained.",
+      "remaining": "Validated causal/risk/preventive/personalized recommendations and longitudinal clinical evaluation missing."
+    },
+    {
+      "section": 10,
+      "title": "Physician copilot",
+      "status": "IN PROGRESS",
+      "implemented": "Owned threads,streaming,evidence,notes,attachments and clinical oversight workflow integrated.",
+      "remaining": "Broad diagnostic,therapeutic,prescribing,ordering and clinical efficacy acceptance incomplete."
+    },
+    {
+      "section": 11,
+      "title": "Patient companion",
+      "status": "IN PROGRESS",
+      "implemented": "Patient-owned educational conversations,consent,approved notes,account controls and feedback.",
+      "remaining": "Verified identity,proxy/guardian,comprehensive patient support and production safety acceptance missing."
+    },
+    {
+      "section": 12,
+      "title": "Documentation automation",
+      "status": "IN PROGRESS",
+      "implemented": "Existing source-scoped templates plus6clinician-authored structured preparations preserved.",
+      "remaining": "Comprehensive reliable clinical synthesis/coding/payer-specific/form submission automation unimplemented."
+    },
+    {
+      "section": 13,
+      "title": "Healthcare administration",
+      "status": "IN PROGRESS",
+      "implemented": "Internal administrative controls and clinician-authored paperwork preparations.",
+      "remaining": "Real payer eligibility,claims,priorauthorization,billing and external automation absent."
+    },
+    {
+      "section": 14,
+      "title": "Role-specific workspaces",
+      "status": "IN PROGRESS",
+      "implemented": "Existing patient,clinician,tenant-product-admin roles and boundaries retained.",
+      "remaining": "Nurse,pharmacist,therapist,radiologist,staff workspaces and verified professional credentials incomplete."
+    },
+    {
+      "section": 15,
+      "title": "Radiology/multimodal medicine",
+      "status": "IN PROGRESS",
+      "implemented": "Existing authorized syntheticDICOM viewing and reviewed reports retained.",
+      "remaining": "Diagnostic image reasoning,PACS and independent radiology validation missing;chat attachments are.txtonly."
+    },
+    {
+      "section": 16,
+      "title": "Patient/physician communication",
+      "status": "IN PROGRESS",
+      "implemented": "Internal scoped inbox,drafts,approval/send/receipts preserved.",
+      "remaining": "No external clinical delivery,monitored urgent channel or production transport acceptance."
+    },
+    {
+      "section": 17,
+      "title": "Conversational intelligence",
+      "status": "IN PROGRESS",
+      "implemented": "Encrypted reviewed attachment context,history lineage,explicit consent and fail-closed revocation integrated.",
+      "remaining": "PDF/images/full multimodal understanding,independent prompt-injection/security/clinical review missing."
+    },
+    {
+      "section": 18,
+      "title": "Durable workflow orchestration",
+      "status": "IN PROGRESS",
+      "implemented": "Existing persisted review/approval state plus versioned idempotent feedback tasks and account lifecycle.",
+      "remaining": "General durable jobs,distributed retries,compensation and human approval orchestration incomplete."
+    },
+    {
+      "section": 19,
+      "title": "Interoperability",
+      "status": "IN PROGRESS",
+      "implemented": "Existing fixture FHIR adapter/export contracts retained.",
+      "remaining": "RealSMART/OAuth/FHIR/EHR/PACS sandbox and production vendor acceptance absent."
+    },
+    {
+      "section": 20,
+      "title": "iOS/Android/web/desktop",
+      "status": "IN PROGRESS",
+      "implemented": "Actualbrowserworkflows and stableeditor27actualXcodecases15unit+12UIpass onb6ab21c,includingfullrealTOTP/recovery workflow;original26preserved.",
+      "remaining": "Physicaldevice/VoiceOver/staging/signing;Androidnative/desktop and complete distribution acceptance incomplete."
+    },
+    {
+      "section": 21,
+      "title": "Premium user experience",
+      "status": "IN PROGRESS",
+      "implemented": "Actual browser responsive/enlarged tests;feedback overflow fixed;selected screenshots inspected.",
+      "remaining": "Full human usability/VoiceOver/localization/all-device native quality unverified."
+    },
+    {
+      "section": 22,
+      "title": "Security/privacy/account lifecycle",
+      "status": "IN PROGRESS",
+      "implemented": "Encrypted attachment payloads,privatekeyfiles,session rechecks,deactivation,policy/holds/limitedcredentialerasure.",
+      "remaining": "Existing clinicalSQLite/originals not wholly encrypted;fulllegalerasure,KMS/rotation/identity/proxy/independent review missing."
+    },
+    {
+      "section": 23,
+      "title": "Maximum performance",
+      "status": "IN PROGRESS",
+      "implemented": "Actual generation latency and SDKusage reported with samples and unknowncost.",
+      "remaining": "Single sample is notcapacity;embedding/audio/patientchat/all-platformusage,costs,distributed load and failover incomplete."
+    },
+    {
+      "section": 24,
+      "title": "Continuous medical learning",
+      "status": "IN PROGRESS",
+      "implemented": "Existing source lifecycle/staging and fail-closed citation checks retained;feedback cannot train or edit guidance.",
+      "remaining": "Rights-reviewed expansion,retractions,qualified clinical correction/evaluation and governed relearning incomplete."
+    },
+    {
+      "section": 25,
+      "title": "Owner-directed feedback",
+      "status": "IN PROGRESS",
+      "implemented": "Real owner report\u2192admintriage\u2192requirement/task\u2192work\u2192technicalresolution browser workflow;private notes/idempotency.",
+      "remaining": "Evidence pointers unverified;qualified clinical review,releaseapproval and deployment outcomes not implemented."
+    },
+    {
+      "section": 26,
+      "title": "Enterprise infrastructure",
+      "status": "IN PROGRESS",
+      "implemented": "Repeatable synthetic runtime,migrations,backups,CI and guarded localkeys.",
+      "remaining": "PostgreSQL/HA/multiregion/productionDR/monitoring/incidentresponse/vendor operations missing."
+    },
+    {
+      "section": 27,
+      "title": "Clinical evaluation",
+      "status": "IN PROGRESS",
+      "implemented": "Deterministic software safety tests and fallible automated support screens retained.",
+      "remaining": "No independent clinician-adjudicated representative intended-use validation or regulatory acceptance."
+    },
+    {
+      "section": 28,
+      "title": "Research reproducibility",
+      "status": "IN PROGRESS",
+      "implemented": "SourceURLs/dates/rights/hashes/snapshots and source-scoped software/live reports retained.",
+      "remaining": "Expert-reviewed reproducible clinical benchmarks,registered analyses and full scientific evaluation absent."
+    },
+    {
+      "section": 29,
+      "title": "Complete end-to-end acceptance",
+      "status": "IN PROGRESS",
+      "implemented": "311Python/29frontend/7Chromium/5project and27actualnative plus actuallivephysician/patient/attachment workflows pass;earlierfailurespreserved.",
+      "remaining": "All specified cross-role/procedure/ambient/external/device/failure workflows are not accepted."
+    },
+    {
+      "section": 30,
+      "title": "Release gates",
+      "status": "VERIFIED",
+      "implemented": "Separate localdemoPASS,syntheticTestFlightFAIL,clinicalpilotFAIL,productionFAIL with ownerBLOCKED gates.",
+      "remaining": "Gate assessment is not gate satisfaction or release authorization."
+    },
+    {
+      "section": 31,
+      "title": "Execution process/budget",
+      "status": "IN PROGRESS",
+      "implemented": "ContinuedMFA,attachments,lifecycle,keyfiles,feedback,metrics and live checks;tested milestones committed.",
+      "remaining": "Checkpoint records exact next engineering tasks;the entire directive is not completed."
+    },
+    {
+      "section": 32,
+      "title": "Final self-audit",
+      "status": "IN PROGRESS",
+      "implemented": "All35sections listed and1155prior requirements preserved with gaps/statuses.",
+      "remaining": "Per-requirement independent risk/originalsource/clinical acceptance remains unresolved."
+    },
+    {
+      "section": 33,
+      "title": "Deliverables",
+      "status": "IN PROGRESS",
+      "implemented": "Reviewable code/tests/evidence,requirementsview,readiness,continuation and draftPRpreserved.",
+      "remaining": "Remaining broad product implementation and owner/independent acceptance not delivered."
+    },
+    {
+      "section": 34,
+      "title": "Final command",
+      "status": "IN PROGRESS",
+      "implemented": "Working bounded vertical workflows extended while preserving priorarchitecture.",
+      "remaining": "No claim of world-class/fullmedical/enterprise/production completion."
+    }
+  ]
+}

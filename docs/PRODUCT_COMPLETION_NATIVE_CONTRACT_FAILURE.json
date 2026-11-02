@@ -1,0 +1,71 @@
+{
+  "source_commit": "165e883486a712f4ab0cd6a261b903659b935229",
+  "run_id": 40790301215,
+  "url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40790301215",
+  "native": {
+    "passed": 2,
+    "failed": 3,
+    "skipped": 0,
+    "total": 5
+  },
+  "independent_authenticated_https_contract": "PASS:patient and clinician protected charts/notes,patient denial,remote logout and subsequent401 exercised against actual backend",
+  "native_app": "FAIL:UIKitNavigationBar ownership assertion at configured launch;unit host did not finish bootstrapping;not a complete11-case run",
+  "annotations": [
+    {
+      "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+      "title": ""
+    },
+    {
+      "message": "Native crash Raphael-2026-10-29-000148.ips: {\"procName\": \"Raphael\", \"exception\": {\"codes\": \"0x0000000000000000, 0x0000000000000000\", \"rawCodes\": [0, 0], \"type\": \"EXC_CRASH\", \"signal\": \"SIGABRT\"}, \"termination\": {\"flags\": 0, \"code\": 6, \"namespace\": \"SIGNAL\", \"indicator\": \"Abort trap: 6\", \"byProc\": \"Raphael\", \"byPid\": 14328}, \"asi\": null, \"faultingThread\": 0}",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "Native crash Raphael-2026-10-29-000215.ips: {\"procName\": \"Raphael\", \"exception\": {\"codes\": \"0x0000000000000000, 0x0000000000000000\", \"rawCodes\": [0, 0], \"type\": \"EXC_CRASH\", \"signal\": \"SIGABRT\"}, \"termination\": {\"flags\": 0, \"code\": 6, \"namespace\": \"SIGNAL\", \"indicator\": \"Abort trap: 6\", \"byProc\": \"Raphael\", \"byPid\": 16250}, \"asi\": null, \"faultingThread\": 0}",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "Native crash Raphael-2026-10-29-000313.ips: {\"procName\": \"Raphael\", \"exception\": {\"codes\": \"0x0000000000000000, 0x0000000000000000\", \"rawCodes\": [0, 0], \"type\": \"EXC_CRASH\", \"signal\": \"SIGABRT\"}, \"termination\": {\"flags\": 0, \"code\": 6, \"namespace\": \"SIGNAL\", \"indicator\": \"Abort trap: 6\", \"byProc\": \"Raphael\", \"byPid\": 18889}, \"asi\": null, \"faultingThread\": 0}",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "r/work/Raphael-AI/Raphael-AI/mobile/artifacts/NativeRun.ynGdyo/NativeTests.xcresult\n\nTesting failed:\n\tRaphael (14328) encountered an error (Early unexpected exit, operation never finished bootstrapping - no restart will be attempted. (Underlying Error: Crash: Raphael (14328) <external symbol>))\n\nFailing tests:\n\tRaphaelUITests.testAuthenticatedPatientAndClinicianUseActualHTTPSBackend()\n\tRaphaelUITests.testNativeSignInControlsDoNotRequireRemoteWebKitAccessibility()\n\n** TEST FAILED **\n\nTesting started",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "tNativeSignInControlsDoNotRequireRemoteWebKitAccessibility]' started.\n    t =     0.00s Start Test at 2026-10-29 00:03:06.692\n    t =     0.08s Set Up\n    t =    23.83s     Checking existence of `\"Welcome to Raphael\" StaticText` (retry 2)\n    t =    23.83s Collecting debug information to assist test failure triage\n/Users/runner/work/Raphael-AI/Raphael-AI/mobile/ios/RaphaelUITests/RaphaelUITests.swift:133: error: -[RaphaelUITests.RaphaelUITests testNativeSignInControlsDoNotRequireRemoteWebKitAccessibility] : XCTAssertTrue failed\n    t =    23.84s Checking existence of `\"Development organization\" TextField`\n    t =    24.85s Checking existence of `\"Development organization\" TextField` (retry 1)\n    t =    25.85s Checking existence of `\"Development organization\" TextField` (retry 2)\n/Users/runner/work/Raphael-AI/Raphael-AI/mobile/ios/RaphaelUITests/RaphaelUITests.swift:135: error: -[RaphaelUITests.RaphaelUITests testNativeSignInControlsDoNotRequireRemoteWebKitAccessibility] : XCTAssertTrue failed\n    t =    25.86s Tap \"Development organization\" TextField\n    t =    25.86s     Wait for org.example.raphael.development to idle\n    t =    25.87s     Find the \"Development organization\" TextField\n    t =    27.88s         Wait for org.example.raphael.development to idle\n    t =    27.88s         Find the \"Development organization\" TextField\n/Users/runner/work/Raphael-AI/Raphael-AI/mobile/ios/RaphaelUITests/RaphaelUITests.swift:136: error: -[RaphaelUITests.RaphaelUITests testNativeSignInControlsDoNotRequireRemoteWebKitAccessibility] : Failed to application org.example.raphael.development is not running\n    t =    27.89s Tear Down\n    t =    27.94s Checking for crash reports corresponding to unexpected termination of org.example.raphael.development\nTest Case '-[RaphaelUITests.RaphaelUITests testNativeSignInControlsDoNotRequireRemoteWebKitAccessibility]' failed (47.969 seconds).\nTest Case '-[RaphaelUITests.RaphaelUITests testUnconfiguredBuildFailsSafelyWithoutConnecting]' started.\n    t =     0.00s Start Test at 2026-10-29 00:03:54.660\n    t =     0.06s Set Up\n    t =     5.52s     Added attachment named 'Final synthetic native UI state;workflow result is separate'\nTest Case '-[RaphaelUITests.RaphaelUITests testUnconfiguredBuildFailsSafelyWithoutConnecting]' passed (5.743 seconds).\nTest Suite 'RaphaelUITests' failed at 2026-10-29 00:04:00.403.\n\t Executed 4 tests, with 4 failures (0 unexpected) in 113.437 (113.442) seconds\nTest Suite 'RaphaelUITests.xctest' failed at 2026-10-29 00:04:00.404.\n\t Executed 4 tests, with 4 failures (0 unexpected) in 113.437 (113.443) seconds\nTest Suite 'All tests' failed at 2026-10-29 00:04:00.404.\n\t Executed 4 tests, with 4 failures (0 unexpected) in 113.437 (113.445) seconds\n2026-10-29 00:04:37.132 xcodebuild[8522:29924] [MT] IDETestOperationsObserverDebug: 225.137 elapsed -- Testing started completed.\n2026-10-29 00:04:37.133 xcodebuild[8522:29924] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start\n\t/Users/runne",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "\nnote: Run script build phase 'Run Script' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'Raphael' from project 'Raphael')\n2026-10-29 00:01:31.023037+0000 Raphael[14328:45497] [library] load_eligibility_plist: Failed to open /Users/runner/Library/Developer/CoreSimulator/Devices/DC4CD8B3-4457-4153-9087-A0D7A2F9BFD9/data/Containers/Data/Application/1E372529-C3C4-47F5-949F-AAB6727C7EDC/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)\n2026-10-29 00:01:32.672578+0000 Raphael[14328:45497] [general] *** Assertion failure in -[SwiftUI.UIKitNavigationBar layoutSubviews], UINavigationBar.m:3895\n2026-10-29 00:01:32.886393+0000 Raphael[14328:45497] *** Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'Layout requested for visible navigation bar, <SwiftUI.UIKitNavigationBar: 0x1016218c0; baseClass = UINavigationBar; frame = (0 0; 402 44); opaque = NO; autoresize = W; layer = <CALayer: 0x60000026efc0>> delegate=0x102083200, when the top item belongs to a different navigation bar. topItem = <UINavigationItem: 0x101523150> title='\udbc2\udfb7\udbc2\udfb7\udbc2\udfb7\udbc2\udfb7\udbc2\udfb7\udbc2\udfb7\udbc2\udfb7' style=navigator, navigation bar = <SwiftUI.UIKitNavigationBar: 0x10162b250; baseClass = UINavigationBar; frame = (0 0; 402 44); opaque = NO; autoresize = W; layer = <CALayer: 0x600000278100>> delegate=0x1020e3200, possibly from a client attempt to nest wrapped navigation controllers.'\n*** First throw call stack:\nlibc++abi: terminating due to uncaught exception of type NSException\n2026-10-29 00:01:53.460155+0000 RaphaelUITests-Runner[15730:49195] [Default] Running tests...\n2026-10-29 00:01:53.514735+0000 RaphaelUITests-Runner[15730:49256] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric\n2026-10-29 00:01:53.559134+0000 RaphaelUITests-Runner[15730:49256] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics\n    t =      nans Interface orientation changed to Portrait\nTest Suite 'All tests' started at 2026-10-29 00:02:06.959.\nTest Suite 'RaphaelUITests.xctest' started at 2026-10-29 00:02:06.961.\n    t =    36.73s     Checking existence of `\"Development organization\" TextField` (retry 2)\n    t =    36.73s Collecting debug information to assist test failure triage\n/Users/runner/work/Raphael-AI/Raphael-AI/mobile/ios/RaphaelUITests/RaphaelUITests.swift:26: error: -[RaphaelUITests.RaphaelUITests testAuthenticatedPatientAndClinicianUseActualHTTPSBackend] : XCTAssertTrue failed\n    t =    37.63s Tear Down\n    t =    37.67s Checking for crash reports corresponding to unexpected termination of org.example.raphael.development\nTest Case '-[RaphaelUITests.RaphaelUITests testAuthenticatedPatientAndClinicianUseActualHTTPSBackend]' failed (57.688 seconds).\nTest Case '-[RaphaelUITests.RaphaelUITests tes",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "Monitoring boot status for iPhone 16 Pro (DC4CD8B3-4457-4153-9087-A0D7A2F9BFD9).\nDevice already booted, nothing to do.\n\nActual synthetic main:app HTTPS ready;simulator trust installed;no provider requests.",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "{\"exported_png_files\": 2, \"source\": \"actual_xcresult_attachments\", \"authenticated_workflow_result_is_separate\": true}",
+      "title": "Raphael native screenshots"
+    },
+    {
+      "message": "{\"source\": \"xcresulttool\", \"status\": \"reported\", \"native_job_result_is_separate\": true, \"passedTests\": 2, \"failedTests\": 3, \"skippedTests\": 0, \"totalTestCount\": 5}",
+      "title": "Raphael native test summary"
+    },
+    {
+      "message": "{\"synthetic_sessions_remaining\": 0, \"provider_requests\": 0, \"backend\": \"actual_main_app_https\", \"audit_event_counts_including_provisioning\": {\"list_patients\": 2, \"login\": 3, \"logout\": 3, \"read_notes\": 2, \"read_patient\": 1}}",
+      "title": "Raphael native backend verification"
+    },
+    {
+      "message": "{\"POST /api/dev/login 200\": 3, \"POST /api/dev/patients 200\": 2, \"POST /api/dev/patients/:id/notes 200\": 1, \"POST /api/dev/logout 200\": 3, \"GET /api/dev/session 200\": 2, \"GET /api/dev/patients 200\": 2, \"GET /api/dev/patients/:id 404\": 1, \"GET /api/dev/patients/:id/notes 200\": 2, \"GET /api/dev/session 401\": 2, \"GET /api/dev/patients/:id 200\": 1}",
+      "title": "Raphael native HTTP trace"
+    },
+    {
+      "message": "Process completed with exit code 65.",
+      "title": ""
+    },
+    {
+      "message": "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.",
+      "title": ""
+    }
+  ]
+}

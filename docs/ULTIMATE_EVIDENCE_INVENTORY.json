@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-11-01T04:31:40.160765+00:00",
+  "uses_mock_services": false,
+  "read_only": true,
+  "remote_writes": 0,
+  "collection": "raphael_evidence_v1",
+  "model": "text-embedding-3-small",
+  "status": "passed",
+  "collection_dimensions": 384,
+  "total_vectors": 48,
+  "active_vectors": 48,
+  "active_documents": 9,
+  "model_tags_compatible": true
+}

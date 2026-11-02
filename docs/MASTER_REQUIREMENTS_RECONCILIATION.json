@@ -1,0 +1,23 @@
+{
+  "baseline_sha": "9feeab359223e06ebb5f448a86529096ac082f4b",
+  "baseline_requirements": 1128,
+  "current_requirements": 1136,
+  "preserved_ids_and_descriptions": 1128,
+  "added": [
+    "MASTER-001",
+    "MASTER-002",
+    "MASTER-003",
+    "MASTER-004",
+    "MASTER-005",
+    "MASTER-006",
+    "MASTER-007",
+    "MASTER-008"
+  ],
+  "state_counts": {
+    "PARTIAL": 862,
+    "NOT_IMPLEMENTED": 194,
+    "VERIFIED": 46,
+    "BLOCKED_EXTERNAL": 11,
+    "IMPLEMENTED_UNVERIFIED": 23
+  }
+}

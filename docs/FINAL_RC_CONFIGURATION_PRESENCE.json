@@ -1,0 +1,14 @@
+{
+  "source": "Inherited execution process environment;presence only",
+  "bindings": {
+    "LLM_API_KEY": true,
+    "LLM_BASE_URL": true,
+    "LLM_MODEL": true,
+    "QDRANT_URL": true,
+    "QDRANT_API_KEY": true,
+    "RAPHAEL_MFA_ENCRYPTION_KEY": false,
+    "RAPHAEL_BACKUP_ENCRYPTION_KEY": false
+  },
+  "secret_values_printed": false,
+  "ci_mfa_key": "Separate ephemeral server-only synthetic fixture key;not staging configuration"
+}

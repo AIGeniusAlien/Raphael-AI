@@ -1,0 +1,25 @@
+FAIL: test_private_fixture_password_is_redacted_from_console_and_artifact_log (test_native_ci_logging.NativeCILoggingTests.test_private_fixture_password_is_redacted_from_console_and_artifact_log)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Raphael-AI/tests/test_native_ci_logging.py", line 18, in test_private_fixture_password_is_redacted_from_console_and_artifact_log
+    self.assertEqual(result.returncode,0,result.stderr)
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "/workspace/Raphael-AI/.github/scripts/redact_native_log.py", line 22, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/Raphael-AI/.github/scripts/redact_native_log.py", line 13, in main
+    values=json.loads((Path(private)/'redactions.json').read_text())
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmpbhd189nw/redactions.json'
+
+
+----------------------------------------------------------------------
+Ran 266 tests in 64.393s
+
+FAILED (failures=1)

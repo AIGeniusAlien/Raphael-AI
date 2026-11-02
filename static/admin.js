@@ -1,0 +1,14 @@
+(() => {
+  'use strict';
+  const el=id=>document.getElementById(id);let user=null,version=0;
+  const status=(text='',error=false)=>{el('status').textContent=text;el('status').dataset.error=String(error);};
+  const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);return n;};
+  function clear(){version++;user=null;el('workspace').hidden=true;el('users').replaceChildren();el('password').value='';el('session').textContent='';}
+  async function api(path,options={}){const response=await fetch('/api/dev'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json'}});const data=await response.json();if(!response.ok){if(response.status===401)clear();throw new Error(typeof data.detail==='string'?data.detail:`Request failed (${response.status}).`);}return data;}
+  async function action(fn){status();try{return await fn();}catch(error){status(error.message,true);}}
+  async function load(){const expected=version;const users=await api('/admin/users');if(expected!==version||!user)return;el('users').replaceChildren();for(const account of users){const card=node('article');card.appendChild(node('h3',account.username));card.appendChild(node('p',`${account.role} · ${account.active?'Active':'Disabled'}`));const toggle=node('button',account.active?'Disable account and revoke sessions':'Enable account');toggle.type='button';toggle.disabled=account.id===user.id;toggle.addEventListener('click',()=>action(async()=>{if(expected!==version||!user)return;toggle.disabled=true;try{await api(`/admin/users/${account.id}`,{method:'PATCH',body:JSON.stringify({active:!account.active})});if(expected===version){await load();status('Account status updated. Disabled-account sessions are revoked.');}}finally{toggle.disabled=account.id===user?.id;}}));card.appendChild(toggle);el('users').appendChild(card);}}
+  el('create-user').addEventListener('submit',event=>{event.preventDefault();const expected=version;const submit=el('create-user').querySelector('button');submit.disabled=true;return action(async()=>{try{await api('/admin/users',{method:'POST',body:JSON.stringify({username:el('username').value.trim(),password:el('password').value,role:el('role').value})});if(expected===version){el('username').value='';await load();status('Synthetic account created. No invitation or external message was sent.');}}finally{el('password').value='';}}).finally(()=>{submit.disabled=false;});});
+  el('refresh').addEventListener('click',()=>action(load));
+  async function boot(){await action(async()=>{user=await api('/session');if(user.role!=='org_admin'){clear();throw new Error('Organization administrator role required. Sign in through the portal with a provisioned admin account.');}el('workspace').hidden=false;el('session').textContent=`${user.username} · ${user.tenant} · organization administrator`;await load();});}
+  window.RaphaelAdmin={boot,load};window.RaphaelAdmin.ready=boot();
+})();

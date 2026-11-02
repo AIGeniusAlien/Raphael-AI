@@ -1,0 +1,35 @@
+(() => {
+ 'use strict';
+ const $=id=>document.getElementById(id),node=(tag,text)=>{const n=document.createElement(tag);n.textContent=text;return n;};
+ let identity=null,after=null,assignees=[],pendingReport=null,busy=false;
+ const status=text=>{$('status').textContent=text;};
+ function clear(){identity=null;pendingReport=null;assignees=[];$('feedback').hidden=true;$('identity').textContent='';$('reports').replaceChildren();$('requirements').replaceChildren();$('report-form').reset();}
+ async function api(path,body){const response=await fetch('/api/dev/feedback'+path,{method:body===undefined?'GET':'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});const result=await response.json();if(!response.ok){if(response.status===401)clear();throw new Error(typeof result.detail==='string'?result.detail:'Request rejected.');}return result;}
+ const action=fn=>Promise.resolve().then(fn).catch(error=>status(error.message));
+ function field(box,tag,label,id){const input=document.createElement(tag);input.id=id;const l=node('label',label);l.htmlFor=id;box.append(l,input);return input;}
+ function render(row){
+  const box=node('article','');box.dataset.feedbackId=row.id;box.append(node('h3',row.title),node('p',row.category+' · '+row.impact+' · '+row.state+' · revision '+row.revision),node('p',row.detail));
+  if(row.task)box.append(node('p','Task '+row.task.id+' · '+row.task.requirement_id+' · '+row.task.state+(row.task.evidence_reference?' · Recorded evidence pointer (unverified): '+row.task.evidence_reference:'')));
+  for(const event of row.actions)box.append(node('p',event.action+' · revision '+event.result_revision+(event.note?' · '+event.note:'')));
+  if(row.actions_truncated){const history=node('button','Show full action history for report '+row.id);history.type='button';history.onclick=()=>action(async()=>{const detail=await api('/reports/'+row.id);box.remove();render(detail);});box.append(history);}
+  if(identity.role==='org_admin'&&!['resolved','rejected'].includes(row.state)){
+   const controls=node('div',''),kind=field(controls,'select','Action for report '+row.id,'action-'+row.id);
+   for(const [value,label] of [['triage','Triage'],['create_task','Create one linked task'],['start_task','Start task'],['assign_task','Assign open task'],['resolve','Record technical resolution'],['reject','Reject before work starts'],['note','Add internal note']]){const option=node('option',label);option.value=value;kind.append(option);}
+   const priority=field(controls,'select','Triage priority','priority-'+row.id);for(const value of ['P0','P1','P2']){const option=node('option',value);option.value=value;priority.append(option);}priority.value=row.priority||'P1';
+   const requirement=field(controls,'input','Existing requirement ID (task creation only)','requirement-'+row.id);requirement.maxLength=60;
+   const assigned=field(controls,'select','Product administrator assignee','assignee-'+row.id);for(const user of assignees){const option=node('option',user.username);option.value=user.id;assigned.append(option);}assigned.value=row.task?.assigned_to||identity.id;
+   const evidence=field(controls,'input','Evidence pointer: full commit SHA, repository CI URL, or docs/ path','evidence-'+row.id);evidence.maxLength=500;
+   const note=field(controls,'textarea','Internal administrator note (no patient data or credentials)','note-'+row.id);note.maxLength=2000;
+   const button=node('button','Apply action to report '+row.id);button.type='button';let pending=null;
+   button.onclick=()=>action(async()=>{if(busy)return;if(note.value.trim().length<5)throw new Error('Enter a meaningful internal note.');const body={expected_revision:row.revision,action:kind.value,note:note.value,priority:priority.value,requirement_id:requirement.value||null,assignee_id:Number(assigned.value),evidence_reference:evidence.value||null};const serialized=JSON.stringify(body);if(!pending||pending.serialized!==serialized)pending={serialized,body:{...body,request_id:crypto.randomUUID()}};busy=true;button.disabled=true;try{await api('/reports/'+row.id+'/actions',pending.body);pending=null;await refresh();status('Action recorded. Evidence pointers remain unverified; medical guidance was not changed.');}finally{busy=false;button.disabled=false;}});
+   controls.append(button);box.append(controls);
+  }
+  $('reports').append(box);
+ }
+ async function refresh(more=false){const data=await api('/reports'+(more&&after?'?after='+after:''));if(!more)$('reports').replaceChildren();for(const row of data.items)render(row);after=data.next_after;$('more').hidden=!after;if(!data.items.length&&!more)$('reports').append(node('p','No reports in your accessible queue.'));}
+ $('report-form').onsubmit=event=>{event.preventDefault();action(async()=>{if(busy)return;const body={category:$('category').value,impact:$('impact').value,title:$('title').value,detail:$('detail').value,synthetic_only_ack:$('synthetic-ack').checked,no_sensitive_data_ack:$('private-ack').checked};const serialized=JSON.stringify(body);if(!pendingReport||pendingReport.serialized!==serialized)pendingReport={serialized,body:{...body,request_id:crypto.randomUUID()}};busy=true;$('submit-report').disabled=true;try{const row=await api('/reports',pendingReport.body);pendingReport=null;$('report-form').reset();await refresh();status('Internal report '+row.id+' persisted. No external notification, medical correction, or training occurred.');}finally{busy=false;$('submit-report').disabled=false;}});};
+ $('refresh').onclick=()=>action(()=>refresh());$('more').onclick=()=>action(()=>refresh(true));
+ $('search').onclick=()=>action(async()=>{const result=await api('/requirements?q='+encodeURIComponent($('requirement-search').value));$('requirements').replaceChildren();for(const row of result.items)$('requirements').append(node('p',row.id+' · '+row.state+' · '+row.description));if(result.truncated)$('requirements').append(node('p','More matches exist; refine your search.'));});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){$('reports').querySelectorAll('textarea').forEach(input=>{input.value='';});}else if(identity)action(async()=>{const response=await fetch('/api/dev/session',{credentials:'same-origin'});const current=response.ok?await response.json():null;if(!current||current.id!==identity.id||current.role!==identity.role||current.tenant!==identity.tenant){clear();status('Your signed-in account changed. Reload before continuing.');}});});
+ action(async()=>{const response=await fetch('/api/dev/session',{credentials:'same-origin'});if(!response.ok)throw new Error('Sign in through the portal to use product feedback.');identity=await response.json();$('identity').textContent=identity.username+' · '+identity.role+' · '+identity.tenant;if(identity.role==='org_admin'){assignees=await api('/assignees');$('queue-title').textContent='Organization product queue';$('administration').hidden=false;}$('feedback').hidden=false;await refresh();});
+})();

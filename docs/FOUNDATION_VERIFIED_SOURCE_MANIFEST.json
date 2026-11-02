@@ -1,0 +1,19 @@
+{
+  "algorithm": "SHA256",
+  "scope": "Application and browser source exercised by foundation-layout-final;not a whole-repository or clinical validation claim.",
+  "files": {
+    "protected_database.py": "711fb55ecb72593c5f5929d59d47ea772d21e6a1ed1c34f3969f68b00ed7a32c",
+    "medical_terms.py": "3ae4b42184cc49fa2a835403bd421595f4ad30f3f370a96f3ab6093c32c13c19",
+    "dev_knowledge.py": "0a2a3bcfeaac8f5da4884143f2c396809053d0578dbb1bd17918753a021612c0",
+    "dev_start.py": "cd05b73235712379a07e2b5631da172460099b3f60a4d22fb696ef983d2b2cc8",
+    "dev_runtime.py": "8cf046e8eeaa2eb717a624ec00ab90f99c5e9fa3a96d42a939d1cd26fd40bbaa",
+    "dev_backup.py": "cdb2314726b9dddab43b260b55d6a3c850db5c5fce47d206b4c3d7dd9655bbe7",
+    "dev_account.py": "72dec7eff069aaf32717ff40049344a9b3ff28c87cae95174baada444954d498",
+    "main.py": "ed26ed604179038cef986827b0649a1a586e7b8ea125f48f8324a73088db586a",
+    "static/portal.css": "a589d494d654e3520b8e2a4fea81571ad04ea602dec8163ba77531153e7b2754",
+    "static/account.js": "a5c7aa64a4d239ba890430bb53fd3f7c7df9b784f0a62939abef0d817bb1f239",
+    "static/knowledge.js": "50ec0920c5bb03af87d2be7cee0929d39aa36ccad2f492a56cae0d26ec1a5b7a",
+    "e2e/test_completion_browser.py": "2fe36022cf9b5bcd7e25d81c21653d73f66b629c3cb27df57de3a512e483aa8a",
+    "e2e/test_terms_browser.py": "6cbe50ef0ca8897a70cd19c719902d752e6bc446e588bf4b062397ecf20fa7f4"
+  }
+}

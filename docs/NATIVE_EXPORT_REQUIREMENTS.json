@@ -1,0 +1,15 @@
+{
+  "baseline_commit": "ce27553d6b215c000ad43e571552e16b1f10ab87",
+  "baseline_requirements": 1154,
+  "all_existing_ids_and_descriptions_preserved": true,
+  "current_requirements": 1155,
+  "state_counts": {
+    "PARTIAL": 870,
+    "NOT_IMPLEMENTED": 191,
+    "VERIFIED": 72,
+    "IMPLEMENTED_UNVERIFIED": 22
+  },
+  "added_ids": [
+    "RC-004"
+  ]
+}

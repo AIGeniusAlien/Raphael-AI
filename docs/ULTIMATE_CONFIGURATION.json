@@ -1,0 +1,33 @@
+{
+  "source": "inherited execution environment",
+  "variables": {
+    "LLM_API_KEY": {
+      "present": true,
+      "value_exposed": false
+    },
+    "LLM_BASE_URL": {
+      "present": true,
+      "value_exposed": false
+    },
+    "LLM_MODEL": {
+      "present": true,
+      "value_exposed": false
+    },
+    "QDRANT_URL": {
+      "present": true,
+      "value_exposed": false
+    },
+    "QDRANT_API_KEY": {
+      "present": true,
+      "value_exposed": false
+    },
+    "RAPHAEL_MFA_ENCRYPTION_KEY": {
+      "present": false,
+      "value_exposed": false
+    },
+    "RAPHAEL_BACKUP_ENCRYPTION_KEY": {
+      "present": false,
+      "value_exposed": false
+    }
+  }
+}

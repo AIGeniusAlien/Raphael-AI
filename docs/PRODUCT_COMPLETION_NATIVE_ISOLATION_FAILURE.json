@@ -1,0 +1,59 @@
+{
+  "source_commit": "c0117b2c6d2343aa6d348e335238de03e52edf29",
+  "run_id": 40789035433,
+  "url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40789035433",
+  "status": "failure",
+  "native": {
+    "passed": 9,
+    "failed": 1,
+    "skipped": 0,
+    "total": 10
+  },
+  "finding": "Native-control minimal case passed;protected web identity absent;only provisioning successful login/logout audits. Empty HTTP trace was unavailable due disabled access logging and must not be interpreted as no request.",
+  "annotations": [
+    {
+      "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+      "title": ""
+    },
+    {
+      "message": "ST FAILED **\n\nTesting started",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "engine.rendering AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.networking AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.webcontent))\" UserInfo={NSLocalizedFailureReason=((target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.rendering AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.networking AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.webcontent))}>\n2026-10-28 23:47:46.117672+0000 Raphael[10672:36251] [ProcessSuspension] 0x11600c5a0 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'WebProcess NearSuspended Assertion' for process with PID=11164, error: (null)\n2026-10-28 23:47:48.581247+0000 RaphaelUITests-Runner[11223:37118] [Default] Running tests...\n    t =      nans Interface orientation changed to Portrait\nTest Suite 'All tests' started at 2026-10-28 23:47:55.214.\n    t =    60.70s     Requesting snapshot of accessibility hierarchy for app with pid 11638\n    t =    60.84s Checking existence of `\"native-authentication-problem\" StaticText`\n/Users/runner/work/Raphael-AI/Raphael-AI/mobile/ios/RaphaelUITests/RaphaelUITests.swift:35: error: -[RaphaelUITests.RaphaelUITests testAuthenticatedPatientAndClinicianUseActualHTTPSBackend] : failed - Authenticated web identity did not appear; no native authentication error is visible.\n    t =    61.78s Tear Down\n    t =    61.79s     Find the Target Application 'org.example.raphael.development'\n    t =    61.99s     Added attachment named 'Final synthetic native UI state;workflow result is separate'\nTest Case '-[RaphaelUITests.RaphaelUITests testAuthenticatedPatientAndClinicianUseActualHTTPSBackend]' failed (62.300 seconds).\nTest Case '-[RaphaelUITests.RaphaelUITests testNativeSignInControlsDoNotRequireRemoteWebKitAccessibility]' started.\n    t =     0.00s Start Test at 2026-10-28 23:48:57.516\n    t =     0.10s Set Up\n    t =     5.39s     Added attachment named 'Final synthetic native UI state;workflow result is separate'\nTest Case '-[RaphaelUITests.RaphaelUITests testUnconfiguredBuildFailsSafelyWithoutConnecting]' passed (5.607 seconds).\nTest Suite 'RaphaelUITests' failed at 2026-10-28 23:49:14.527.\n\t Executed 3 tests, with 1 failure (0 unexpected) in 79.312 (79.313) seconds\nTest Suite 'RaphaelUITests.xctest' failed at 2026-10-28 23:49:14.528.\n\t Executed 3 tests, with 1 failure (0 unexpected) in 79.312 (79.313) seconds\nTest Suite 'All tests' failed at 2026-10-28 23:49:14.529.\n\t Executed 3 tests, with 1 failure (0 unexpected) in 79.312 (79.315) seconds\n2026-10-28 23:49:44.235 xcodebuild[7000:25502] [MT] IDETestOperationsObserverDebug: 149.338 elapsed -- Testing started completed.\n2026-10-28 23:49:44.236 xcodebuild[7000:25502] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start\n\tRaphaelUITests.testAuthenticatedPatientAndClinicianUseActualHTTPSBackend()\n\n** TE",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "\nnote: Run script build phase 'Run Script' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'Raphael' from project 'Raphael')\n2026-10-28 23:47:38.607768+0000 Raphael[10672:35503] [library] load_eligibility_plist: Failed to open /Users/runner/Library/Developer/CoreSimulator/Devices/DC4CD8B3-4457-4153-9087-A0D7A2F9BFD9/data/Containers/Data/Application/2D52A5FE-FFAC-4B45-AC11-CBCCCE5F3562/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)\n2026-10-28 23:47:40.747255+0000 Raphael[10672:35503] [Process] WebContent process (0x116000d00) took 1.670964 seconds to launch\n2026-10-28 23:47:40.860220+0000 Raphael[10672:36260] [default] Failed to resolve host network app id to config: bundleID: com.apple.WebKit.Networking instance ID: Optional([_EXExtensionInstanceIdentifier: C83D9DD9-023E-4EA8-83EC-497F239502A0])\n2026-10-28 23:47:40.998859+0000 Raphael[10672:35503] [Process] GPU process (0x116002210) took 1.869702 seconds to launch\n2026-10-28 23:47:44.544569+0000 Raphael[10672:35503] [Process] Networking process (0x116005f20) took 3.793815 seconds to launch\n2026-10-28 23:47:44.546767+0000 Raphael[10672:35503] [ResourceLoadStatistics] Failed to request storage access quirks from WebPrivacy.\n2026-10-28 23:47:44.547651+0000 Raphael[10672:35503] [ResourceLoadStatistics] Failed to request storage access user agent string quirks from WebPrivacy.\nTest Suite 'All tests' started at 2026-10-28 23:47:44.595.\nTest Suite 'RaphaelTests.xctest' started at 2026-10-28 23:47:44.622.\nTest Suite 'NavigationPolicyTests' started at 2026-10-28 23:47:44.623.\nTest Case '-[RaphaelTests.ServerConfigurationTests testNativeSessionCookieScopeAndExpiryAreStrict]' passed (0.007 seconds).\nTest Case '-[RaphaelTests.ServerConfigurationTests testPublicWebKitBridgeResolvesPromiseWithoutOverlayLibrary]' started.\n2026-10-28 23:47:45.910983+0000 Raphael[10672:35503] [ResourceLoadStatistics] Failed to request query parameters from WebPrivacy.\n2026-10-28 23:47:45.953216+0000 Raphael[10672:35503] [ResourceLoadStatistics] Failed to request allowed query parameters from WebPrivacy.\n2026-10-28 23:47:45.955217+0000 Raphael[10672:35503] [ResourceLoadStatistics] Failed to request restricted opener domains from WebPrivacy\nTest Case '-[RaphaelTests.ServerConfigurationTests testPublicWebKitBridgeResolvesPromiseWithoutOverlayLibrary]' passed (1.412 seconds).\nTest Case '-[RaphaelTests.ServerConfigurationTests testReadinessRejectsLegacyMissingAndMalformedServiceResponses]' started.\nTest Case '-[RaphaelTests.ServerConfigurationTests testReadinessRejectsLegacyMissingAndMalformedServiceResponses]' passed (0.005 seconds).\n\t Executed 7 tests, with 0 failures (0 unexpected) in 1.456 (1.501) seconds\n2026-10-28 23:47:46.117491+0000 Raphael[10672:36251] [assertion] Error acquiring assertion: <Error Domain=RBSServiceErrorDomain Code=1 \"((target is not running or doesn't have entitlement com.apple.developer.web-browser-",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "\n[2026-10-28 23:44:26 +0000] Status=2, isTerminal=NO, Elapsed=01:03.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)\n\t\tMigration Elapsed:00:56 seconds\n\n[2026-10-28 23:44:27 +0000] Status=2, isTerminal=NO, Elapsed=01:04.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)\n\t\tMigration Elapsed:00:57 seconds\n\n[2026-10-28 23:44:29 +0000] Status=2, isTerminal=NO, Elapsed=01:05.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.addressbook.migrator (AddressBookLegacy.migrator)\n\t\tMigration Elapsed:00:58 seconds\n\n[2026-10-28 23:44:30 +0000] Status=2, isTerminal=NO, Elapsed=01:06.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.CloudTabsMigrator.migrator (CloudTabsMigrator.migrator)\n\t\tMigration Elapsed:00:59 seconds\n\n[2026-10-28 23:44:31 +0000] Status=2, isTerminal=NO, Elapsed=01:08.\n\tWaiting on Data Migration\n\t\tReason:Running plugin com.apple.PreferencesMigrator (PreferencesMigrator.migrator)\n\t\tMigration Elapsed:01:00 seconds\n\n[2026-10-28 23:44:32 +0000] Status=4, isTerminal=NO, Elapsed=01:09.\n\tWaiting on System App\n\n[2026-10-28 23:44:33 +0000] Status=4, isTerminal=NO, Elapsed=01:10.\n\tWaiting on System App\n\n[2026-10-28 23:44:35 +0000] Status=4, isTerminal=NO, Elapsed=01:11.\n\tWaiting on System App\n\n[2026-10-28 23:44:35 +0000] Status=4, isTerminal=NO, Elapsed=01:12.\n\tWaiting on System App\n\n[2026-10-28 23:44:37 +0000] Status=4, isTerminal=NO, Elapsed=01:14.\n\tWaiting on System App\n\n[2026-10-28 23:44:42 +0000] Status=4294967295, isTerminal=YES, Elapsed=01:18.\n\tFinished\n\nActual synthetic main:app HTTPS ready;simulator trust installed;no provider requests.",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "{\"exported_png_files\": 4, \"source\": \"actual_xcresult_attachments\", \"authenticated_workflow_result_is_separate\": true}",
+      "title": "Raphael native screenshots"
+    },
+    {
+      "message": "{\"source\": \"xcresulttool\", \"status\": \"reported\", \"native_job_result_is_separate\": true, \"passedTests\": 9, \"failedTests\": 1, \"skippedTests\": 0, \"totalTestCount\": 10}",
+      "title": "Raphael native test summary"
+    },
+    {
+      "message": "{\"synthetic_sessions_remaining\": 0, \"provider_requests\": 0, \"backend\": \"actual_main_app_https\", \"audit_event_counts_including_provisioning\": {\"login\": 1, \"logout\": 1}}",
+      "title": "Raphael native backend verification"
+    },
+    {
+      "message": "{}",
+      "title": "Raphael native HTTP trace"
+    },
+    {
+      "message": "Process completed with exit code 65.",
+      "title": ""
+    },
+    {
+      "message": "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.",
+      "title": ""
+    }
+  ]
+}

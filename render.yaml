@@ -4,5 +4,15 @@ services:
     env: python
     region: ohio
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
-    autoDeploy: true
+    startCommand: "bash run_staging.sh"
+    autoDeploy: false
+    healthCheckPath: /readyz
+    envVars:
+      - key: RAPHAEL_DEV_PORTAL
+        value: "1"
+      - key: RAPHAEL_DEV_SYNTHETIC_ONLY
+        value: "1"
+      - key: RAPHAEL_BIND_HOST
+        value: "0.0.0.0"
+      - key: DATABASE_URL
+        sync: false

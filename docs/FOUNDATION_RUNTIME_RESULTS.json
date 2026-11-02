@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "real_launcher": true,
+  "real_provider_requests": false,
+  "production_data_used": false,
+  "healthz": true,
+  "readyz": true,
+  "starts": 2,
+  "synthetic_patient_persisted": true,
+  "encrypted_attachment_decrypts_after_restart": true,
+  "mfa_key_persists": true,
+  "password_only_rejected_after_restart": true,
+  "recovery_authentication_after_restart": true,
+  "provider_mode": "disabled",
+  "sqlite_pages_encrypted": true
+}

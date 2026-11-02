@@ -1,0 +1,47 @@
+{
+  "checked_on": "2026-10-26",
+  "runtime_presence": {
+    "LLM_API_KEY": true,
+    "LLM_BASE_URL": true,
+    "LLM_MODEL": true,
+    "QDRANT_URL": true,
+    "QDRANT_API_KEY": true
+  },
+  "openai": {
+    "status": "passed",
+    "streaming": "passed_real_physician_portal",
+    "model_requested": "gpt-4o-mini"
+  },
+  "qdrant": {
+    "status": "passed",
+    "collection": "raphael_evidence_v1",
+    "vector_configuration": {
+      "size": 384,
+      "distance": "Cosine"
+    },
+    "active_documents": 3,
+    "active_vectors": 20,
+    "repeat_vectors_written": 0
+  },
+  "embedding": {
+    "status": "passed",
+    "provider": "openai",
+    "model": "text-embedding-3-small",
+    "actual_dimensions": 384,
+    "input_count": 1
+  },
+  "local_minilm": {
+    "status": "failed",
+    "error_type": "OSError"
+  },
+  "cdc_fetch": "HTTP200;reuse policy inspected;returned source hashes/excerpts checked against fresh fetch",
+  "live_physician_browser": {
+    "status": "passed",
+    "uses_mock_services": false,
+    "citation_count": 3,
+    "retrieved_excerpts": 6,
+    "missing_evidence_results": 0,
+    "clinician_approved": false
+  },
+  "source_verification": "publisher/reuse-policy/text/hash checks only;not independent clinical/GRADE/legal certification"
+}

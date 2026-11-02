@@ -1,0 +1,36 @@
+{
+  "checked_at": "2026-11-01T01:22:02.618320+00:00",
+  "source": "Inherited execution environment;no credential files or production database inspected",
+  "variables": {
+    "LLM_API_KEY": {
+      "present": true,
+      "value_exposed": false
+    },
+    "LLM_BASE_URL": {
+      "present": true,
+      "value_exposed": false
+    },
+    "LLM_MODEL": {
+      "present": true,
+      "value_exposed": false
+    },
+    "QDRANT_URL": {
+      "present": true,
+      "value_exposed": false
+    },
+    "QDRANT_API_KEY": {
+      "present": true,
+      "value_exposed": false
+    },
+    "RAPHAEL_MFA_ENCRYPTION_KEY": {
+      "present": false,
+      "value_exposed": false
+    },
+    "RAPHAEL_BACKUP_ENCRYPTION_KEY": {
+      "present": false,
+      "value_exposed": false
+    }
+  },
+  "live_evidence": "PRODUCT_COMPLETION_LIVE_FAILURE_2026_11_01.json",
+  "note": "Five provider bindings available;fresh stream/retrieval occurred;claim support failed closed. New MFA/backup keys remain operator inputs."
+}

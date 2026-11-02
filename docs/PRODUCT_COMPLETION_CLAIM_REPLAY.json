@@ -1,0 +1,55 @@
+{
+  "mode": "one bounded diagnostic replay",
+  "uses_mock_services": false,
+  "generation_retried": false,
+  "original_workflow_status": "failed",
+  "status": "passed",
+  "claim_screen": {
+    "status": "passed",
+    "checks": [
+      {
+        "segment_id": "S1",
+        "text": "According to the CDC, antibiotics do not work on viruses, which are different from bacteria; this includes common illnesses such as colds, flu, and most sore throats, where antibiotics will not improve symptoms. This information is sourced from [a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2] (source date: 2025-09-23). This statement is general education and requires clinician review for individual treatment decisions.",
+        "classification": "medical_claim",
+        "verdict": "supported",
+        "provider_verdict": "supported",
+        "supports": [
+          {
+            "chunk_id": "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2",
+            "quote": "Antibiotics DO NOT work on viruses."
+          },
+          {
+            "chunk_id": "a428f827958f1d9c18a3d44bb86cf8c4fa38f9813b98f622275528581dbfbdf2",
+            "quote": "Antibiotics do not treat infections caused by viruses such as those that cause: Colds and runny noses, even if the mucus is thick, yellow or green Most sore throats (except strep throat) Flu Most cases of chest colds (bronchitis) Antibiotics will NOT make you feel better if you have a virus."
+          }
+        ],
+        "citations_without_support": [],
+        "reason_code": "direct_support",
+        "patient_population": "adult",
+        "source_populations": [
+          "general"
+        ]
+      }
+    ],
+    "counts": {
+      "not_external_claim": 0,
+      "supported": 1,
+      "uncertain": 0,
+      "unsupported": 0
+    },
+    "screening_only": true,
+    "clinical_validation": false,
+    "clinician_approval_required": true,
+    "coverage": "Every deterministic paragraph segment screened;semantic verdicts remain model judgments,not independent validation.",
+    "model_requested": "gpt-4o-mini",
+    "model_returned": "gpt-4o-mini-2024-07-18",
+    "provider_calls": 1,
+    "timeout_seconds": 20,
+    "max_retries": 0,
+    "usage": {
+      "prompt_tokens": 6018,
+      "completion_tokens": 49,
+      "total_tokens": 6067
+    }
+  }
+}

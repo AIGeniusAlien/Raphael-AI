@@ -1,0 +1,11 @@
+{
+  "scope": "Linux actual native-CI HTTPS backend composition;not iOS UI or external providers",
+  "provider_requests": 0,
+  "uses_mock_services": false,
+  "login": 200,
+  "session_authenticated": 200,
+  "controlled_failure": 503,
+  "recovered": 200,
+  "authoritative_expiry": 401,
+  "status": "passed"
+}

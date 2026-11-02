@@ -23,7 +23,7 @@
       "section": 2,
       "title": "RECOVER AND RECONCILE EVERY EXISTING REQUIREMENT",
       "status": "IN PROGRESS",
-      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "evidence": "1164canonical ledger rows;all1161prior IDs/descriptions/criteria preserved;new verification vocabulary and explicit unadjudicated fields.",
       "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
@@ -37,7 +37,7 @@
       "section": 4,
       "title": "THE RAPHAEL MEDICAL BRAIN",
       "status": "IN PROGRESS",
-      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "evidence": "medical_terms.py;existing reviewed local evidence workspace;actual term-review/opt-in alias/citation/revocation API and browser tests;historical live provider proof unchanged.",
       "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
@@ -257,5 +257,6 @@
       "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
       "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     }
-  ]
+  ],
+  "latest_implementation_evidence": "docs/FOUNDATION_IMPLEMENTATION_CHECKPOINT.md"
 }

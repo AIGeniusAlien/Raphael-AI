@@ -25,7 +25,7 @@
         generation++;
         $('workspace').hidden = true;
         $('sources').replaceChildren(); $('results').replaceChildren();
-        $('citation').replaceChildren(); $('source-detail').replaceChildren();
+        $('citation').replaceChildren(); $('source-detail').replaceChildren(); $('terms').replaceChildren(); $('term-source').replaceChildren(); $('term-coverage').textContent='';
       }
       throw new Error(typeof data.detail === 'string' ? data.detail : 'Request failed. Check the fields and source permissions.');
     }
@@ -55,6 +55,13 @@
     const items = await api('/knowledge/sources');
     if (generation !== expected) return;
     $('sources').replaceChildren();
+    $('term-source').replaceChildren(element('option', 'Select an approved source'));
+    $('term-source').firstChild.value = '';
+    for (const source of items.filter(item => item.status === 'approved')) {
+      const option = element('option', `${source.title} — version ${source.version}`);
+      option.value = String(source.id); option.dataset.version = source.version_sha256;
+      $('term-source').appendChild(option);
+    }
     if (!items.length) $('sources').appendChild(element('p', 'No supplied sources. Nothing is indexed until intake and review.'));
     for (const source of items) {
       const row = element('article');
@@ -66,7 +73,7 @@
       row.appendChild(review);
       $('sources').appendChild(row);
     }
-    await coverage();
+    await coverage(); await loadTerms();
   }
   async function showSource(id) {
     const expected = ++sourceGeneration;
@@ -113,7 +120,7 @@
   }
   async function search() {
     const expected = generation;
-    const data = await api('/knowledge/search', { query: $('query').value.trim() });
+    const data = await api('/knowledge/search', { query: $('query').value.trim(), use_terms: $('use-terms').checked });
     if (generation !== expected) return;
     $('results').replaceChildren(); $('citation').replaceChildren();
     if (!data.results.length) $('results').appendChild(element('p', 'No approved excerpt matched. No answer or citation is invented.'));
@@ -133,7 +140,7 @@
       }));
       section.appendChild(resolve); $('results').appendChild(section);
     }
-    status(data.notice);
+    status(`${data.notice} Alias normalization: ${data.normalization.status}.`);
   }
   async function intake() {
     const expected = generation;
@@ -149,6 +156,49 @@
     await loadSources(); await showSource(source.id);
     status(source.deduplicated ? 'Identical immutable version already exists; no duplicate was created.' : 'Pending version saved. Read the excerpt and explicitly review it before retrieval.');
   }
+  async function loadTerms() {
+    const expected = generation;
+    const [data, counts] = await Promise.all([api('/knowledge/terms'), api('/knowledge/terms/coverage')]);
+    if (generation !== expected) return;
+    $('term-coverage').textContent = counts.facets.length ? counts.facets.map(item => `${item.specialty}: ${item.active_terms} active terms, ${item.source_versions} source versions; clinical validation absent`).join('; ') : 'No active reviewed terminology coverage.';
+    $('terms').replaceChildren();
+    for (const term of data.terms) {
+      const article = element('article'); article.dataset.termId = String(term.id);
+      article.appendChild(element('h3', term.canonical));
+      article.appendChild(element('p', `${term.aliases.join(', ')} → ${term.canonical} · ${term.specialty} · ${term.kind} · ${term.status} · ${term.active_for_search ? 'active for opt-in search' : 'inactive for search'}`));
+      article.appendChild(element('p', `Source ${term.source_id}; version SHA-256 ${term.source_version_sha256}; mapping SHA-256 ${term.content_sha256}`, 'meta'));
+      const source = element('button', 'Read bound source'); source.type = 'button';
+      source.addEventListener('click', () => action(() => showSource(term.source_id))); article.appendChild(source);
+      if (term.status !== 'revoked') {
+        const label = element('label'); label.className = 'checkbox';
+        const check = element('input'); check.type = 'checkbox';
+        label.append(check, document.createTextNode(' I reviewed this exact mapping and bound source version. This is not independent clinical validation.'));
+        article.appendChild(label);
+        for (const target of term.status === 'pending' ? ['review', 'revoke'] : ['revoke']) {
+          const button = element('button', target === 'review' ? 'Review term mapping' : 'Revoke term mapping'); button.type = 'button';
+          button.addEventListener('click', () => action(async () => {
+            if (!check.checked) throw new Error('Read the bound source and attest review of this exact mapping first.');
+            button.disabled = true;
+            try {
+              await api(`/knowledge/terms/${term.id}/${target}`, {content_sha256:term.content_sha256, source_version_sha256:term.source_version_sha256, content_reviewed:true});
+              if (generation !== expected) return;
+              await loadTerms(); status(target === 'review' ? 'Mapping reviewed for opt-in alias search.' : 'Mapping revoked; retained history is not deleted.');
+            } finally { button.disabled = false; }
+          })); article.appendChild(button);
+        }
+      }
+      $('terms').appendChild(article);
+    }
+  }
+  async function saveTerm() {
+    const expected = generation;
+    const option = $('term-source').selectedOptions[0];
+    if (!option || !option.value) throw new Error('Select a current approved source version.');
+    const data = await api('/knowledge/terms', {source_id:Number(option.value),source_version_sha256:option.dataset.version,canonical:$('term-canonical').value.trim(),aliases:$('term-aliases').value.split('\n').map(value => value.trim()).filter(Boolean),specialty:$('term-specialty').value.trim(),kind:$('term-kind').value});
+    if (generation !== expected) return;
+    $('term-form').reset(); await loadTerms();
+    status(data.deduplicated ? 'Immutable mapping already exists; no duplicate created.' : 'Pending mapping saved. Explicit review is required before alias search.');
+  }
   function bindForm(id, fn) {
     $(id).addEventListener('submit', event => {
       event.preventDefault();
@@ -158,7 +208,7 @@
     });
   }
   async function boot() {
-    bindForm('source-form', intake); bindForm('search-form', search);
+    bindForm('source-form', intake); bindForm('search-form', search); bindForm('term-form', saveTerm);
     $('refresh').addEventListener('click', () => action(loadSources));
     const user = await api('/session');
     $('account').textContent = `${user.username} · ${user.tenant} · ${user.role}`;

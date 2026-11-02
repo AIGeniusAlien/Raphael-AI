@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-STATUS={'VERIFIED':'VERIFIED','PARTIAL':'IN PROGRESS','IMPLEMENTED_UNVERIFIED':'IMPLEMENTED, UNVERIFIED','NOT_IMPLEMENTED':'NOT STARTED','BLOCKED_EXTERNAL':'EXTERNALLY BLOCKED','REQUIRES_CLINICAL_VALIDATION':'IMPLEMENTED, UNVERIFIED'}
+STATUS={'VERIFIED':'VERIFIED IN SYNTHETIC TESTING','PARTIAL':'IN PROGRESS','IMPLEMENTED_UNVERIFIED':'IMPLEMENTED BUT UNVERIFIED','NOT_IMPLEMENTED':'NOT STARTED','BLOCKED_EXTERNAL':'EXTERNALLY BLOCKED','REQUIRES_CLINICAL_VALIDATION':'IMPLEMENTED BUT UNVERIFIED'}
 CAUSE={'VERIFIED':'NONE_WITHIN_RECORDED_SCOPE','PARTIAL':'ENGINEERING_INCOMPLETE','IMPLEMENTED_UNVERIFIED':'VERIFICATION_MISSING','NOT_IMPLEMENTED':'IMPLEMENTATION_MISSING','BLOCKED_EXTERNAL':'EXTERNAL_DEPENDENCY','REQUIRES_CLINICAL_VALIDATION':'INDEPENDENT_VALIDATION_MISSING'}
 
 def build():
@@ -14,7 +14,7 @@ def build():
     rows=[]
     for row in ledger['requirements']:
         identifier=row['requirement_id']
-        rows.append({**row,'canonical_state':row['state'],'status':('FAILED' if identifier=='PLATFORM-006' and row['state']!='VERIFIED' else STATUS[row['state']]),
+        rows.append({**row,'canonical_state':row['state'],'status':('FAILED' if identifier=='PLATFORM-006' and row['state']!='VERIFIED' else row['verification_status']),
             'original_source':{'preserved_canonical_matrix':'docs/REQUIREMENTS_MATRIX.md','line':lines[identifier],'requirement_id':identifier,'historical_directive_attribution':'See preserved master directives;individual original-upload attribution has not been independently reconciled.'},
             'functional_area':identifier.split('-')[0],
             'exact_required_behavior':row['description'],
@@ -22,7 +22,7 @@ def build():
             'root_cause_type':('ACCEPTANCE_TEST_FAILURE' if identifier=='PLATFORM-006' and row['state']!='VERIFIED' else CAUSE[row['state']]),
             'owner_controlled_blockers':{'assessment':'Not individually adjudicated;dependencies must not be assumed to be external-only blockers.','recorded_dependencies':row['external_dependency'],'release_gate_record':'docs/RAPHAEL_FINAL_ACCEPTANCE.json'},
             'verification_evidence':row['test_coverage'],
-            'status_scope':'VERIFIED is bounded to the preserved row acceptance/evidence;IN PROGRESS includes historical partial implementation and does not assert an active assigned worker. No scope deferral is inferred.'})
+            'status_scope':'Verification is bounded to the preserved row acceptance/evidence;IN PROGRESS includes historical partial implementation and does not assert an active assigned worker. No scope deferral is inferred.'})
     return {'schema_version':1,'source':'docs/ENGINEERING_LEDGER.json','requirement_count':len(rows),'status_counts':dict(Counter(row['status'] for row in rows)),'clinical_validation':False,'individual_original_source_and_risk_review_complete':False,'requirements':rows}
 
 def main():

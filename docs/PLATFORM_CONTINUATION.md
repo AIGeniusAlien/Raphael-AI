@@ -1,3 +1,9 @@
+# Latest continuation after two verified foundation slices
+
+Read `FOUNDATION_IMPLEMENTATION_CHECKPOINT.md` and `FOUNDATION_LOCAL_RESULTS.json` first. 326Python/29frontend/8Chromium/5mobile-source tests and9localchecks passed. Current code includes encrypted synthetic SQLite and source-version-bound reviewed terminology/opt-in alias search. 1164requirements;all1161prior descriptions/criteria preserved. Current-head CI remains independently scoped. Keep draftPR1,no merge/deploy/Apple/realPHI/new paid requests.
+
+Next: rights-reviewed terminology/standard mappings and comprehensive coverage,then clinician-reviewed procedure pathways using existing evidence/patient/clinician modules and real API/UI persistence/consent/tenant/revocation regressions. No taxonomy=competence claim. Sourcebound aliases now work;the earlier continuation's description of that feature as notstarted is superseded. Full PHI lifecycle,caches/spooling,exports,oldcopy retention/erasure,KMS and independent clinical/operational gates remain unfinished. Preserve all historical failures/provider/native results in their original source scope.
+
 # Current continuation: synthetic storage increment
 
 Read `DATABASE_STORAGE_CHECKPOINT.md` first. Current source includes actual opt-in SQLCipher encryption, safe verified migration/rotation copies, encrypted inner snapshots and authenticated UI status. 319Python/29frontend/7Chromium/5mobile-source tests and9local checks passed. Latest full raw artifacts:`/workspace/.raphael/cipher-full-initial`. New directive:`directives/DEFINITIVE_HEALTHCARE_PLATFORM_2026-11-01.md`,36sections;entire directive remains incomplete. Preserve all work and draftPR1;no merge/deploy/Apple/realPHI/new paid calls.

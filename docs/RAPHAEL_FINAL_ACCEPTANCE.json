@@ -5,7 +5,7 @@
   "implementation_commit": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
   "release_decisions": {
     "synthetic_local_web_demonstration": "PASS",
-    "controlled_synthetic_testflight": "FAIL",
+    "controlled_synthetic_testflight": "BLOCKED",
     "controlled_clinical_pilot": "FAIL",
     "clinical_production": "FAIL"
   },
@@ -13,7 +13,7 @@
     {
       "id": "synthetic_web_workflow",
       "status": "PASS",
-      "cause": "Bounded synthetic development scope;311Python/29frontend/7Chromium/5mobile source cases pass.",
+      "cause": "Bounded synthetic development;326Python/29frontend/8Chromium/5mobile-source tests and9local checks pass.",
       "attempted_remediation": "Full combined local verification plus9API/1Chromium post-history-cap follow-ups.",
       "responsible_party": "Engineering",
       "next_verification": "Re-run actual current-head CI;no Xcode inference from Linux."
@@ -45,7 +45,7 @@
     {
       "id": "mfa_encryption_configuration",
       "status": "BLOCKED",
-      "cause": "RAPHAEL_MFA_ENCRYPTION_KEY absent in inherited environment.",
+      "cause": "Stable authorized staging bindings,escrow and operator acceptance not established;local tests use private ephemeral keys. Historical missing-variable observations are not a fresh environment-presence audit.",
       "attempted_remediation": "Feature refuses enrollment when key missing;tests use ephemeral keys.",
       "responsible_party": "Owner/operator secret management",
       "next_verification": "Provide protected stable Fernet key,escrow separately,and verify enrollment/restart/recovery in authorized staging;never send key through chat."
@@ -69,15 +69,15 @@
     {
       "id": "encrypted_backup",
       "status": "PASS",
-      "cause": "Bounded synthetic SQLite backup,not live DB encryption or production DR.",
-      "attempted_remediation": "4 roundtrip/tamper/overwrite/scope tests;private encrypted artifacts and validated restore.",
+      "cause": "Actual SQLCipher inner snapshot plus outer encrypted backup and validated protected restore;synthetic Linux scope only.",
+      "attempted_remediation": "Real SQLCipher wrong/missing key,tamper,source-preserving copy/rotation,no-overwrite and roundtrip tests pass.",
       "responsible_party": "Engineering",
       "next_verification": "Exercise dev_backup on a dedicated synthetic copy with separately escrowed key."
     },
     {
       "id": "backup_key_operations",
       "status": "BLOCKED",
-      "cause": "RAPHAEL_BACKUP_ENCRYPTION_KEY absent;no production backup destination or key escrow.",
+      "cause": "Stable authorized staging bindings,escrow and operator acceptance not established;local tests use private ephemeral keys. Historical missing-variable observations are not a fresh environment-presence audit.",
       "attempted_remediation": "Fail-closed key requirement and synthetic restore exercise implemented.",
       "responsible_party": "Owner/operator secret management",
       "next_verification": "Bind a distinct protected key and establish authorized storage,escrow,rotation and restore ownership."
@@ -142,7 +142,7 @@
       "id": "production_phi_infrastructure",
       "status": "FAIL",
       "cause": "Live DB at-rest encryption,key rotation,production database/migrations,distributed limits,monitoring and recovery operations incomplete.",
-      "attempted_remediation": "Encrypted synthetic backup and local concurrency checks;no production deployment claim.",
+      "attempted_remediation": "Opt-in synthetic SQLCipher pages,verified migration/rotation copies and encrypted backup/restore implemented. Full PHI lifecycle,production infrastructure and independent validation remain incomplete.",
       "responsible_party": "Engineering;owner authorizes infrastructure",
       "next_verification": "Complete production/staging controls and independent security/restore/rollback/capacity exercises."
     },
@@ -237,7 +237,7 @@
     {
       "id": "document_key_operations",
       "status": "BLOCKED",
-      "cause": "StableRAPHAEL_DOCUMENT_ENCRYPTION_KEY absent;tests use ephemeral keys.",
+      "cause": "Stable authorized staging bindings,escrow and operator acceptance not established;local tests use private ephemeral keys. Historical missing-variable observations are not a fresh environment-presence audit.",
       "attempted_remediation": "Fail-closed privatefile/key binding implemented;no operator key fabricated.",
       "responsible_party": "Owner/operator secret management",
       "next_verification": "Bind stable distinct protected key/escrow in authorized staging and verify restart/restore."
@@ -273,6 +273,18 @@
       "attempted_remediation": "UIKit-owned pair/private store eliminates per-character SwiftUI binding reconciliation;newregression plus realtypedpassword/TOTP/recovery/replay/disable/revocation allpass27/0/0 onb6ab21c. EveryMFApasswordmatchtrue;0active sessions.",
       "responsible_party": "Engineering",
       "next_verification": "Preserve exact softwareproof;ownerphysicaldevice/VoiceOver/staging/signing/independent security remain. Do not equate this with fullTestFlight/clinical readiness."
+    },
+    {
+      "id": "synthetic_sqlcipher_pages",
+      "status": "PASS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md",
+      "scope": "Explicit Linux synthetic mode only;not complete PHI lifecycle."
+    },
+    {
+      "id": "reviewed_local_terminology",
+      "status": "PASS",
+      "evidence": "docs/FOUNDATION_IMPLEMENTATION_CHECKPOINT.md",
+      "scope": "Local source-bound lexical alias review/retrieval only;not standard ontology or clinical competence."
     }
   ],
   "requirements": {
@@ -501,5 +513,10 @@
     "manual_inspection": false,
     "reason": "Automatic approval review rejected repeating the previously blocked native blob-host download;no further retry/workaround after rejection;actualCIannotations and localbrowserimages used."
   },
-  "final_followup_scope": "Evidence/documentation/acceptance metadata only after b6ab21c;final commit identified inPR/finalresponse;no futureCIresult claimed."
+  "final_followup_scope": "Evidence/documentation/acceptance metadata only after b6ab21c;final commit identified inPR/finalresponse;no futureCIresult claimed.",
+  "latest_foundation_evidence": "docs/FOUNDATION_IMPLEMENTATION_CHECKPOINT.md",
+  "local_results": "docs/FOUNDATION_LOCAL_RESULTS.json",
+  "historical_implementation_commit": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
+  "latest_implementation_commit": "Inspect current PR head;this pre-push evidence does not claim a future commit or CI outcome.",
+  "requirement_count": 1164
 }

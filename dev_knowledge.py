@@ -65,6 +65,8 @@ def init_knowledge_schema(engine):
     _require_synthetic(engine)
     with engine.begin() as c:
         execute_sqlite_script(c, SCHEMA)
+        from medical_terms import init_terms
+        init_terms(c)
 
 
 def _now():
@@ -137,6 +139,7 @@ class SearchIn(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     query: str = Field(min_length=2, max_length=1000)
     top_k: int = Field(default=12, ge=1, le=30)
+    use_terms: StrictBool = False
 
 
 def _chunks(content, size=1200, overlap=150):
@@ -298,10 +301,12 @@ def install_knowledge(app, ctx):
 
     @router.post("/search")
     def search(body: SearchIn, user=Depends(ctx.clinician)):
-        results = search_evidence(engine, user["tenant"], body.query, body.top_k)
+        from medical_terms import expand_query
+        normalization = expand_query(engine,user["tenant"],body.query) if body.use_terms else {"query":body.query,"status":"disabled","mappings":[]}
+        results = search_evidence(engine, user["tenant"], normalization["query"], body.top_k)
         with engine.begin() as c:
             ctx.audit(c, user, "search_evidence", "evidence_source")
-        return {"results": results, "retrieval_method": "sqlite_fts5_lexical",
+        return {"results": results, "normalization": normalization, "retrieval_method": "sqlite_fts5_lexical",
                 "notice": "Only clinician-reviewed supplied excerpts are searched; source truth and permission are not independently verified."}
 
     @router.get("/citations/{chunk_id}")
@@ -329,3 +334,5 @@ def install_knowledge(app, ctx):
                 "source_verification": "clinician_attestation_only", "external_connectors": "not invoked"}
 
     app.include_router(router)
+    from medical_terms import install_terms
+    install_terms(app,ctx)

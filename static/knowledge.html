@@ -22,6 +22,7 @@
       <form id="search-form">
         <label for="query">Search text</label>
         <input id="query" required minlength="2" maxlength="1000">
+        <label class="checkbox"><input id="use-terms" type="checkbox"> Expand exact aliases using reviewed local terms (optional)</label>
         <button type="submit">Search reviewed text</button>
       </form>
       <p id="coverage"></p>
@@ -34,6 +35,20 @@
       <button id="refresh" type="button">Refresh sources</button>
       <div id="sources"></div>
       <section id="source-detail" aria-label="Source content review"></section>
+    </section>
+    <section aria-labelledby="terms-title">
+      <h2 id="terms-title">Reviewed local terminology and coverage</h2>
+      <p>Bind an alias to an exact approved source version. Canonical text must occur in that source. New mappings stay pending until explicit review. These local terms are not a licensed standard ontology or evidence of specialty competence. Do not enter patient information.</p>
+      <p id="term-coverage"></p>
+      <form id="term-form">
+        <label for="term-source">Approved source version</label><select id="term-source" required></select>
+        <label for="term-canonical">Canonical phrase in source text</label><input id="term-canonical" required minlength="2" maxlength="120">
+        <label for="term-aliases">Aliases, one per line (maximum 12)</label><textarea id="term-aliases" required rows="3" maxlength="1452"></textarea>
+        <label for="term-specialty">Local specialty facet, not validated coverage</label><input id="term-specialty" required minlength="2" maxlength="80">
+        <label for="term-kind">Term kind</label><select id="term-kind"><option value="other">Other</option><option value="condition">Condition</option><option value="symptom">Symptom</option><option value="procedure">Procedure</option><option value="test">Test</option><option value="medication">Medication</option></select>
+        <button type="submit">Save pending term mapping</button>
+      </form>
+      <div id="terms"></div>
     </section>
     <section aria-labelledby="intake-title">
       <h2 id="intake-title">Intake an authorized excerpt</h2>

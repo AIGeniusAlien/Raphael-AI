@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-02T04:27:02.276669+00:00",
+  "platform": "Linux",
+  "python": "3.12.14",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "python",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 95.619,
+      "counts": {
+        "tests": 326
+      },
+      "log": "/workspace/.raphael/storage-terms-full/python.log"
+    },
+    {
+      "name": "frontend",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.168,
+      "counts": {
+        "tests": 29,
+        "pass": 29,
+        "fail": 0,
+        "skipped": 0
+      },
+      "log": "/workspace/.raphael/storage-terms-full/frontend.log"
+    },
+    {
+      "name": "chromium",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 48.255,
+      "counts": {
+        "tests": 8
+      },
+      "log": "/workspace/.raphael/storage-terms-full/chromium.log"
+    },
+    {
+      "name": "mobile-structure",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.065,
+      "counts": {},
+      "log": "/workspace/.raphael/storage-terms-full/mobile-structure.log"
+    },
+    {
+      "name": "mobile-tests",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.115,
+      "counts": {
+        "tests": 5
+      },
+      "log": "/workspace/.raphael/storage-terms-full/mobile-tests.log"
+    },
+    {
+      "name": "traceability",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.115,
+      "counts": {},
+      "log": "/workspace/.raphael/storage-terms-full/traceability.log"
+    },
+    {
+      "name": "platform-acceptance",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.165,
+      "counts": {},
+      "log": "/workspace/.raphael/storage-terms-full/platform-acceptance.log"
+    },
+    {
+      "name": "protected-runtime",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 6.14,
+      "counts": {},
+      "log": "/workspace/.raphael/storage-terms-full/protected-runtime.log"
+    },
+    {
+      "name": "safety-evaluation",
+      "status": "passed",
+      "exit_code": 0,
+      "timeout": false,
+      "duration_seconds": 0.717,
+      "counts": {},
+      "log": "/workspace/.raphael/storage-terms-full/safety-evaluation.log"
+    },
+    {
+      "name": "ios-native",
+      "status": "skipped",
+      "reason": "macOS,Xcode and RAPHAEL_SIMULATOR_DESTINATION required;no native build ran."
+    },
+    {
+      "name": "live-services",
+      "status": "skipped",
+      "reason": "Requires explicit --live;no provider credentials transmitted. Historical live evidence is not rerun evidence."
+    },
+    {
+      "name": "dependency-advisory-audit",
+      "status": "skipped",
+      "reason": "Separate CI pip-audit gate queries advisory databases;no fresh audit implied by local tests."
+    }
+  ],
+  "clinical_validation": false,
+  "production_data_used": false
+}

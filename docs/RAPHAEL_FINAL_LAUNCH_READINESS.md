@@ -1,3 +1,5 @@
+> Current foundation checkpoint: [actual results and remaining gates](FOUNDATION_IMPLEMENTATION_CHECKPOINT.md). Two implemented slices pass326Python/29frontend/8Chromium/5mobile-source tests and9local checks. All1161prior requirement IDs/descriptions/criteria preserved;1164rows now. Historical counts/plaintext limitations below retain their original source scope. Full directive remains incomplete;TestFlight BLOCKED;clinical production FAIL.
+
 > Latest synthetic storage checkpoint: [actual implementation and limitations](DATABASE_STORAGE_CHECKPOINT.md). Opt-in SQLCipher pages, verified copy/rotation and protected backup/restore pass 319 Python,29 frontend,7 Chromium,5 mobile-source tests and two real starts. Earlier plaintext reports and test counts are historical. Complete platform,TestFlight and clinical launch remain unfinished. Current-head CI must be checked separately.
 
 # Raphael platform implementation and release readiness

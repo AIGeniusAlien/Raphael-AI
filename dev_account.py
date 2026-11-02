@@ -62,6 +62,13 @@ def install_account(app,ctx,patient_ai_exporter=None):
     install_lifecycle(app,ctx)
     engine=ctx.engine
     router=APIRouter(prefix='/api/dev/account',dependencies=[Depends(ctx.same_origin_json)])
+    @router.get('/storage')
+    def storage(user=Depends(ctx.user)):
+        from protected_database import storage_status
+        result=storage_status(engine)
+        with engine.begin() as c:ctx.audit(c,user,'review_storage_protection','account',user['id'])
+        return result
+
     @router.get('')
     def account(user=Depends(ctx.user)):
         with engine.begin() as c:

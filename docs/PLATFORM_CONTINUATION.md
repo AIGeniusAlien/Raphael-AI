@@ -1,3 +1,11 @@
+# Current continuation: synthetic storage increment
+
+Read `DATABASE_STORAGE_CHECKPOINT.md` first. Current source includes actual opt-in SQLCipher encryption, safe verified migration/rotation copies, encrypted inner snapshots and authenticated UI status. 319Python/29frontend/7Chromium/5mobile-source tests and9local checks passed. Latest full raw artifacts:`/workspace/.raphael/cipher-full-initial`. New directive:`directives/DEFINITIVE_HEALTHCARE_PLATFORM_2026-11-01.md`,36sections;entire directive remains incomplete. Preserve all work and draftPR1;no merge/deploy/Apple/realPHI/new paid calls.
+
+Next dependency-ready implementation: reviewed source-version-bound medical terminology and specialty coverage in the existing knowledge workspace, opt-in ambiguity-safe alias retrieval, tenant/role/source-revocation tests and actual browser journey. No fake clinical content or specialty competence claims. Existing live vector corpus remains unchanged. Then procedure pathways,qualified clinical feedback/evaluation and remaining external/native/production gates. Further PHI work must include upload spooling,exports,old copies,platform stores and operator-approved retention/KMS/escrow;page encryption alone does not complete it.
+
+The historical continuation below is preserved for full context;its plaintext limitation has now been narrowed only as documented above. Native27case and provider proofs remain historical unless fresh CI/authorized real checks succeed.
+
 # Raphael platform continuation — 2026-11-01
 
 Continue the existing checkout/branch/draftPR1. Preserve every commit and uncommitted change. No reset,worktree,merge,deployment,Apple submission,realPHI,billing or external clinical delivery is authorized.

@@ -13,15 +13,16 @@ from dev_mfa import totp
 class CompletionBrowserTests(unittest.TestCase):
  def test_authenticator_recovery_structured_approval_and_patient_visibility(self):
   with tempfile.TemporaryDirectory(prefix='raphael-completion-browser-') as directory:
-   url='sqlite:///'+directory+'/synthetic.db';password=secrets.token_urlsafe(25);key=Fernet.generate_key().decode()
-   engine=create_engine(url)
+   url='sqlite:///'+directory+'/synthetic.db';password=secrets.token_urlsafe(25);key=Fernet.generate_key().decode();database_key=Fernet.generate_key().decode()
+   from protected_database import application_engine
    with patch.dict(os.environ,{'RAPHAEL_DEV_SYNTHETIC_ONLY':'1'}):
+    engine=application_engine(url,encrypted=True,encryption_key=database_key)
     migrate(engine)
     for name,role in [('doctor','clinician'),('patient','patient'),('admin','org_admin')]:create_dev_user(engine,'synthetic',name,password,role)
    engine.dispose()
    with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
    base=f'http://127.0.0.1:{port}'
-   env=dict(os.environ,DATABASE_URL=url,RAPHAEL_DEV_PORTAL='1',RAPHAEL_DEV_SYNTHETIC_ONLY='1',RAPHAEL_MFA_ENCRYPTION_KEY=key,LLM_API_KEY='',LLM_BASE_URL='',QDRANT_URL='',QDRANT_API_KEY='')
+   env=dict(os.environ,DATABASE_URL=url,RAPHAEL_DEV_PORTAL='1',RAPHAEL_DEV_SYNTHETIC_ONLY='1',RAPHAEL_MFA_ENCRYPTION_KEY=key,RAPHAEL_DATABASE_ENCRYPTED='1',RAPHAEL_DATABASE_ENCRYPTION_KEY=database_key,LLM_API_KEY='',LLM_BASE_URL='',QDRANT_URL='',QDRANT_API_KEY='')
    with tempfile.TemporaryFile(mode='w+') as log:
     process=subprocess.Popen([sys.executable,'-m','uvicorn','main:app','--host','127.0.0.1','--port',str(port)],env=env,stdout=log,stderr=log,start_new_session=True)
     try:
@@ -39,7 +40,7 @@ class CompletionBrowserTests(unittest.TestCase):
        context=browser.new_context(base_url=base);page=context.new_page();errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
        self.assertEqual(context.request.post('/api/dev/login',data={'tenant':'synthetic','username':'doctor','password':password}).status,200)
        patient=context.request.post('/api/dev/patients',data={'name':'Synthetic completion patient','patient_username':'patient'}).json()
-       page.goto('/static/account.html');expect(page.locator('#account')).to_be_visible();expect(page.locator('#mfa-enroll')).to_be_enabled()
+       page.goto('/static/account.html');expect(page.locator('#account')).to_be_visible();expect(page.locator('#storage-status')).to_contain_text('SQLCipher database-page encryption verified');expect(page.locator('#mfa-enroll')).to_be_enabled()
        page.locator('#mfa-password').fill(password);page.locator('#mfa-enroll').click();expect(page.locator('#mfa-private')).to_be_visible()
        secret=re.search(r'key \(expires in 10 minutes\): ([A-Z2-7]+)',page.locator('#mfa-private').inner_text()).group(1)
        page.locator('#mfa-password').fill(password);page.locator('#mfa-code').fill(totp(secret,int(time.time())//30));page.locator('#mfa-confirm').click()

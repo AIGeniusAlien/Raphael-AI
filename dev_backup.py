@@ -1,15 +1,16 @@
 """Bounded authenticated-encryption backup/restore for isolated synthetic SQLite.
 
-The operator owns external key storage/rotation. This does not encrypt the live
-SQLite database, establish a production retention policy or create cloud backups.
+The operator owns external key storage/rotation. SQLCipher sources retain inner
+page encryption;plaintext legacy sources remain plaintext inside the outer backup.
+No production retention policy or cloud disaster-recovery acceptance is implied.
 """
+from protected_database import application_engine as create_engine
 import argparse
 import os
 from pathlib import Path
 import sqlite3
 import tempfile
 from cryptography.fernet import Fernet,InvalidToken
-from sqlalchemy import create_engine
 from dev_runtime import backup,schema_status
 from dev_portal import _require_synthetic
 
@@ -33,15 +34,15 @@ def private_write(destination,data):
 def encrypted_backup(engine,destination):
     encryption=cipher();_require_synthetic(engine)
     with engine.connect() as connection:
-        pages=connection.exec_driver_sql('PRAGMA page_count').scalar()
-        size=connection.exec_driver_sql('PRAGMA page_size').scalar()
+        pages=int(connection.exec_driver_sql('PRAGMA page_count').scalar())
+        size=int(connection.exec_driver_sql('PRAGMA page_size').scalar())
         if pages*size>MAX_DATABASE_BYTES:raise ValueError('Synthetic encrypted backup exceeds the bounded limit.')
     # A consistent SQLite backup, never a byte-copy of a concurrently written DB.
     with tempfile.TemporaryDirectory(prefix='raphael-private-backup-') as private:
         source=Path(private)/'snapshot.sqlite';backup(engine,source)
         if source.stat().st_size>MAX_DATABASE_BYTES:raise ValueError('Synthetic encrypted backup exceeds the bounded limit.')
         encrypted=encryption.encrypt(source.read_bytes());private_write(destination,encrypted)
-    return {'encrypted':True,'scope':'synthetic_sqlite','live_database_encrypted':False,'key_stored_in_backup':False}
+    return {'encrypted':True,'scope':'synthetic_sqlite','live_database_encrypted':bool(getattr(engine,'_raphael_encrypted',False)),'key_stored_in_backup':False}
 
 def restore_encrypted_backup(source,destination):
     if os.getenv('RAPHAEL_DEV_SYNTHETIC_ONLY')!='1':raise ValueError('Restore requires explicit synthetic-only scope.')
@@ -49,19 +50,22 @@ def restore_encrypted_backup(source,destination):
     if source.stat().st_size>MAX_ENCRYPTED_BYTES:raise ValueError('Encrypted backup exceeds bounded limit.')
     try:plaintext=cipher().decrypt(source.read_bytes())
     except InvalidToken:raise ValueError('Backup authentication failed. Restore refused; verify the protected key and file integrity.') from None
-    if len(plaintext)>MAX_DATABASE_BYTES or not plaintext.startswith(b'SQLite format 3\x00'):raise ValueError('Not a bounded SQLite backup.')
+    if len(plaintext)>MAX_DATABASE_BYTES:raise ValueError('Not a bounded SQLite backup.')
+    protected=not plaintext.startswith(b'SQLite format 3\x00')
+    if protected and os.getenv('RAPHAEL_DATABASE_ENCRYPTED')!='1':raise ValueError('Protected backup requires explicit database encryption mode and its protected key.')
+    if not protected and os.getenv('RAPHAEL_DATABASE_ENCRYPTED')=='1':raise ValueError('Legacy plaintext restore requires a private staged restore followed by verified encrypted migration;no plaintext output published in protected mode.')
     # Validate privately before exposing the restored file at its final path.
     with tempfile.TemporaryDirectory(prefix='raphael-private-restore-') as private:
         candidate=Path(private)/'candidate.sqlite';private_write(candidate,plaintext)
-        with sqlite3.connect('file:'+str(candidate)+'?mode=ro',uri=True) as connection:
-            if connection.execute('PRAGMA integrity_check').fetchone()!=('ok',) or connection.execute('PRAGMA foreign_key_check').fetchone():raise ValueError('Restored database integrity check failed.')
-        engine=create_engine('sqlite:///'+str(candidate))
+        engine=create_engine('sqlite:///'+str(candidate),encrypted=protected)
         try:
+            with engine.connect() as connection:
+                if connection.exec_driver_sql('PRAGMA integrity_check').scalar()!='ok' or connection.exec_driver_sql('PRAGMA foreign_key_check').all():raise ValueError('Restored database integrity check failed.')
             _require_synthetic(engine)
             if not schema_status(engine)['ready']:raise ValueError('Backup schema does not match this application; no restore performed.')
         finally:engine.dispose()
         private_write(destination,plaintext)
-    return {'restored':True,'scope':'synthetic_sqlite','overwritten':False,'integrity_checked':True}
+    return {'restored':True,'scope':'synthetic_sqlite','overwritten':False,'integrity_checked':True,'sqlite_pages_encrypted':protected}
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('command',choices=('backup','restore'));parser.add_argument('--database-url');parser.add_argument('--source',type=Path);parser.add_argument('--output',required=True,type=Path);args=parser.parse_args()

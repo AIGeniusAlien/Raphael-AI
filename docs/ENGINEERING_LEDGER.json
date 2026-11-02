@@ -4,10 +4,10 @@
   "state_counts": {
     "PARTIAL": 872,
     "NOT_IMPLEMENTED": 189,
-    "VERIFIED": 78,
+    "VERIFIED": 80,
     "IMPLEMENTED_UNVERIFIED": 22
   },
-  "requirement_count": 1161,
+  "requirement_count": 1163,
   "clinical_validation": false,
   "requirements": [
     {
@@ -16260,6 +16260,34 @@
       "remaining_work": "Bounded stableeditor/TOTP workflow accepted;physicaldevice/VoiceOver/staging/signing and independent security remain.",
       "acceptance_criteria": "Actual enrollment/code/recovery/login/replay/revoke/disable must all pass;no fixture bypass",
       "next_implementation_action": "Bounded stableeditor/TOTP workflow accepted;physicaldevice/VoiceOver/staging/signing and independent security remain.",
+      "priority": "P0",
+      "milestone": "M1",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "PLATFORM-007",
+      "description": "Opt-in synthetic database-page protection and authenticated storage status",
+      "state": "VERIFIED",
+      "code_location": "protected_database.py;main.py;dev_start.py;dev_account.py;static/account.js",
+      "test_coverage": "8 real SQLCipher regressions;encrypted Chromium account journey;319 Python/29 frontend/7 Chromium/5 mobile-source full run",
+      "external_dependency": "Linux SQLCipher4.12.0;distinct private development keys",
+      "remaining_work": "Synthetic Linux only;source copies,exports,spooling,KMS and independent production review remain out of scope",
+      "acceptance_criteria": "Actual encrypted pages with missing/wrong key and tamper refusal;no silent plaintext fallback;authenticated status;two real starts preserve data",
+      "next_implementation_action": "Synthetic Linux only;source copies,exports,spooling,KMS and independent production review remain out of scope",
+      "priority": "P0",
+      "milestone": "M1",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."
+    },
+    {
+      "requirement_id": "PLATFORM-008",
+      "description": "Data-preserving encrypted copy migration rotation and protected backup restore",
+      "state": "VERIFIED",
+      "code_location": "protected_database.py;dev_runtime.py;dev_backup.py;tests/test_protected_database.py",
+      "test_coverage": "Actual SQLCipher schema/table/BLOB/FTS/trigger/sequence fingerprint;wrong-key/tamper/no-overwrite/backup/restore tests",
+      "external_dependency": "Stop source writers;ready synthetic schema;new private destination;distinct old/new keys",
+      "remaining_work": "Bounded64MiB/200000rows;operator cutover/escrow/retention/secure erasure and production DR remain required",
+      "acceptance_criteria": "Verify integrity and full logical copy before exclusive publication;source retained;rotation uses new file;backup snapshot remains encrypted",
+      "next_implementation_action": "Bounded64MiB/200000rows;operator cutover/escrow/retention/secure erasure and production DR remain required",
       "priority": "P0",
       "milestone": "M1",
       "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim."

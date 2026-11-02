@@ -1,10 +1,10 @@
 """Provision synthetic portal accounts without defaults or command-line passwords."""
 
+from protected_database import application_engine as create_engine
 import argparse
 import getpass
 import sys
 
-from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 
 from dev_portal import create_dev_user, init_portal_schema

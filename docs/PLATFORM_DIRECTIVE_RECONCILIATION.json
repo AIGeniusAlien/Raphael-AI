@@ -1,253 +1,261 @@
 {
-  "directive": "docs/directives/ULTIMATE_MASTER_PLATFORM_2026-11-01.md",
-  "sections_expected": 35,
-  "sections_reconciled": 35,
+  "directive": "docs/directives/DEFINITIVE_HEALTHCARE_PLATFORM_2026-11-01.md",
+  "sections_expected": 36,
+  "sections_reconciled": 36,
   "all_requirements_satisfied": false,
+  "scope": "Section inventory only;not a claim of line-by-line requirement implementation or independent clinical review. Historical detailed reconciliation preserved separately.",
   "sections": [
     {
       "section": 0,
-      "title": "Directive execution",
+      "title": "EXECUTIVE MANDATE \u2014 BUILD RAPHAEL, NOT ANOTHER PLAN",
       "status": "IN PROGRESS",
-      "implemented": "Six integrated increments continued beyond initial green suites.",
-      "remaining": "The complete platform remains unfinished;no scope deferral or full-completion claim."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 1,
-      "title": "Engineering disciplines",
+      "title": "OPERATE AS AN ELITE MULTIDISCIPLINARY TEAM",
       "status": "IN PROGRESS",
-      "implemented": "Security,privacy,clinical-safety and operational perspectives applied to code and tests.",
-      "remaining": "No independent human clinical,privacy,security or regulatory signoff."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 2,
-      "title": "Recovery and requirements",
+      "title": "RECOVER AND RECONCILE EVERY EXISTING REQUIREMENT",
       "status": "IN PROGRESS",
-      "implemented": "1155originalIDs/descriptions preserved;1161current rows;additive acceptance vocabulary view.",
-      "remaining": "Individual original-upload attribution,risk classification and owner assignment remain unreviewed for broad legacy rows."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 3,
-      "title": "Fundamental architecture",
+      "title": "BUILD RAPHAEL AS A HEALTHCARE OPERATING SYSTEM",
       "status": "IN PROGRESS",
-      "implemented": "Existing modularportal,chart,consent,RAG,documentation,account,messaging/runtime reused.",
-      "remaining": "Enterprise workflow boundaries and all platform layers not complete."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 4,
-      "title": "Medical intelligence and evidence",
+      "title": "THE RAPHAEL MEDICAL BRAIN",
       "status": "IN PROGRESS",
-      "implemented": "Actual physician/patientOpenAI/Qdrant CDC education;384dimensions;9documents/48vectors;source/citation checks.",
-      "remaining": "Comprehensive licensed medicine,terminology,coverage,independent evidence appraisal and clinical reasoning validation absent."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 5,
-      "title": "Every specialty/subspecialty",
+      "title": "COMPREHENSIVE MEDICAL SPECIALTY COVERAGE",
       "status": "IN PROGRESS",
-      "implemented": "Population/specialty metadata and supported educational scope retained.",
-      "remaining": "No comprehensive specialty or subspecialty competence or specialist adjudication."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 6,
-      "title": "Complete procedure intelligence",
-      "status": "NOT STARTED",
-      "implemented": "Existing provisional documentation only;no new procedure engine.",
-      "remaining": "Procedure catalog,selection,scheduling,preop/postop,guideline and human-factors validation missing."
+      "title": "COMPREHENSIVE MEDICAL PROCEDURE INTELLIGENCE",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 7,
-      "title": "Ambient clinical intelligence",
+      "title": "REAL-TIME AMBIENT CLINICAL INTELLIGENCE",
       "status": "IN PROGRESS",
-      "implemented": "Existing browser speech/transcript consent/session/note controls preserved.",
-      "remaining": "Real microphone/diarization/medicalASR/ambient diagnostic/emergency performance unvalidated."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 8,
-      "title": "Medical calculators",
+      "title": "DYNAMIC DIFFERENTIAL DIAGNOSIS",
       "status": "IN PROGRESS",
-      "implemented": "Existing deterministic contracts/protocol tests retained.",
-      "remaining": "No comprehensive clinically validated calculator library or independent reference adjudication."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 9,
-      "title": "Preventive/longitudinal medicine",
+      "title": "EMERGENCY RECOGNITION AND CLINICAL SAFETY",
       "status": "IN PROGRESS",
-      "implemented": "Authorized chart timeline,exact-unit trends and reviewed synthetic observation extraction retained.",
-      "remaining": "Validated causal/risk/preventive/personalized recommendations and longitudinal clinical evaluation missing."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 10,
-      "title": "Physician copilot",
+      "title": "COMPLETE CLINICAL DOCUMENTATION AUTOMATION",
       "status": "IN PROGRESS",
-      "implemented": "Owned threads,streaming,evidence,notes,attachments and clinical oversight workflow integrated.",
-      "remaining": "Broad diagnostic,therapeutic,prescribing,ordering and clinical efficacy acceptance incomplete."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 11,
-      "title": "Patient companion",
+      "title": "COMPLETE HEALTHCARE WORKFLOW AUTOMATION",
       "status": "IN PROGRESS",
-      "implemented": "Patient-owned educational conversations,consent,approved notes,account controls and feedback.",
-      "remaining": "Verified identity,proxy/guardian,comprehensive patient support and production safety acceptance missing."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 12,
-      "title": "Documentation automation",
+      "title": "ROLE-SPECIFIC WORKSPACES",
       "status": "IN PROGRESS",
-      "implemented": "Existing source-scoped templates plus6clinician-authored structured preparations preserved.",
-      "remaining": "Comprehensive reliable clinical synthesis/coding/payer-specific/form submission automation unimplemented."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 13,
-      "title": "Healthcare administration",
+      "title": "COMPLETE PATIENT PLATFORM",
       "status": "IN PROGRESS",
-      "implemented": "Internal administrative controls and clinician-authored paperwork preparations.",
-      "remaining": "Real payer eligibility,claims,priorauthorization,billing and external automation absent."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 14,
-      "title": "Role-specific workspaces",
+      "title": "COMPLETE CLINICIAN PLATFORM",
       "status": "IN PROGRESS",
-      "implemented": "Existing patient,clinician,tenant-product-admin roles and boundaries retained.",
-      "remaining": "Nurse,pharmacist,therapist,radiologist,staff workspaces and verified professional credentials incomplete."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 15,
-      "title": "Radiology/multimodal medicine",
+      "title": "RADIOLOGY AND MULTIMODAL INTELLIGENCE",
       "status": "IN PROGRESS",
-      "implemented": "Existing authorized syntheticDICOM viewing and reviewed reports retained.",
-      "remaining": "Diagnostic image reasoning,PACS and independent radiology validation missing;chat attachments are.txtonly."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 16,
-      "title": "Patient/physician communication",
+      "title": "HEALTHCARE INTEROPERABILITY",
       "status": "IN PROGRESS",
-      "implemented": "Internal scoped inbox,drafts,approval/send/receipts preserved.",
-      "remaining": "No external clinical delivery,monitored urgent channel or production transport acceptance."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 17,
-      "title": "Conversational intelligence",
+      "title": "SECURE PATIENT\u2013CLINICIAN COMMUNICATION",
       "status": "IN PROGRESS",
-      "implemented": "Encrypted reviewed attachment context,history lineage,explicit consent and fail-closed revocation integrated.",
-      "remaining": "PDF/images/full multimodal understanding,independent prompt-injection/security/clinical review missing."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 18,
-      "title": "Durable workflow orchestration",
+      "title": "MEDICAL CALCULATORS AND CLINICAL RULES",
       "status": "IN PROGRESS",
-      "implemented": "Existing persisted review/approval state plus versioned idempotent feedback tasks and account lifecycle.",
-      "remaining": "General durable jobs,distributed retries,compensation and human approval orchestration incomplete."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 19,
-      "title": "Interoperability",
+      "title": "LONGITUDINAL AND PREVENTIVE MEDICINE",
       "status": "IN PROGRESS",
-      "implemented": "Existing fixture FHIR adapter/export contracts retained.",
-      "remaining": "RealSMART/OAuth/FHIR/EHR/PACS sandbox and production vendor acceptance absent."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 20,
-      "title": "iOS/Android/web/desktop",
+      "title": "SECURITY, PRIVACY, AND PHI PROTECTION",
       "status": "IN PROGRESS",
-      "implemented": "Actualbrowserworkflows and stableeditor27actualXcodecases15unit+12UIpass onb6ab21c,includingfullrealTOTP/recovery workflow;original26preserved.",
-      "remaining": "Physicaldevice/VoiceOver/staging/signing;Androidnative/desktop and complete distribution acceptance incomplete."
+      "evidence": "protected_database.py;tests/test_protected_database.py;docs/DATABASE_STORAGE_CHECKPOINT.md",
+      "remaining": "Database pages now protected when explicitly enabled. Full PHI lifecycle,source copies,exports,upload spooling,platform keys,retention,secure erasure and independent production validation remain incomplete."
     },
     {
       "section": 21,
-      "title": "Premium user experience",
+      "title": "IOS, ANDROID, WEB, AND DESKTOP",
       "status": "IN PROGRESS",
-      "implemented": "Actual browser responsive/enlarged tests;feedback overflow fixed;selected screenshots inspected.",
-      "remaining": "Full human usability/VoiceOver/localization/all-device native quality unverified."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 22,
-      "title": "Security/privacy/account lifecycle",
+      "title": "WORLD-CLASS USER EXPERIENCE",
       "status": "IN PROGRESS",
-      "implemented": "Encrypted attachment payloads,privatekeyfiles,session rechecks,deactivation,policy/holds/limitedcredentialerasure.",
-      "remaining": "Existing clinicalSQLite/originals not wholly encrypted;fulllegalerasure,KMS/rotation/identity/proxy/independent review missing."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 23,
-      "title": "Maximum performance",
+      "title": "PERFORMANCE AND COST EFFICIENCY",
       "status": "IN PROGRESS",
-      "implemented": "Actual generation latency and SDKusage reported with samples and unknowncost.",
-      "remaining": "Single sample is notcapacity;embedding/audio/patientchat/all-platformusage,costs,distributed load and failover incomplete."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 24,
-      "title": "Continuous medical learning",
+      "title": "CONTINUOUS EVIDENCE AND MODEL UPDATES",
       "status": "IN PROGRESS",
-      "implemented": "Existing source lifecycle/staging and fail-closed citation checks retained;feedback cannot train or edit guidance.",
-      "remaining": "Rights-reviewed expansion,retractions,qualified clinical correction/evaluation and governed relearning incomplete."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 25,
-      "title": "Owner-directed feedback",
+      "title": "FEEDBACK AND OWNER-DIRECTED IMPROVEMENT",
       "status": "IN PROGRESS",
-      "implemented": "Real owner report\u2192admintriage\u2192requirement/task\u2192work\u2192technicalresolution browser workflow;private notes/idempotency.",
-      "remaining": "Evidence pointers unverified;qualified clinical review,releaseapproval and deployment outcomes not implemented."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 26,
-      "title": "Enterprise infrastructure",
+      "title": "PRODUCTION INFRASTRUCTURE",
       "status": "IN PROGRESS",
-      "implemented": "Repeatable synthetic runtime,migrations,backups,CI and guarded localkeys.",
-      "remaining": "PostgreSQL/HA/multiregion/productionDR/monitoring/incidentresponse/vendor operations missing."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 27,
-      "title": "Clinical evaluation",
+      "title": "CLINICAL EVALUATION AND SCIENTIFIC RIGOR",
       "status": "IN PROGRESS",
-      "implemented": "Deterministic software safety tests and fallible automated support screens retained.",
-      "remaining": "No independent clinician-adjudicated representative intended-use validation or regulatory acceptance."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 28,
-      "title": "Research reproducibility",
+      "title": "EXACT DEFINITION OF DONE",
       "status": "IN PROGRESS",
-      "implemented": "SourceURLs/dates/rights/hashes/snapshots and source-scoped software/live reports retained.",
-      "remaining": "Expert-reviewed reproducible clinical benchmarks,registered analyses and full scientific evaluation absent."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 29,
-      "title": "Complete end-to-end acceptance",
+      "title": "REQUIRED INTEGRATED DEMONSTRATIONS",
       "status": "IN PROGRESS",
-      "implemented": "311Python/29frontend/7Chromium/5project and27actualnative plus actuallivephysician/patient/attachment workflows pass;earlierfailurespreserved.",
-      "remaining": "All specified cross-role/procedure/ambient/external/device/failure workflows are not accepted."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 30,
-      "title": "Release gates",
-      "status": "VERIFIED",
-      "implemented": "Separate localdemoPASS,syntheticTestFlightFAIL,clinicalpilotFAIL,productionFAIL with ownerBLOCKED gates.",
-      "remaining": "Gate assessment is not gate satisfaction or release authorization."
+      "title": "IMPLEMENTATION WAVES",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 31,
-      "title": "Execution process/budget",
+      "title": "AUTONOMOUS EXECUTION AND CONTINUATION",
       "status": "IN PROGRESS",
-      "implemented": "ContinuedMFA,attachments,lifecycle,keyfiles,feedback,metrics and live checks;tested milestones committed.",
-      "remaining": "Checkpoint records exact next engineering tasks;the entire directive is not completed."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 32,
-      "title": "Final self-audit",
+      "title": "RELEASE GATES",
       "status": "IN PROGRESS",
-      "implemented": "All35sections listed and1155prior requirements preserved with gaps/statuses.",
-      "remaining": "Per-requirement independent risk/originalsource/clinical acceptance remains unresolved."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 33,
-      "title": "Deliverables",
+      "title": "FINAL COMPREHENSIVE AUDIT",
       "status": "IN PROGRESS",
-      "implemented": "Reviewable code/tests/evidence,requirementsview,readiness,continuation and draftPRpreserved.",
-      "remaining": "Remaining broad product implementation and owner/independent acceptance not delivered."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     },
     {
       "section": 34,
-      "title": "Final command",
+      "title": "FINAL REQUIRED DELIVERABLES",
       "status": "IN PROGRESS",
-      "implemented": "Working bounded vertical workflows extended while preserving priorarchitecture.",
-      "remaining": "No claim of world-class/fullmedical/enterprise/production completion."
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 35,
+      "title": "FINAL EXECUTION COMMAND",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
     }
   ]
 }

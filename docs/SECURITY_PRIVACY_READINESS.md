@@ -1,3 +1,5 @@
+> Latest synthetic storage checkpoint: [actual implementation and limitations](DATABASE_STORAGE_CHECKPOINT.md). Opt-in SQLCipher pages, verified copy/rotation and protected backup/restore pass 319 Python,29 frontend,7 Chromium,5 mobile-source tests and two real starts. Earlier plaintext reports and test counts are historical. Complete platform,TestFlight and clinical launch remain unfinished. Current-head CI must be checked separately.
+
 > Ultimate increment,2026-11-01: [Authoritative implementation and release evidence](RAPHAEL_FINAL_LAUNCH_READINESS.md). Real supported physician/patient workflows now complete with strict screening;longitudinal review and clinician-approved tabular extraction are integrated. Earlier checkpoints below retain their original source scope.
 
 > Historical checkpoint before f9ee83f,2026-11-01 UTC: [Authoritative implementation and release gates](RAPHAEL_FINAL_LAUNCH_READINESS.md). Fresh live workflow FAILED CLOSED;historical successful runs below are not current acceptance. Native follow-up and exact-source results are recorded in the authoritative report. Reports below retain their historical source scope.

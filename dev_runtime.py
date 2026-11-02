@@ -3,14 +3,16 @@
 This module intentionally supports the synthetic SQLite workflow only. It does
 not advertise PostgreSQL migrations or a production backup/recovery service.
 """
+from protected_database import application_engine as create_engine
 import argparse
 from datetime import datetime, timezone
 import importlib
 import os
 from pathlib import Path
+from contextlib import closing
 import sqlite3
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
 from database import execute_sqlite_script
 
@@ -78,7 +80,7 @@ def backup(engine, destination):
     fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     os.close(fd)
     try:
-        with engine.connect() as c, sqlite3.connect(target) as output:
+        with engine.connect() as c, closing(engine._raphael_backup_connection(target) if getattr(engine,"_raphael_encrypted",False) else sqlite3.connect(target)) as output:
             c.connection.driver_connection.backup(output)
             if output.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                 raise RuntimeError("Backup integrity check failed.")

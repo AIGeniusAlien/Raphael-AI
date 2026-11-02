@@ -6986,3 +6986,8 @@ The complete [ULTIMATE_MASTER_PLATFORM_2026-11-01.md](directives/ULTIMATE_MASTER
 ## Ultimate platform execution binding — 2026-11-01
 
 The complete35section directive in `directives/ULTIMATE_MASTER_PLATFORM_2026-11-01.md` remains an additive target. `PLATFORM_DIRECTIVE_RECONCILIATION.json` covers every section and `PLATFORM_REQUIREMENT_ACCEPTANCE.json` derives the owner status vocabulary without changing original requirement descriptions or canonicalhistoricalstates.1161rows include all1155previous IDs/descriptions. New bounded PLATFORM-001–006 never substitute for broad clinical,privacy,procedure,ambient,enterprise or launch requirements. `RAPHAEL_FINAL_LAUNCH_READINESS.md` is current;older reports retain their recorded source. Full original-upload attribution,intended-use risk classification and owner adjudication of legacy rows remain unfinished and are explicitly marked unreviewed.
+
+
+## Definitive healthcare platform directive — additive 2026-11-01
+
+The complete owner directive is preserved verbatim in [DEFINITIVE_HEALTHCARE_PLATFORM_2026-11-01.md](directives/DEFINITIVE_HEALTHCARE_PLATFORM_2026-11-01.md), sections0–35. It is additive to all historical requirements, not a replacement or completion claim. Current storage implementation and unresolved gates are recorded in [DATABASE_STORAGE_CHECKPOINT.md](DATABASE_STORAGE_CHECKPOINT.md). Universal specialty/procedure competence and independent clinical validation remain unachieved.

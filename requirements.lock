@@ -83,3 +83,6 @@ typing-extensions==4.16.0
 typing-inspection==0.4.4
 urllib3==2.8.0
 uvicorn==0.38.0
+
+# Optional encrypted local SQLite runtime;Linux wheels are verified in CI.
+sqlcipher3-binary==0.6.0; sys_platform == "linux"

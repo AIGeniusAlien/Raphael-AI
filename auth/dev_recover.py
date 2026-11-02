@@ -1,7 +1,8 @@
 """Operator-only synthetic password recovery;no public reset or email provider."""
+from protected_database import application_engine as create_engine
 import argparse
 import getpass
-from sqlalchemy import create_engine,text
+from sqlalchemy import text
 from dev_portal import _require_synthetic,_password_hash,_now
 
 

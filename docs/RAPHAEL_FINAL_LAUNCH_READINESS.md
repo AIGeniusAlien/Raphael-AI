@@ -1,3 +1,5 @@
+> Latest synthetic storage checkpoint: [actual implementation and limitations](DATABASE_STORAGE_CHECKPOINT.md). Opt-in SQLCipher pages, verified copy/rotation and protected backup/restore pass 319 Python,29 frontend,7 Chromium,5 mobile-source tests and two real starts. Earlier plaintext reports and test counts are historical. Complete platform,TestFlight and clinical launch remain unfinished. Current-head CI must be checked separately.
+
 # Raphael platform implementation and release readiness
 
 The entire master directive is **not complete**. This continuation delivered six bounded increments across nativeMFA,encrypted conversation attachments,account lifecycle,private development keys,owner feedback and measured intelligence performance. Existing architecture,all1155prior requirement IDs/descriptions and draft[PR#1](https://github.com/AIGeniusAlien/Raphael-AI/pull/1) are preserved. No merge,deployment,Apple submission,real patient data,billing or external clinical communications occurred.

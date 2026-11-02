@@ -38,3 +38,6 @@ filelock==4.2.4
 setuptools==84.2.1
 
 pyasn1==0.6.5
+
+# Optional encrypted local SQLite runtime;Linux wheels are verified in CI.
+sqlcipher3-binary==0.6.0; sys_platform == "linux"

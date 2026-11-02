@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from protected_database import application_engine as create_engine
 import os, json, secrets, httpx, hashlib, io, re
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional, List, Dict, Any
@@ -14,7 +15,7 @@ from starlette.responses import JSONResponse
 from pydantic import ValidationError
 from openai import OpenAI
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from database import execute_sqlite_script
 
 from qdrant_client import QdrantClient

@@ -13,13 +13,13 @@ import time
 from unittest.mock import patch
 import httpx
 from sqlalchemy import create_engine
-from dev_keys import create_key_file
+from dev_keys import create_key_file,load_key_file
 from dev_runtime import migrate
 from dev_portal import create_dev_user
 from dev_mfa import totp
 
 
-def run(output):
+def run(output,encrypted_database=False):
     stage='setup';result={'status':'failed','real_launcher':True,'real_provider_requests':False,'production_data_used':False}
     process=None
     def stop():
@@ -45,17 +45,22 @@ def run(output):
         with tempfile.TemporaryDirectory(prefix='raphael-protected-runtime-') as directory,tempfile.TemporaryFile(mode='w+') as log:
             private=Path(directory);database=private/'synthetic.db';url='sqlite:///'+str(database)
             document=private/'document.key';mfa=private/'mfa.key'
-            create_key_file(document);create_key_file(mfa);password=secrets.token_urlsafe(30)
-            engine=create_engine(url)
+            database_key=private/'database.key'
+            create_key_file(document);create_key_file(mfa)
+            if encrypted_database:create_key_file(database_key)
+            password=secrets.token_urlsafe(30)
+            from protected_database import application_engine
+            with patch.dict(os.environ,{'RAPHAEL_DEV_SYNTHETIC_ONLY':'1'}):engine=application_engine(url,encrypted=encrypted_database,encryption_key=load_key_file(database_key) if encrypted_database else None)
             try:
                 with patch.dict(os.environ,{'RAPHAEL_DEV_SYNTHETIC_ONLY':'1'}):
                     migrate(engine)
                     for name,role in (('doctor','clinician'),('patient','patient')):create_dev_user(engine,'synthetic',name,password,role)
             finally:engine.dispose()
-            environment={k:v for k,v in os.environ.items() if k not in ('RAPHAEL_DOCUMENT_ENCRYPTION_KEY','RAPHAEL_MFA_ENCRYPTION_KEY')}
+            environment={k:v for k,v in os.environ.items() if k not in ('RAPHAEL_DOCUMENT_ENCRYPTION_KEY','RAPHAEL_MFA_ENCRYPTION_KEY','RAPHAEL_DATABASE_ENCRYPTION_KEY','RAPHAEL_DATABASE_ENCRYPTED')}
             with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
             base='http://127.0.0.1:'+str(port)
             command=[sys.executable,'-m','dev_start','--database',str(database),'--document-key-file',str(document),'--mfa-key-file',str(mfa),'--port',str(port)]
+            if encrypted_database:command+=['--database-key-file',str(database_key)]
             def start():
                 nonlocal process
                 process=subprocess.Popen(command,env=environment,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
@@ -88,11 +93,12 @@ def run(output):
                     assert web.post('/api/dev/login',json=login).status_code==401
                     web.post('/api/dev/login',json={**login,'otp':recovery}).raise_for_status()
                     assert web.get('/api/dev/account/mfa').json()['enabled'] is True
+                    assert web.get('/api/dev/account/storage').json()['sqlite_pages_encrypted']==encrypted_database
                     stored=web.get(path+'/attachments');stored.raise_for_status();assert stored.json()['items'][0]['id']==item['id']
                     preview=web.get(path+'/attachments/'+str(item['id'])+'/preview');preview.raise_for_status()
                     assert 'Synthetic protected restart text.' in preview.json()['text']
                     web.post('/api/dev/logout',json={}).raise_for_status()
-                result.update(status='passed',healthz=True,readyz=True,starts=2,synthetic_patient_persisted=True,encrypted_attachment_decrypts_after_restart=True,mfa_key_persists=True,password_only_rejected_after_restart=True,recovery_authentication_after_restart=True,provider_mode='disabled')
+                result.update(status='passed',healthz=True,readyz=True,starts=2,synthetic_patient_persisted=True,encrypted_attachment_decrypts_after_restart=True,mfa_key_persists=True,password_only_rejected_after_restart=True,recovery_authentication_after_restart=True,provider_mode='disabled',sqlite_pages_encrypted=encrypted_database)
             finally:stop()
     except Exception as error:result.update(failed_stage=stage,error_type=type(error).__name__)
     if output:output.write_text(json.dumps(result,indent=2)+'\n')
@@ -100,5 +106,5 @@ def run(output):
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path);args=parser.parse_args();return run(args.output)
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path);parser.add_argument('--encrypted-database',action='store_true');args=parser.parse_args();return run(args.output,args.encrypted_database)
 if __name__=='__main__':raise SystemExit(main())

@@ -3,6 +3,18 @@ services:
     name: raphael-ai
     env: python
     region: ohio
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
-    autoDeploy: true
+    buildCommand: "pip install torch==2.15.0+cpu --index-url https://download.pytorch.org/whl/cpu && pip install --no-deps -r requirements.lock && pip check"
+    startCommand: "bash run_staging.sh"
+    autoDeploy: false
+    healthCheckPath: /readyz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.14"
+      - key: RAPHAEL_DEV_PORTAL
+        value: "1"
+      - key: RAPHAEL_DEV_SYNTHETIC_ONLY
+        value: "1"
+      - key: RAPHAEL_BIND_HOST
+        value: "0.0.0.0"
+      - key: DATABASE_URL
+        sync: false

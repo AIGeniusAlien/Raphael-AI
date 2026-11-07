@@ -1,0 +1,260 @@
+{
+  "date": "2026-10-26",
+  "baseline_commit": "5a5288ebc3ddb5af0ba3a68eb971f6bd3e861457",
+  "branch": "fix/sqlite-startup-recovery",
+  "pr": 1,
+  "requirements_prior": 1117,
+  "requirements_total": 1128,
+  "baseline_ids_descriptions_preserved": true,
+  "local_verification": {
+    "schema_version": 1,
+    "generated_at": "2026-10-26T23:52:47.780485+00:00",
+    "platform": "Linux",
+    "python": "3.12.14",
+    "status": "passed",
+    "checks": [
+      {
+        "name": "python",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 77.43,
+        "counts": {
+          "tests": 193
+        },
+        "log": "/workspace/.raphael/production-release-verification/python.log"
+      },
+      {
+        "name": "frontend",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.216,
+        "counts": {
+          "tests": 26,
+          "pass": 26,
+          "fail": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/.raphael/production-release-verification/frontend.log"
+      },
+      {
+        "name": "chromium",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 42.115,
+        "counts": {
+          "tests": 6
+        },
+        "log": "/workspace/.raphael/production-release-verification/chromium.log"
+      },
+      {
+        "name": "mobile-structure",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.115,
+        "counts": {},
+        "log": "/workspace/.raphael/production-release-verification/mobile-structure.log"
+      },
+      {
+        "name": "mobile-tests",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.165,
+        "counts": {
+          "tests": 5
+        },
+        "log": "/workspace/.raphael/production-release-verification/mobile-tests.log"
+      },
+      {
+        "name": "traceability",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.115,
+        "counts": {},
+        "log": "/workspace/.raphael/production-release-verification/traceability.log"
+      },
+      {
+        "name": "safety-evaluation",
+        "status": "passed",
+        "exit_code": 0,
+        "timeout": false,
+        "duration_seconds": 0.968,
+        "counts": {},
+        "log": "/workspace/.raphael/production-release-verification/safety-evaluation.log"
+      },
+      {
+        "name": "ios-native",
+        "status": "skipped",
+        "reason": "macOS,Xcode and RAPHAEL_SIMULATOR_DESTINATION required;no native build ran."
+      },
+      {
+        "name": "live-services",
+        "status": "skipped",
+        "reason": "Requires explicit --live;no provider credentials transmitted. Historical live evidence is not rerun evidence."
+      },
+      {
+        "name": "dependency-advisory-audit",
+        "status": "skipped",
+        "reason": "Separate CI pip-audit gate queries advisory databases;no fresh audit implied by local tests."
+      }
+    ],
+    "clinical_validation": false,
+    "production_data_used": false
+  },
+  "focused_blocked_browser": {
+    "passed": 1,
+    "failed": 0,
+    "fixture": "explicit browser-only SSE,not live proof"
+  },
+  "dependency_audit": {
+    "packages": 86,
+    "known_advisories": 0,
+    "fresh_this_execution": true
+  },
+  "source_scan": {
+    "severity_filter": "high",
+    "confidence_filter": "high",
+    "findings": 0,
+    "scan_errors": 0
+  },
+  "native": {
+    "structural_checks": "passed",
+    "xcode_local": "NOT_RUN",
+    "new_native_tests": "NOT_RUN",
+    "ci": "VERIFIED_REMOTE_CI",
+    "device_signing": "NOT_RUN",
+    "app_store_ready": false,
+    "compiler_defect": {
+      "file": "mobile/ios/Raphael/PatientWebSession.swift",
+      "cause": "Completion closure passed to async callAsyncJavaScript overload",
+      "fix_commit": "766d3e7e747c29de8f39b945bd0b57a370c7dbbd",
+      "status": "Verified fixed by actual Xcode compilation"
+    },
+    "runtime_followup": {
+      "cause": "Missing /usr/lib/swift/libswiftWebKit.dylib in iOS18.5 simulator",
+      "fix": "Public Objective-C promise bridge and removal of unused dynamic overlay dependencies",
+      "verified": true,
+      "verified_commit": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+      "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175"
+    },
+    "xcode_ci_compile": "VERIFIED:Xcode16.4/iOS18.5",
+    "simulator_unit_ui": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "source": "xcresulttool result bundle via GitHub annotation"
+    },
+    "authenticated_native_staging": "NOT_RUN"
+  },
+  "cross_platform": {
+    "linux_launcher_http_restart": "passed",
+    "windows": "IMPLEMENTED_UNVERIFIED",
+    "macos_python_setup": "IMPLEMENTED_UNVERIFIED"
+  },
+  "live_current": {
+    "initial_attempt": "physician safely blocked for missing support;browser terminal detection defect timed out;UI fixed and separately regression-tested",
+    "final_attempt": {
+      "technical_workflow": "passed",
+      "physician_status": "blocked",
+      "physician_support_screen": "blocked",
+      "patient_status": "complete",
+      "patient_support_screen": "passed",
+      "actual_dimensions": 384,
+      "embedding_model": "text-embedding-3-small",
+      "collection": "raphael_evidence_v1",
+      "original_source_checks": true,
+      "missing_evidence_results": 0,
+      "artifact": "docs/PRODUCTION_LIVE_RESULTS.json",
+      "clinical_validation": false
+    },
+    "historical_completed_workflow": "docs/RECOVERY_LIVE_RESULTS.json;not current rerun proof"
+  },
+  "clinical_validation": false,
+  "release_classification": "NOT SAFE FOR RELEASE",
+  "deployment_performed": false,
+  "merge_performed": false,
+  "source_brand_assets": "preserved;owner canonical icon authority unresolved",
+  "readiness": "Restricted synthetic development;shared clinical/production/App Store release blocked",
+  "external_gates": [
+    "Authenticated native HTTPS staging/device/accessibility verification;unsigned simulator compilation and tests already pass",
+    "Apple signing,registered bundle,owner brand/support/privacy metadata",
+    "verified identity/MFA/guardian/public recovery",
+    "retention/legal hold and policy-backed account erasure",
+    "PHI vendor BAAs,at-rest encryption,formal risk analysis and clinical/security/privacy/operations assessment",
+    "authorized HTTPS staging;no deployment performed"
+  ],
+  "owner_commands": "docs/AUTOMATED_DEVELOPMENT.md",
+  "security_scan_artifact": "docs/PRODUCTION_SOURCE_SCAN.json",
+  "dependency_audit_artifact": "docs/PRODUCTION_DEPENDENCY_AUDIT.json",
+  "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175",
+  "ci_observed_status": "All three jobs succeeded on the final source commit",
+  "evidence_inventory": {
+    "collection": "raphael_evidence_v1",
+    "total_vectors": 31,
+    "active_vectors": 31,
+    "active_documents": 6,
+    "dimensions": 384,
+    "distance": "Cosine",
+    "embedding_models": [
+      "text-embedding-3-small"
+    ],
+    "operation": "read_only_inventory",
+    "collection_mutated": false
+  },
+  "remote_browser_followup": {
+    "failure": "Care page390px overflow on remote Chromium",
+    "fix": "Intrinsic controls shrink and long tokens wrap;no overflow hidden",
+    "local_verified": "320px and390px with20px text;actual Chromium passed",
+    "remote_verified": true,
+    "ci_run": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40418688776"
+  },
+  "read_origin_hardening": {
+    "all_portal_routers": true,
+    "includes_reads_and_uploads": true,
+    "multipart_preserved": true,
+    "duplicate_guard_accounting_prevented": true,
+    "tests": "Final local and remote CI193Python/26frontend/6Chromium/5mobile source checks pass"
+  },
+  "ci_source_commit": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+  "ci_jobs": [
+    {
+      "completed_at": "2026-10-26T23:56:13Z",
+      "conclusion": "success",
+      "head_sha": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+      "html_url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175/job/121921677192",
+      "id": 121921677192,
+      "name": "dependency-audit",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-10-26T23:58:39Z",
+      "conclusion": "success",
+      "head_sha": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+      "html_url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175/job/121921677524",
+      "id": 121921677524,
+      "name": "regression",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-10-26T23:58:54Z",
+      "conclusion": "success",
+      "head_sha": "1da515ac57bbdb7f9ce25b9ae9a6644474593979",
+      "html_url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/40422980175/job/121921677526",
+      "id": 121921677526,
+      "name": "ios-simulator",
+      "status": "completed"
+    }
+  ],
+  "remaining_code_gaps": [
+    "Policy-backed account erasure;current workflow is review-only",
+    "Public identity/registration/recovery/MFA and guardian permissions",
+    "Android native and broader clinical/specialty/interoperability/voice capabilities",
+    "Production encryption,audit,distributed security and operations hardening"
+  ],
+  "report_scope": "Final evidence-only documentation follow-up;CI results identify the exact verified source commit."
+}

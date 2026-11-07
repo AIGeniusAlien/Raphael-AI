@@ -1,0 +1,51 @@
+test_deletion_review_persists_is_idempotent_and_never_erases (test_account.AccountTests.test_deletion_review_persists_is_idempotent_and_never_erases) ... ok
+test_export_limits_fail_without_a_partial_attachment (test_account.AccountTests.test_export_limits_fail_without_a_partial_attachment) ... ERROR
+test_export_only_own_approved_content_no_credentials_or_drafts (test_account.AccountTests.test_export_only_own_approved_content_no_credentials_or_drafts) ... ok
+test_export_rejects_clinicians_and_revoked_owner_session (test_account.AccountTests.test_export_rejects_clinicians_and_revoked_owner_session) ... ok
+test_profile_is_private_and_does_not_overwrite_chart (test_account.AccountTests.test_profile_is_private_and_does_not_overwrite_chart) ... ok
+test_session_revocation_is_own_scoped_and_clears_correct_cookie_path (test_account.AccountTests.test_session_revocation_is_own_scoped_and_clears_correct_cookie_path) ... ok
+
+======================================================================
+ERROR: test_export_limits_fail_without_a_partial_attachment (test_account.AccountTests.test_export_limits_fail_without_a_partial_attachment)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: table dev_notes has no column named updated_at
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/workspace/Raphael-AI/tests/test_account.py", line 63, in test_export_limits_fail_without_a_partial_attachment
+    c.execute(text("INSERT INTO dev_notes(patient_id,author_id,content,status,created_at,updated_at) VALUES(:p,2,:v,'approved','2020-01-01','2020-01-01')"),{'p':self.pid,'v':'SYNTHETIC-OVERSIZE-'+'x'*(5*1024*1024)})
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/workspace/.raphael/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table dev_notes has no column named updated_at
+[SQL: INSERT INTO dev_notes(patient_id,author_id,content,status,created_at,updated_at) VALUES(?,2,?,'approved','2020-01-01','2020-01-01')]
+[parameters: (1, 'SYNTHETIC-OVERSIZE-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ... (5242601 characters truncated) ... xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+
+----------------------------------------------------------------------
+Ran 6 tests in 2.964s
+
+FAILED (errors=1)

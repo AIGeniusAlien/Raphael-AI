@@ -1,0 +1,44 @@
+# Protected native patient export — release evidence
+
+Implementation source: `e90c78b3174a76b2d1e235b671ff1d348e9d395e`, draft [PR #1](https://github.com/AIGeniusAlien/Raphael-AI/pull/1), 2026-11-01. This is a bounded synthetic-data engineering increment, not full platform completion or clinical/distribution approval.
+
+## Implemented behavior
+
+Patient **Privacy and settings → Protected record export** uses the existing own-account `/api/dev/account/export` endpoint. Each prepare, clipboard copy and system data-provider request fetches fresh server data and then verifies the same authenticated identity through `/api/dev/session`. The native reader enforces 5 MiB while streaming. The envelope inspector requires the expected format, own patient account, required record arrays, at most 500 rows per section, approved notes and no credential keys. Unsigned clinician drafts and document file bytes are excluded. The original endpoint and all existing portal behavior remain available.
+
+Preparation retains only a bounded summary, not the export bytes. Copy and sharing require separate sensitive-data confirmation. Copy requests a local-only clipboard entry with 60-second OS expiry. This is not guaranteed forensic erasure; a destination may retain a deliberate copy. Sharing uses a revocable 60-second ticket and a lazy `NSItemProvider` that fetches and reauthorizes each data request. The app creates no export file. Cancellation, settings dismissal, backgrounding, logout or observed session revocation invalidates pending tickets/tasks. Epoch and identity guards prevent late transfers after cancellation. Session revocation cannot recall data already deliberately handed to the OS or copied by a user.
+
+No arbitrary WebKit download, credentials in JavaScript, persistent session cache, automatic external destination, clinical communication or real patient data was added. The export is JSON metadata/records, not document binaries or a complete legal portability service.
+
+## Verification scope
+
+Local consolidated verification: 269 Python, 29 frontend, 7 Chromium and 5 mobile-source tests pass, with 14 deterministic safety cases and traceability validation. These are not Xcode results or fresh live OpenAI/Qdrant proof. Existing provider pipeline and prior actual supported conversations remain unchanged.
+
+First actual Xcode run: [41327652440](https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41327652440): 22 passed, 1 failed, 0 skipped. The copy case stalled immediately after the status check and hit its 240-second bound; the original 18 and all three new unit cases plus the export failure/revocation case passed. One active synthetic session remained after that failure; cleanup correctly failed. Raw CI and annotations are preserved in `NATIVE_EXPORT_FIRST_FAILURE_*.json`. The synchronous cross-app XCTest clipboard read was replaced with a bounded token-protected host `simctl pbpaste` observer that returns only six validation booleans; it cannot deliver data to the app or bypass authentication. The precise OS prompt state was not captured, so an OS permission prompt remains an inference.
+
+Host-observer follow-up source `fd706542d1aad3bdcb17fc9e5dd28d654e4a77f2`, [CI41330157848](https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41330157848):22passed/1failed/0skipped. The status check completed,but the host clipboard observation returned422;the exact underlying cause was not captured. One active synthetic session remained and cleanup failed. Raw failure/annotations are retained in `NATIVE_EXPORT_HOST_OBSERVER_FAILURE_*.json`. That observer and its extra fixture surface were removed. No diagnostic failure is counted as success.
+
+Follow-up source `e90c78b3174a76b2d1e235b671ff1d348e9d395e`, actual Xcode [41331977079](https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41331977079): **PASS:23passed/0failed/0skipped(12unit+11UI)**. Regression,dependency/source audit and actual native jobs all passed. The original18cases are preserved. Native server cleanup: 17logins/14logouts/0active sessions/1expired row retained;no provider requests. Raw CI and native annotations are retained in `NATIVE_EXPORT_CI_RESULTS.json` and `NATIVE_EXPORT_NATIVE_ANNOTATIONS.json`. The real native user Paste action validated the actual simulator clipboard;the exact first-run OS prompt state and failed host-observer422 subcause remain unknown. Share-container presentation/cancellation does not prove delivery to an OS destination. The new case deliberately uses the existing native Paste menu after logout,inspects the actual JSON,clears the unsent field by relaunch and signs in again for share-container testing. No login containing pasted JSON is submitted. The direct programmatic cross-app read and host observer are absent.
+
+
+New cases exercise own-account validation, rejection of foreign identities/credentials/drafts/oversized/malformed payloads, invalidated system-provider delivery, real authenticated clipboard export, system-share presentation/cancellation, controlled 503, cancellation of a delayed export and independent owner-session revocation. Existing backend regressions also cover clinician denial, revoked-session denial and oversized-response denial. All databases and accounts are disposable synthetic fixtures; CI control routes are absent from the normal application.
+
+The share-presentation test does not select an external destination. Physical iPhone Files/AirDrop/third-party delivery, destination behavior during backgrounding, full VoiceOver, account erasure/retention policy and clinical/organizational approval remain unverified or incomplete. Do not count these as passed.
+
+## Reproduce and continue
+
+1. Run `python -m dev_verify --all --require-browser --output /tmp/raphael-native-export-check` from the reviewed checkout with the documented Python/Node/Chromium setup.
+2. Run the existing `development.yml` workflow on the reviewed branch for real Xcode and disposable authenticated HTTPS fixtures. Do not replace required authentication with a mocked transport. Without those private fixture inputs, local native tests skip authenticated cases and do not establish acceptance.
+3. On an authorized physical device and synthetic HTTPS staging, sign in as the patient, prepare the export, confirm copy and inspect its own-account JSON. Verify that a clinician cannot export as a patient. Test cancellation, logout, revocation, background/foreground, network loss and oversized denial without altering real records.
+4. Explicitly confirm system sharing to an approved protected test destination, inspect the delivered JSON, then delete deliberate test copies. Exercise expiry/revocation before data delivery and record actual behavior. No destination selection or communication occurred in this run.
+5. Record device/build/OS, accessibility review and any destination limitations before considering TestFlight acceptance. Staging, stable secret keys, Apple signing, privacy/support URLs, retention policy and distribution authorization remain owner actions listed in the authoritative release report.
+
+## Preserved failures and external limits
+
+- The first local oversized-export fixture used a nonexistent `dev_notes.updated_at` column. It was corrected to the existing approval schema, not by changing production tables; all six account tests passed. The initial failure and corrected output are retained in `NATIVE_EXPORT_INITIAL_FIXTURE_FAILURE.log` and `NATIVE_EXPORT_ACCOUNT_TESTS.log`.
+- Run41327421080 was cancelled when the screenshot-capture correction was pushed. It is retained in `NATIVE_EXPORT_CANCELLED_CI.json` and is not a native pass.
+- Native run41327652440 produced22passed/1failed and one remaining active synthetic session. The 240-second bound and fail-closed cleanup were preserved; no row deletion or authentication bypass was used to manufacture a green result.
+- Existing Actions artifact-host download restrictions remain. Captured native screenshots were not manually inspected in this workspace; the owner can inspect the xcresult and PNGs in the linked GitHub artifact. No new failed artifact-host request was made. Browser inspection remains scoped to the previously verified unchanged web interfaces.
+- A bounded read of Apple's public upcoming-requirements page failed with `ProxyError`. Current upload-SDK eligibility was not verified. Xcode16.4 development compatibility does not establish present App Store Connect upload eligibility; the owner must verify current official Apple requirements before any separately authorized distribution. No retry or upload occurred.
+
+The earlier271-Python local result belonged to the removed host-observer harness and is preserved separately in `NATIVE_EXPORT_HOST_OBSERVER_LOCAL_RESULTS.json`. Removing its two fixture-only tests returns the current suite to269;no application regression test was removed.

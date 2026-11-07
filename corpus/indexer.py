@@ -1,8 +1,13 @@
 import hashlib
+import uuid
 from datetime import datetime
 
 def sha256(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+def point_id_for(chunk_id: str) -> str:
+    """Qdrant accepts UUIDs, while citation chunk IDs retain their full hash."""
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
 
 def normalize_date(date_str: str | None) -> str | None:
     if not date_str:

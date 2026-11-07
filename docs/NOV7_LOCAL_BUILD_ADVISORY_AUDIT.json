@@ -1,0 +1,13 @@
+{
+  "scope": "Installed local-version builds; supplement to pip-audit. Public metadata does not independently attest binary contents.",
+  "results": [
+    {
+      "name": "torch",
+      "installed_version": "2.15.0+cpu",
+      "public_version": "2.15.0",
+      "source": "https://pypi.org/pypi/torch/2.15.0/json",
+      "vulnerabilities": [],
+      "status": "no_public_advisories"
+    }
+  ]
+}

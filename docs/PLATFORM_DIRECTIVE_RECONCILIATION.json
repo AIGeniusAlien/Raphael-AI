@@ -1,0 +1,262 @@
+{
+  "directive": "docs/directives/DEFINITIVE_HEALTHCARE_PLATFORM_2026-11-01.md",
+  "sections_expected": 36,
+  "sections_reconciled": 36,
+  "all_requirements_satisfied": false,
+  "scope": "Section inventory only;not a claim of line-by-line requirement implementation or independent clinical review. Historical detailed reconciliation preserved separately.",
+  "sections": [
+    {
+      "section": 0,
+      "title": "EXECUTIVE MANDATE \u2014 BUILD RAPHAEL, NOT ANOTHER PLAN",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 1,
+      "title": "OPERATE AS AN ELITE MULTIDISCIPLINARY TEAM",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 2,
+      "title": "RECOVER AND RECONCILE EVERY EXISTING REQUIREMENT",
+      "status": "IN PROGRESS",
+      "evidence": "1164canonical ledger rows;all1161prior IDs/descriptions/criteria preserved;new verification vocabulary and explicit unadjudicated fields.",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 3,
+      "title": "BUILD RAPHAEL AS A HEALTHCARE OPERATING SYSTEM",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 4,
+      "title": "THE RAPHAEL MEDICAL BRAIN",
+      "status": "IN PROGRESS",
+      "evidence": "medical_terms.py;existing reviewed local evidence workspace;actual term-review/opt-in alias/citation/revocation API and browser tests;historical live provider proof unchanged.",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 5,
+      "title": "COMPREHENSIVE MEDICAL SPECIALTY COVERAGE",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 6,
+      "title": "COMPREHENSIVE MEDICAL PROCEDURE INTELLIGENCE",
+      "status": "NOT STARTED",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Comprehensive procedure catalog and reviewed patient/clinician pathway engine are not implemented;generic documentation is not procedure competence."
+    },
+    {
+      "section": 7,
+      "title": "REAL-TIME AMBIENT CLINICAL INTELLIGENCE",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 8,
+      "title": "DYNAMIC DIFFERENTIAL DIAGNOSIS",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 9,
+      "title": "EMERGENCY RECOGNITION AND CLINICAL SAFETY",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 10,
+      "title": "COMPLETE CLINICAL DOCUMENTATION AUTOMATION",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 11,
+      "title": "COMPLETE HEALTHCARE WORKFLOW AUTOMATION",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 12,
+      "title": "ROLE-SPECIFIC WORKSPACES",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 13,
+      "title": "COMPLETE PATIENT PLATFORM",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 14,
+      "title": "COMPLETE CLINICIAN PLATFORM",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 15,
+      "title": "RADIOLOGY AND MULTIMODAL INTELLIGENCE",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 16,
+      "title": "HEALTHCARE INTEROPERABILITY",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 17,
+      "title": "SECURE PATIENT\u2013CLINICIAN COMMUNICATION",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 18,
+      "title": "MEDICAL CALCULATORS AND CLINICAL RULES",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 19,
+      "title": "LONGITUDINAL AND PREVENTIVE MEDICINE",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 20,
+      "title": "SECURITY, PRIVACY, AND PHI PROTECTION",
+      "status": "IN PROGRESS",
+      "evidence": "protected_database.py;tests/test_protected_database.py;docs/DATABASE_STORAGE_CHECKPOINT.md",
+      "remaining": "Database pages now protected when explicitly enabled. Full PHI lifecycle,source copies,exports,upload spooling,platform keys,retention,secure erasure and independent production validation remain incomplete."
+    },
+    {
+      "section": 21,
+      "title": "IOS, ANDROID, WEB, AND DESKTOP",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 22,
+      "title": "WORLD-CLASS USER EXPERIENCE",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 23,
+      "title": "PERFORMANCE AND COST EFFICIENCY",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 24,
+      "title": "CONTINUOUS EVIDENCE AND MODEL UPDATES",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 25,
+      "title": "FEEDBACK AND OWNER-DIRECTED IMPROVEMENT",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 26,
+      "title": "PRODUCTION INFRASTRUCTURE",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 27,
+      "title": "CLINICAL EVALUATION AND SCIENTIFIC RIGOR",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 28,
+      "title": "EXACT DEFINITION OF DONE",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 29,
+      "title": "REQUIRED INTEGRATED DEMONSTRATIONS",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 30,
+      "title": "IMPLEMENTATION WAVES",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 31,
+      "title": "AUTONOMOUS EXECUTION AND CONTINUATION",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 32,
+      "title": "RELEASE GATES",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 33,
+      "title": "FINAL COMPREHENSIVE AUDIT",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 34,
+      "title": "FINAL REQUIRED DELIVERABLES",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    },
+    {
+      "section": 35,
+      "title": "FINAL EXECUTION COMMAND",
+      "status": "IN PROGRESS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md; preserved requirements and historical reports",
+      "remaining": "Complete section-specific acceptance and independent review;no whole-section completion inferred from bounded software tests."
+    }
+  ],
+  "latest_implementation_evidence": "docs/FOUNDATION_IMPLEMENTATION_CHECKPOINT.md"
+}

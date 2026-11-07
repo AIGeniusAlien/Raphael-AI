@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.env
+*.db
+*.db-wal
+*.db-shm
+verification-results/
+
+# Explicit development key files must remain outside source control.
+*.key
+*.key.backup

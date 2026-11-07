@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-07T19:31:28.260754+00:00",
+  "repository": "AIGeniusAlien/Raphael-AI",
+  "head_sha": "906700fc43ede1c834ff89fff46bee58ba2fd1d9",
+  "working_tree_clean": false,
+  "requirement_count": 1164,
+  "state_counts": {
+    "PARTIAL": 872,
+    "NOT_IMPLEMENTED": 189,
+    "VERIFIED": 81,
+    "IMPLEMENTED_UNVERIFIED": 22
+  },
+  "proposed_work": [
+    {
+      "requirement_id": "ACCEPT-001",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-002",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-003",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-004",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-005",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-006",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-007",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-010",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-011",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-012",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-013",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "ACCEPT-014",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "CARE-005",
+      "state": "PARTIAL",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "COMPLETE-001",
+      "state": "PARTIAL",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "COMPLETE-008",
+      "state": "PARTIAL",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "COMPLETE-010",
+      "state": "PARTIAL",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "CORE-003",
+      "state": "IMPLEMENTED_UNVERIFIED",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "CORE-006",
+      "state": "PARTIAL",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "CORE-007",
+      "state": "PARTIAL",
+      "priority": "P0"
+    },
+    {
+      "requirement_id": "DBX-001",
+      "state": "PARTIAL",
+      "priority": "P0"
+    }
+  ],
+  "recorded_release_gates": {
+    "synthetic_local_web_demonstration": "PASS",
+    "controlled_synthetic_testflight": "BLOCKED",
+    "controlled_clinical_pilot": "FAIL",
+    "clinical_production": "FAIL"
+  },
+  "gate_scope": "Recorded requirements evidence;not independently revalidated by this metadata audit.",
+  "github_checks": [
+    {
+      "run_id": 41390802643,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41390802643"
+    }
+  ],
+  "github_metadata_checked": true,
+  "persistent_execution": "not_proven_by_one_shot",
+  "automatic_code_changes": false,
+  "clinical_database_accessed": false,
+  "provider_requests": false,
+  "merge_or_deployment": false
+}

@@ -1,0 +1,40 @@
+{
+  "uses_mock_services": false,
+  "provider": "NCBI PubMed",
+  "scope": "read_only_bibliographic_metadata_no_collection_writes",
+  "full_text_reuse_verified": false,
+  "attempt_context": "after_environment_reconnection",
+  "status": "passed",
+  "pmids": [
+    "39669647"
+  ],
+  "records": [
+    {
+      "pmid": "39669647",
+      "title": "Nasal Irrigation With Saline Solution for Pediatric Acute Upper Respiratory Infections: A Systematic Review.",
+      "publication_date": "2024 Dec",
+      "articleids": [
+        {
+          "idtype": "pubmed",
+          "idtypen": 1,
+          "value": "39669647"
+        },
+        {
+          "idtype": "pmc",
+          "idtypen": 8,
+          "value": "PMC11634572"
+        },
+        {
+          "idtype": "pmcid",
+          "idtypen": 5,
+          "value": "pmc-id: PMC11634572;"
+        },
+        {
+          "idtype": "doi",
+          "idtypen": 3,
+          "value": "10.7759/cureus.75464"
+        }
+      ]
+    }
+  ]
+}

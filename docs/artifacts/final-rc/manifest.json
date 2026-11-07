@@ -1,0 +1,48 @@
+{
+  "application_source": "cc91830d17a15f0350db16d28da704b4771e61e0",
+  "followup_3747c73": "CI-only orchestration/redaction changes;application unchanged",
+  "capture_kind": "Actual Chromium screenshots;synthetic data;live Qdrant coverage where filename starts coverage",
+  "captures": [
+    {
+      "file": "account-mobile.png",
+      "sha256": "3b20d7350b671e1e5c70e96d420c7869b96e3124b0c2930998727f25df242457",
+      "visually_inspected": true
+    },
+    {
+      "file": "completion-desktop.png",
+      "sha256": "3163d32d400e4c16b3c9ced3a399c9455141b04833f55c3f30a110c65b84f4a7",
+      "visually_inspected": false
+    },
+    {
+      "file": "coverage-desktop.png",
+      "sha256": "669b4bcfed0ae45fc7859d5ad429e52e689f5dcb117ddd625f990bea8eeb5a57",
+      "visually_inspected": false
+    },
+    {
+      "file": "coverage-enlarged.png",
+      "sha256": "5a61175e7ff379cbc36d1ab19456a485f39d1a69616b1d63cfe1589ef62d85fd",
+      "visually_inspected": false
+    },
+    {
+      "file": "coverage-mobile.png",
+      "sha256": "ff349bb59a6664f8dda162c811c32117e13ed02709bb252680f4bf5fd3aef3ad",
+      "visually_inspected": true
+    },
+    {
+      "file": "coverage-tablet.png",
+      "sha256": "1edd7bf3af261edd099ef921dee2a16dd72314e7e9224d5785faf070c278b648",
+      "visually_inspected": false
+    },
+    {
+      "file": "longitudinal-enlarged.png",
+      "sha256": "892f3c7f22e987fc7a1962ccf3deb99aa8f736966c3d1a2ca76d9c6a6d4ecce9",
+      "visually_inspected": false
+    },
+    {
+      "file": "longitudinal-mobile.png",
+      "sha256": "0bb63ccf2f3ecbc52ce97de07b2c7e28b6b378964dec577e62d9c298e26904fe",
+      "visually_inspected": true
+    }
+  ],
+  "native_images_inspected": false
+}

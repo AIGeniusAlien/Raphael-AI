@@ -1,0 +1,20 @@
+{
+  "scope": "Bandit -lll -iii;application,curated evidence,scripts,native and CI helpers",
+  "source_commit": "f5a7d9fa7f64237884646119d09be09101f5aa53",
+  "findings": [],
+  "errors": [],
+  "metrics": {
+    "CONFIDENCE.HIGH": 53,
+    "CONFIDENCE.LOW": 10,
+    "CONFIDENCE.MEDIUM": 4,
+    "CONFIDENCE.UNDEFINED": 0,
+    "SEVERITY.HIGH": 0,
+    "SEVERITY.LOW": 56,
+    "SEVERITY.MEDIUM": 11,
+    "SEVERITY.UNDEFINED": 0,
+    "loc": 5817,
+    "nosec": 0,
+    "skipped_tests": 0
+  },
+  "independent_security_review": false
+}

@@ -1,0 +1,171 @@
+{
+  "queried_source": "https://pypi.org/pypi/torch/2.6.0/json",
+  "scope": "Upstream public2.6.0;installed CPU-local build is not independently audited by this metadata query.",
+  "vulnerabilities": [
+    {
+      "id": "GHSA-3749-ghw9-m3mg",
+      "fixed_in": [
+        "2.7.1-rc1"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "GHSA-887c-mr87-cxwp",
+      "fixed_in": [
+        "2.8.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-205",
+      "fixed_in": [
+        "2.7.1"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-206",
+      "fixed_in": [
+        "2.9.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-200",
+      "fixed_in": [
+        "2.7.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-207",
+      "fixed_in": [
+        "2.7.1"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-201",
+      "fixed_in": [
+        "2.7.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-204",
+      "fixed_in": [
+        "2.9.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2026-139",
+      "fixed_in": [],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-209",
+      "fixed_in": [
+        "2.7.1"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-208",
+      "fixed_in": [
+        "2.7.1"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-191",
+      "fixed_in": [],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-199",
+      "fixed_in": [
+        "2.7.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-202",
+      "fixed_in": [
+        "2.7.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-198",
+      "fixed_in": [
+        "2.7.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2025-203",
+      "fixed_in": [
+        "2.9.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "GHSA-c678-jfcj-6jmf",
+      "fixed_in": [],
+      "withdrawn": null
+    },
+    {
+      "id": "GHSA-x3gm-94wq-g975",
+      "fixed_in": [],
+      "withdrawn": null
+    },
+    {
+      "id": "GHSA-f4hp-rmr7-r7v8",
+      "fixed_in": [],
+      "withdrawn": null
+    },
+    {
+      "id": "GHSA-vgrw-7cvw-pwgx",
+      "fixed_in": [
+        "2.9.1"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "GHSA-rrmf-rvhw-rf47",
+      "fixed_in": [
+        "2.13.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "GHSA-qfhq-4f3w-5fph",
+      "fixed_in": [
+        "2.10.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2026-1970",
+      "fixed_in": [
+        "2.8.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "PYSEC-2026-2286",
+      "fixed_in": [
+        "2.10.0"
+      ],
+      "withdrawn": null
+    },
+    {
+      "id": "GHSA-63cw-57p8-fm3p",
+      "fixed_in": [
+        "2.10.0"
+      ],
+      "withdrawn": null
+    }
+  ]
+}

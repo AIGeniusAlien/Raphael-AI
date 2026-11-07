@@ -1,0 +1,24 @@
+{
+  "source_commit": "165e883486a712f4ab0cd6a261b903659b935229",
+  "run_id": 40790301215,
+  "failure": "Browser checked session401 immediately after local hide, before asynchronous logout response completed.",
+  "fix": "Wait for actual logout response and assert200 then401;preserve immediate local hiding. Added real browser outage/reload/retry acceptance plus29frontend subtests.",
+  "annotations": [
+    {
+      "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+      "title": ""
+    },
+    {
+      "message": "chromium: test_patient_authorization_receiver_review_approval_revocation_and_emergency_mobile (test_care_browser.CareBrowserTests.test_patient_authorization_receiver_review_approval_revocation_and_emergency_mobile) ... ok\ntest_patient_explicit_grant_and_revoke_block_other_and_originating_clinicians (test_chart_access_browser.ChartAccessBrowserTests.test_patient_explicit_grant_and_revoke_block_other_and_originating_clinicians) ... ok\ntest_authenticator_recovery_structured_approval_and_patient_visibility (test_completion_browser.CompletionBrowserTests.test_authenticator_recovery_structured_approval_and_patient_visibility) ... ok\ntest_streamed_fixture_encounter_consent_incremental_notes_edit_and_signoff (test_intelligence_browser.IntelligenceBrowserTests.test_streamed_fixture_encounter_consent_incremental_notes_edit_and_signoff) ... ok\ntest_patient_education_consent_stream_sources_reload_cancel_and_revoke_mobile (test_patient_ai_browser.PatientAIBrowserTests.test_patient_education_consent_stream_sources_reload_cancel_and_revoke_mobile) ... ok\ntest_internal_reply_approval_admin_and_actual_dicom_view (test_platform_browser.PlatformBrowserTests.test_internal_reply_approval_admin_and_actual_dicom_view) ... /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/pydicom/dataset.py:1378: DeprecationWarning: 'FileDataset.is_little_endian' will be removed in v4.0, set the Transfer Syntax UID or use the 'little_endian' argument with FileDataset.save_as() or dcmwrite() instead\n  warn_and_log(\n/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/pydicom/dataset.py:1337: DeprecationWarning: 'FileDataset.is_implicit_VR' will be removed in v4.0, set the Transfer Syntax UID or use the 'implicit_vr' argument with FileDataset.save_as() or dcmwrite() instead\n  warn_and_log(\n/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/pydicom/filewriter.py:1309: DeprecationWarning: 'write_like_original' is deprecated and will be removed in v4.0, please use 'enforce_file_format' instead\n  warn_and_log(\nok\ntest_two_role_portals_internal_messages_and_explicit_note_approval (test_portal_browser.PortalBrowserTests.test_two_role_portals_internal_messages_and_explicit_note_approval) ... FAIL\n\n======================================================================\nFAIL: test_two_role_portals_internal_messages_and_explicit_note_approval (test_portal_browser.PortalBrowserTests.test_two_role_portals_internal_messages_and_explicit_note_approval)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/Raphael-AI/Raphael-AI/e2e/test_portal_browser.py\", line 152, in test_two_role_portals_internal_messages_and_explicit_note_approval\n    self.assertEqual(physician_context.request.get(\"/api/dev/session\").status, 401)\nAssertionError: 200 != 401\n\n----------------------------------------------------------------------\nRan 7 tests in 37.044s\n\nFAILED (failures=1)\n",
+      "title": "Raphael failure diagnostics"
+    },
+    {
+      "message": "Process completed with exit code 1.",
+      "title": ""
+    },
+    {
+      "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+      "title": ""
+    }
+  ]
+}

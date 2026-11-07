@@ -1,4 +1,9 @@
-from sentence_transformers import SentenceTransformer
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 import numpy as np
 
 _MODEL = None
@@ -6,6 +11,7 @@ _MODEL = None
 def get_model(model_name: str):
     global _MODEL
     if _MODEL is None:
+        from sentence_transformers import SentenceTransformer
         _MODEL = SentenceTransformer(model_name)
     return _MODEL
 

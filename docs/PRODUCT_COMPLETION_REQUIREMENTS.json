@@ -1,0 +1,12 @@
+{
+  "baseline_commit": "a7e79cb792121b794af6aca110816cd6d123843c",
+  "baseline_descriptions_preserved": 1136,
+  "current_requirements": 1146,
+  "state_counts": {
+    "PARTIAL": 870,
+    "NOT_IMPLEMENTED": 191,
+    "VERIFIED": 63,
+    "IMPLEMENTED_UNVERIFIED": 22
+  },
+  "full_product_complete": false
+}

@@ -1,0 +1,549 @@
+{
+  "schema_version": 1,
+  "authoritative_report": "docs/RAPHAEL_FINAL_LAUNCH_READINESS.md",
+  "starting_commit": "214cc169b9935282b694b557f5400da5dfafde9f",
+  "implementation_commit": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
+  "release_decisions": {
+    "synthetic_local_web_demonstration": "PASS",
+    "controlled_synthetic_testflight": "BLOCKED",
+    "controlled_clinical_pilot": "FAIL",
+    "clinical_production": "FAIL",
+    "public_app_store": "FAIL"
+  },
+  "capabilities": [
+    {
+      "id": "synthetic_web_workflow",
+      "status": "PASS",
+      "cause": "Bounded synthetic development;326Python/29frontend/8Chromium/5mobile-source tests and9local checks pass.",
+      "attempted_remediation": "Full combined local verification plus9API/1Chromium post-history-cap follow-ups.",
+      "responsible_party": "Engineering",
+      "next_verification": "Re-run actual current-head CI;no Xcode inference from Linux."
+    },
+    {
+      "id": "real_evidence_workflow",
+      "status": "PASS",
+      "cause": "Actual physician/patientOpenAI/Qdrant educational workflows both complete with strict screens.",
+      "attempted_remediation": "Fresh updated-transport live results;384dimensions;9CDCdocuments/48vectors;original sources/citations checked.",
+      "responsible_party": "Engineering",
+      "next_verification": "Expand licensed coverage only with rights checks and independent adjudication;bounded success is notclinical validation."
+    },
+    {
+      "id": "authenticated_native",
+      "status": "PASS",
+      "cause": "Bounded actual27case stable-editor simulator acceptance;not full device/distribution/clinical acceptance.",
+      "attempted_remediation": "UIKit-owned pair/private store eliminates per-character SwiftUI binding reconciliation;newregression plus realtypedpassword/TOTP/recovery/replay/disable/revocation allpass27/0/0 onb6ab21c. EveryMFApasswordmatchtrue;0active sessions.",
+      "responsible_party": "Engineering",
+      "next_verification": "Preserve exact softwareproof;ownerphysicaldevice/VoiceOver/staging/signing/independent security remain. Do not equate this with fullTestFlight/clinical readiness."
+    },
+    {
+      "id": "mfa_technical_controls",
+      "status": "PASS",
+      "cause": "Synthetic API/browser acceptance;not enterprise identity assurance.",
+      "attempted_remediation": "Encrypted TOTP enrollment/replay prevention/one-use recovery/management throttling/revoke-other-sessions. MFA schema stamp prevents pre-MFA downgrade from silently allowing password-only access.",
+      "responsible_party": "Engineering",
+      "next_verification": "11 lifecycle regressions plus actual Chromium enrollment/recovery. Independent security review remains required."
+    },
+    {
+      "id": "mfa_encryption_configuration",
+      "status": "BLOCKED",
+      "cause": "Stable authorized staging bindings,escrow and operator acceptance not established;local tests use private ephemeral keys. Historical missing-variable observations are not a fresh environment-presence audit.",
+      "attempted_remediation": "Feature refuses enrollment when key missing;tests use ephemeral keys.",
+      "responsible_party": "Owner/operator secret management",
+      "next_verification": "Provide protected stable Fernet key,escrow separately,and verify enrollment/restart/recovery in authorized staging;never send key through chat."
+    },
+    {
+      "id": "structured_documentation",
+      "status": "PASS",
+      "cause": "Six bounded clinician-authored preparations;AI clinical synthesis and payer integrations absent.",
+      "attempted_remediation": "Fields/provenance/missing facts/edit/approval/publication integrated and all6formats tested.",
+      "responsible_party": "Engineering",
+      "next_verification": "Inspect snapshots and actual patient publication;run tests.test_structured_documentation and completion Chromium case."
+    },
+    {
+      "id": "evidence_lifecycle",
+      "status": "PASS",
+      "cause": "Local real-Qdrant protocol tests;no live withdrawal/mutation performed.",
+      "attempted_remediation": "Stage complete versions,interrupt/retry safely,prevent stale rollback,withdraw without deletion,read-only refresh planning. Fresh read-only live compatibility/inventory9documents/48vectors/384dimensions passed;no remote lifecycle mutation tested.",
+      "responsible_party": "Engineering",
+      "next_verification": "Run tests.test_curated_evidence;explicitly authorize a separate staging collection before live withdrawal testing."
+    },
+    {
+      "id": "encrypted_backup",
+      "status": "PASS",
+      "cause": "Actual SQLCipher inner snapshot plus outer encrypted backup and validated protected restore;synthetic Linux scope only.",
+      "attempted_remediation": "Real SQLCipher wrong/missing key,tamper,source-preserving copy/rotation,no-overwrite and roundtrip tests pass.",
+      "responsible_party": "Engineering",
+      "next_verification": "Exercise dev_backup on a dedicated synthetic copy with separately escrowed key."
+    },
+    {
+      "id": "backup_key_operations",
+      "status": "BLOCKED",
+      "cause": "Stable authorized staging bindings,escrow and operator acceptance not established;local tests use private ephemeral keys. Historical missing-variable observations are not a fresh environment-presence audit.",
+      "attempted_remediation": "Fail-closed key requirement and synthetic restore exercise implemented.",
+      "responsible_party": "Owner/operator secret management",
+      "next_verification": "Bind a distinct protected key and establish authorized storage,escrow,rotation and restore ownership."
+    },
+    {
+      "id": "local_concurrency",
+      "status": "PASS",
+      "cause": "40-operation local probe does not establish sustained production capacity.",
+      "attempted_remediation": "Actual HTTP/SQLite:40x200 responses,20 expected records,p95 23.657ms.",
+      "responsible_party": "Engineering",
+      "next_verification": "Reproduce scripts.benchmark_synthetic;separately establish sustained staging workloads and SLOs."
+    },
+    {
+      "id": "native_device_signing",
+      "status": "BLOCKED",
+      "cause": "No authorized staging/team/bundle/signing or executed physical-device acceptance.",
+      "attempted_remediation": "Existing release guards retained;Intel Mac/device instructions updated.",
+      "responsible_party": "Owner provides access;Engineering executes tests",
+      "next_verification": "Supply authorized staging and Apple/device access;run actual device journeys before signed archive acceptance."
+    },
+    {
+      "id": "distribution_metadata",
+      "status": "BLOCKED",
+      "cause": "Approved support/privacy URLs,icon authority,metadata and upload authorization absent.",
+      "attempted_remediation": "No placeholder signing team or distribution success fabricated.",
+      "responsible_party": "Owner/privacy reviewer",
+      "next_verification": "Approve actual assets/policies/metadata;validate Release;authorize upload separately only after technical gates pass."
+    },
+    {
+      "id": "production_identity_guardian",
+      "status": "FAIL",
+      "cause": "Identity proofing,enterprise MFA enrollment/enforcement,guardian/proxy authorization and external secure password recovery incomplete.",
+      "attempted_remediation": "Optional TOTP/recovery implemented;existing tenant/patient/consent guards preserved.",
+      "responsible_party": "Engineering with accountable identity/policy owner",
+      "next_verification": "Implement verified identity and scoped proxy flows;adversarial cross-patient/tenant,expiry,revocation and recovery acceptance."
+    },
+    {
+      "id": "erasure_retention_holds",
+      "status": "FAIL",
+      "cause": "Full legal/account/medical/backup erasure remains incomplete despite verified limited controls.",
+      "attempted_remediation": "Policy/hold/password/MFA/ownerrequest/version-gated limitedcredential/profile erasure;8API and actualbrowser tests.",
+      "responsible_party": "Engineering;owner approves retention/identity policy",
+      "next_verification": "Complete qualified retention/erasure policy and data/backup/integrations scope;do not count limited erasure as Apple compliance."
+    },
+    {
+      "id": "comprehensive_clinical_knowledge",
+      "status": "FAIL",
+      "cause": "Nine CDC documents are insufficient;additional rights-reviewed connectors and independent clinical reference cases remain incomplete.",
+      "attempted_remediation": "Safer evidence lifecycle and fresh real-source support checks;citation thresholds unchanged.",
+      "responsible_party": "Engineering and independent clinical/content reviewers",
+      "next_verification": "Expand licensed/provenance-reviewed coverage;evaluate common/high-risk/population cases with independent adjudication."
+    },
+    {
+      "id": "native_export_accessibility_outages",
+      "status": "FAIL",
+      "cause": "Full protected OS destination delivery,physical-device and VoiceOver acceptance remain incomplete;bounded JSON clipboard,share-container and simulator failure/expiry/Dynamic Type acceptance pass.",
+      "attempted_remediation": "Bounded native JSON copy and share-container cancellation,controlled503/delay cancellation and owner revocation pass in actual Xcode;full destination delivery,physical device,VoiceOver and TOTP enrollment remain.",
+      "responsible_party": "Engineering",
+      "next_verification": "Execute authorized physical-device destination delivery,expiry/revocation/backgrounding and full VoiceOver;preserve23native cases and add independent TOTP enrollment/verification."
+    },
+    {
+      "id": "production_phi_infrastructure",
+      "status": "FAIL",
+      "cause": "Live DB at-rest encryption,key rotation,production database/migrations,distributed limits,monitoring and recovery operations incomplete.",
+      "attempted_remediation": "Opt-in synthetic SQLCipher pages,verified migration/rotation copies and encrypted backup/restore implemented. Full PHI lifecycle,production infrastructure and independent validation remain incomplete.",
+      "responsible_party": "Engineering;owner authorizes infrastructure",
+      "next_verification": "Complete production/staging controls and independent security/restore/rollback/capacity exercises."
+    },
+    {
+      "id": "clinical_regulatory_contracts",
+      "status": "BLOCKED",
+      "cause": "Independent clinical/security/privacy evaluation,intended-use/regulatory analysis,applicable contracts/BAAs and governance absent.",
+      "attempted_remediation": "No compliance,clearance or clinical-validation claims made.",
+      "responsible_party": "Owner and qualified independent reviewers",
+      "next_verification": "Document intended use,risk controls,expert evidence and required legal/vendor approvals before clinical pilot."
+    },
+    {
+      "id": "live_external_clinical_integrations",
+      "status": "BLOCKED",
+      "cause": "Authorized EHR/communications/voice/imaging vendor access and clinical validation unavailable.",
+      "attempted_remediation": "Existing sandbox adapters/fixtures preserved;none represented as hospital integrations.",
+      "responsible_party": "Owner provides authorized contracts/access;Engineering integrates",
+      "next_verification": "Execute authorized vendor sandbox contracts and human-approved workflows;then separately approve any clinical use."
+    },
+    {
+      "id": "durable_logout_recovery",
+      "status": "PASS",
+      "cause": "Local hiding and remote invalidation are separate;outage requires explicit retry.",
+      "attempted_remediation": "10second bounded logout;tab-local noncredential intent;block account switching;retry on reload;accept server401 as invalidated.",
+      "responsible_party": "Engineering",
+      "next_verification": "29frontend subtests and actual browser abort/reload/retry/server401 acceptance passed."
+    },
+    {
+      "id": "dependency_and_source_security_scan",
+      "status": "PASS",
+      "cause": "Source-scoped GitHub security gate on5be27f7;new38efcba exact-source CI not yetrun.",
+      "attempted_remediation": "86installedpackage compatibility pass;actual previous security job passed.",
+      "responsible_party": "Engineering",
+      "next_verification": "Read exact final-head dependency-advisory/Bandit jobs before claiming final-source scan success."
+    },
+    {
+      "id": "longitudinal_review_context",
+      "status": "PASS",
+      "cause": "Entered data only;not clinical inference.",
+      "attempted_remediation": "7tests plus immutable context/revocation and actual clinician/patient browser trend tests pass;whole-record bounded snapshots persist.",
+      "responsible_party": "Engineering",
+      "next_verification": "Clinical relevance,causal synthesis,unit reconciliation and expert validation incomplete."
+    },
+    {
+      "id": "reviewed_tabular_observation_extraction",
+      "status": "PASS",
+      "cause": "Exact synthetic CSV-in-text contract only.",
+      "attempted_remediation": "4parser+3API cases and actual upload-preview-explicit approval-patient journey pass;atomic non-overwriting idempotence;later edits require review.",
+      "responsible_party": "Engineering",
+      "next_verification": "Free-text/PDF/OCR and verified clinical identity/extraction evaluation incomplete."
+    },
+    {
+      "id": "private_workflow_checks",
+      "status": "PASS",
+      "cause": "Content-free own-authorized workflow and generationmetrics only.",
+      "attempted_remediation": "5metrics regressions;actualSDK streamingusage2711tokens and n1latency;unknowncost retained.",
+      "responsible_party": "Engineering",
+      "next_verification": "Add governed accounting for missing workflows and realistic capacity testing;small samples are notproduction percentiles."
+    },
+    {
+      "id": "strict_live_verification",
+      "status": "PASS",
+      "cause": "Actual two supported workflows passed unchanged source/citation/support gates.",
+      "attempted_remediation": "PLATFORM_LIVE_RESULTS.json;both complete/claimscreenpassed;missing evidence0;no mocks.",
+      "responsible_party": "Engineering",
+      "next_verification": "Preserve each blocked/failed run;no retry-until-desired-answer or clinical accuracy claim."
+    },
+    {
+      "id": "supported_domain_coverage_map",
+      "status": "PASS",
+      "cause": "Explicit bounded index inventory;not clinical competence.",
+      "attempted_remediation": "Read-only clinician panel;unauthorized access denied;local unchecked scope and provider503 sanitized;real9documents48vectors384dimensions.",
+      "responsible_party": "Engineering",
+      "next_verification": "Rights-reviewed corpus growth and independent clinical evaluation."
+    },
+    {
+      "id": "native_patient_json_copy",
+      "status": "PASS",
+      "cause": "Own linked-record JSON only;not full legal portability or OS destination acceptance.",
+      "attempted_remediation": "Real authenticated copy confirmed through explicit native user Paste after logout;fresh authorization,limits,negative payload/provider,503/cancel/revoke and share-container cancellation regressions pass.",
+      "responsible_party": "Engineering",
+      "next_verification": "Physical device,OS destination delivery,full VoiceOver,document binaries and policy-backed lifecycle;deliberate copies cannot be recalled."
+    },
+    {
+      "id": "encrypted_conversation_attachments",
+      "status": "PASS",
+      "cause": "Synthetic.txt payloads encrypted;review/consent/source/history controls work.",
+      "attempted_remediation": "11API regressions and real browser lifecycle.",
+      "responsible_party": "Engineering",
+      "next_verification": "PDF/images,scanner,wholePHIencryption and independent review remain."
+    },
+    {
+      "id": "document_key_operations",
+      "status": "BLOCKED",
+      "cause": "Stable authorized staging bindings,escrow and operator acceptance not established;local tests use private ephemeral keys. Historical missing-variable observations are not a fresh environment-presence audit.",
+      "attempted_remediation": "Fail-closed privatefile/key binding implemented;no operator key fabricated.",
+      "responsible_party": "Owner/operator secret management",
+      "next_verification": "Bind stable distinct protected key/escrow in authorized staging and verify restart/restore."
+    },
+    {
+      "id": "limited_account_lifecycle",
+      "status": "PASS",
+      "cause": "Bounded deactivation/reactivation/policy/hold/limitedcredentialerasure implemented.",
+      "attempted_remediation": "8API and realowner/adminbrowser tests;clinical/audit/originalrecordsretained.",
+      "responsible_party": "Engineering",
+      "next_verification": "Qualified fulllegal retention/erasure and Apple acceptance remain distinct."
+    },
+    {
+      "id": "private_development_keys",
+      "status": "PASS",
+      "cause": "Explicit private0600creation/load and distinctsource binding onPOSIX.",
+      "attempted_remediation": "4keyfile regressions plus actual2start protectedlauncher health/readiness/patientpersistence/attachmentdecryption/MFArecovery smoke pass.",
+      "responsible_party": "Engineering",
+      "next_verification": "No productionKMS/rotation/escrow or WindowsACL acceptance."
+    },
+    {
+      "id": "owner_product_feedback",
+      "status": "PASS",
+      "cause": "Internalowner/adminreports and requirement-linked task state machine integrated.",
+      "attempted_remediation": "9API and realChromiumworkflow;idempotency/revisions/privateadminnotes/clinicalresolutionblock.",
+      "responsible_party": "Engineering",
+      "next_verification": "Independent evidence verification,qualified clinical correction,releaseapproval and deployment monitoring absent."
+    },
+    {
+      "id": "native_totp_extended_workflow",
+      "status": "PASS",
+      "cause": "Bounded actual27case stable-editor simulator acceptance;not full device/distribution/clinical acceptance.",
+      "attempted_remediation": "UIKit-owned pair/private store eliminates per-character SwiftUI binding reconciliation;newregression plus realtypedpassword/TOTP/recovery/replay/disable/revocation allpass27/0/0 onb6ab21c. EveryMFApasswordmatchtrue;0active sessions.",
+      "responsible_party": "Engineering",
+      "next_verification": "Preserve exact softwareproof;ownerphysicaldevice/VoiceOver/staging/signing/independent security remain. Do not equate this with fullTestFlight/clinical readiness."
+    },
+    {
+      "id": "synthetic_sqlcipher_pages",
+      "status": "PASS",
+      "evidence": "docs/DATABASE_STORAGE_CHECKPOINT.md",
+      "scope": "Explicit Linux synthetic mode only;not complete PHI lifecycle."
+    },
+    {
+      "id": "reviewed_local_terminology",
+      "status": "PASS",
+      "evidence": "docs/FOUNDATION_IMPLEMENTATION_CHECKPOINT.md",
+      "scope": "Local source-bound lexical alias review/retrieval only;not standard ontology or clinical competence."
+    },
+    {
+      "id": "consumer_candidate_server_boundary",
+      "status": "PASS",
+      "evidence": "docs/NOV7_LOCAL_RESULTS.json",
+      "scope": "Synthetic patient preview only;not public approval."
+    },
+    {
+      "id": "durable_readonly_jobs",
+      "status": "PASS",
+      "evidence": "tests/test_dev_jobs.py;e2e/test_jobs_browser.py",
+      "scope": "Two bounded inventories;no permanent scheduler."
+    },
+    {
+      "id": "source_bound_procedure_coordination",
+      "status": "PASS",
+      "evidence": "tests/test_dev_procedures.py;e2e/test_procedures_browser.py",
+      "scope": "Synthetic checklist coordination;not medicalconsent/procedure performance or clinical validation."
+    },
+    {
+      "id": "native_release_policy_profiles",
+      "status": "BLOCKED",
+      "cause": "Source/projectchecks passed;actualtwo-profileMacCI pending at this authoring snapshot.",
+      "next_verification": "Inspect draftPR1 exactcommit currentCI;minimum28development+1candidate withzero failures/skips."
+    }
+  ],
+  "requirements": {
+    "baseline_commit": "214cc169b9935282b694b557f5400da5dfafde9f",
+    "baseline_requirements": 1155,
+    "current_requirements": 1161,
+    "removed_ids": [],
+    "changed_original_descriptions": [],
+    "new_ids": [
+      "PLATFORM-001",
+      "PLATFORM-002",
+      "PLATFORM-003",
+      "PLATFORM-004",
+      "PLATFORM-005",
+      "PLATFORM-006"
+    ],
+    "canonical_state_counts": {
+      "PARTIAL": 872,
+      "NOT_IMPLEMENTED": 189,
+      "VERIFIED": 78,
+      "IMPLEMENTED_UNVERIFIED": 22
+    },
+    "historical_evidence_preserved": "Baseline Git history and archived source-scoped reports;current views do not replace old verification history.",
+    "latest_directive_sha256": "87fc3972c6041a3c6d7155e68656eda9d2f8fcfdd09ae33d6d407b1e99cf068a",
+    "complete_platform": false
+  },
+  "clinical_validation": false,
+  "production_data_used": false,
+  "merged": false,
+  "deployed": false,
+  "apple_submitted": false,
+  "verification_scope": "Bounded synthetic implementations and actual general CDC education only;whole directive remains incomplete. See source-scoped local/live reports and actual CI. No clinical validation.",
+  "native_followup_source": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
+  "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41355525846",
+  "native_followup_status": "PASS",
+  "ci_evidence": {
+    "source": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
+    "run_id": 41355525846,
+    "regression": "PASS",
+    "dependency_audit": "PASS",
+    "ios_simulator": "PASS",
+    "final_pr_head_checks": "https://github.com/AIGeniusAlien/Raphael-AI/pull/1/checks"
+  },
+  "native_tests": {
+    "status": "PASS",
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0,
+    "unit": 15,
+    "ui": 12,
+    "source": "actualxcresulttool",
+    "commit": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce"
+  },
+  "native_server_evidence": {
+    "active_sessions": 0,
+    "expired_sessions_retained": 1,
+    "logins": 20,
+    "logouts": 16,
+    "provider_requests": 0,
+    "actual_https_main_app": true
+  },
+  "previous_verified_head": "4299e1337d850ea0d1f5662a8aa9be4e15e3aada",
+  "directive": "docs/directives/ULTIMATE_MASTER_PLATFORM_2026-11-01.md",
+  "live_evidence": {
+    "report": "docs/PLATFORM_LIVE_RESULTS.json",
+    "uses_mock_services": false,
+    "physician": "complete",
+    "patient": "complete",
+    "claim_screens": "passed",
+    "dimensions": 384,
+    "documents": 9,
+    "vectors": 48,
+    "generation_tokens": 2711,
+    "total_ms_single_sample": 3553.528,
+    "cost": null,
+    "clinical_validation": false
+  },
+  "live_scope_panel_evidence": "docs/FINAL_RC_LIVE_COVERAGE_BROWSER.json",
+  "live_coverage_evidence": "docs/FINAL_RC_EVIDENCE_COVERAGE.json",
+  "historical_ci_evidence": "docs/ULTIMATE_CI_RESULTS.json",
+  "native_timeout_evidence": "docs/FINAL_RC_NATIVE_TIMEOUT_CI.json",
+  "failed_or_cancelled_current_attempts": [
+    {
+      "run": 41337350610,
+      "result": "25pass1fail:recoverydisclosure"
+    },
+    {
+      "run": 41345149422,
+      "result": "25pass1fail:enroll403"
+    },
+    {
+      "run": 41347137588,
+      "result": "25pass1fail:keyboardfocusafterenroll200"
+    },
+    {
+      "run": 41348569560,
+      "result": "backendreadinesstimeout;Xcodenotrun"
+    },
+    {
+      "run": 41350847958,
+      "source": "def5e652d95e719fda7b6a9eccc205aeccbabeae",
+      "result": "regression/securityPASS;native25pass1fail0skip at test-only secure accessibility mask length assertion after enrollment200;removed unreliable assertion,authoritative server checks preserved;corrected-head CI required"
+    },
+    {
+      "run": 41352788712,
+      "source": "4069057407174def4c419641dbd23a9cd35a9b24",
+      "result": "regression/securityPASS;native25pass1fail0skip;newenrollment403;submittedpassword mismatch confirmed by boolean-only diagnostics;1active synthetic session;stableUIKitcredentialpair remediation requires actual27case rerun"
+    }
+  ],
+  "native_background_recovery": "PASS with one explicit visible user retry after reported stopped WebKit content;actual authenticated web identity,owner revocation,reused-factor rejection and relaunch remain required.",
+  "validation_scope_note": "Actual CI sourcee90c78b;later evidence-only commit is separately identified in PR1. First export run22passed1failed and cleanup failure are preserved;not counted as success. Source-scoped provider evidence remains historical,not a fresh live call.",
+  "later_validation_history": [
+    {
+      "source": "22b88630b64af24f7924d681ba368ec00d84937a",
+      "status": "FAIL",
+      "native_passed": 17,
+      "native_failed": 1,
+      "native_skipped": 0,
+      "authenticated_ui_passed": 9,
+      "cause": "WebKit bridge unit fixture10s startup deadline;measured cold process launch22.6s. Fixture bound corrected to30s;behavior assertions unchanged.",
+      "evidence": "docs/FINAL_RC_COLD_WEBKIT_FIXTURE_FAILURE_CI.json"
+    }
+  ],
+  "previous_native_acceptance_before_export": {
+    "implementation_commit": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1",
+    "native_tests": {
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "total": 18,
+      "source": "xcresulttool",
+      "commit": "4fd91160b5b05cc28457cd23f67a89b58fb3d5d1"
+    },
+    "native_server_evidence": {
+      "logins": 13,
+      "logouts": 11,
+      "session_401_responses": 6,
+      "active_sessions_remaining": 0,
+      "expired_sessions_retained": 1,
+      "provider_requests": 0,
+      "raw": {
+        "synthetic_sessions_remaining": 0,
+        "expired_sessions_retained": 1,
+        "provider_requests": 0,
+        "backend": "actual_main_app_https",
+        "audit_event_counts_including_provisioning": {
+          "list_patients": 14,
+          "login": 13,
+          "logout": 11,
+          "read_notes": 11,
+          "read_patient": 10
+        }
+      }
+    },
+    "native_followup_ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41284154400",
+    "ci_evidence": "docs/FINAL_RC_CI_RESULTS.json"
+  },
+  "native_screenshots": {
+    "exported_png_files": 17,
+    "source": "actual_xcresult_attachments",
+    "manual_visual_inspection": false,
+    "remaining_action": "Owner inspects GitHub artifact directly or enables artifact-host access;not physical-device or accessibility approval."
+  },
+  "configuration_presence_evidence": {
+    "source": "inherited actualprocess securebindings;no values printed",
+    "LLM_API_KEY": true,
+    "LLM_BASE_URL": true,
+    "LLM_MODEL": true,
+    "QDRANT_URL": true,
+    "QDRANT_API_KEY": true,
+    "RAPHAEL_MFA_ENCRYPTION_KEY": false,
+    "RAPHAEL_DOCUMENT_ENCRYPTION_KEY": false,
+    "RAPHAEL_BACKUP_ENCRYPTION_KEY": false,
+    "setup_start_skill_draft_saved": true,
+    "environment_published_by_this_run": false,
+    "credential_configuration_source": {
+      "LLM_API_KEY": "environment secret binding allowed to api.openai.com;actual authenticated requests passed",
+      "QDRANT_API_KEY": "environment secret binding scoped to configured QdrantCloud cluster;authenticated read-only operations passed",
+      "nonsecret_provider_settings": "Present in actual process;separate editable nonsecret binding metadata not exposed by config draft read."
+    }
+  },
+  "previous_acceptance_snapshot": "docs/PLATFORM_PREVIOUS_ACCEPTANCE.json",
+  "section_reconciliation": "docs/PLATFORM_DIRECTIVE_RECONCILIATION.json",
+  "acceptance_view": "docs/PLATFORM_REQUIREMENT_ACCEPTANCE.json",
+  "previous_native_acceptance_before_platform": {
+    "tests": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0,
+      "total": 23,
+      "source": "xcresulttool",
+      "commit": "e90c78b3174a76b2d1e235b671ff1d348e9d395e"
+    },
+    "ci": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41331977079",
+    "source": "e90c78b3174a76b2d1e235b671ff1d348e9d395e"
+  },
+  "application_increment_commit": "38efcba7120ea7046bbb96ceb6b2c85a4c1c42bf",
+  "supplemental_live_attachment": {
+    "source": "def5e652d95e719fda7b6a9eccc205aeccbabeae",
+    "report": "docs/PLATFORM_LIVE_ATTACHMENT_RESULTS.json",
+    "status": "PASS",
+    "uses_mock_services": false,
+    "generation_tokens": 3001,
+    "total_ms_single_sample": 4419.595,
+    "clinical_validation": false
+  },
+  "supplemental_concurrency": {
+    "source": "def5e652d95e719fda7b6a9eccc205aeccbabeae",
+    "report": "docs/PLATFORM_CONCURRENCY_RESULTS.json",
+    "status": "PASS",
+    "operations": 40,
+    "workers": 4,
+    "persisted_records": 20,
+    "production_capacity_validated": false
+  },
+  "cancelled_superseded_runs": [
+    {
+      "run": 41355482442,
+      "source": "958e3809d5d44d64047a380a13a6cb067182a83a",
+      "status": "CANCELLED",
+      "acceptance_proof": false
+    }
+  ],
+  "native_screenshots_current": {
+    "source": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
+    "manual_inspection": false,
+    "reason": "Automatic approval review rejected repeating the previously blocked native blob-host download;no further retry/workaround after rejection;actualCIannotations and localbrowserimages used."
+  },
+  "final_followup_scope": "Evidence/documentation/acceptance metadata only after b6ab21c;final commit identified inPR/finalresponse;no futureCIresult claimed.",
+  "latest_foundation_evidence": "docs/FOUNDATION_IMPLEMENTATION_CHECKPOINT.md",
+  "local_results": "docs/NOV7_LOCAL_RESULTS.json",
+  "historical_implementation_commit": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
+  "latest_implementation_commit": "Inspect current PR head;this pre-push evidence does not claim a future commit or CI outcome.",
+  "requirement_count": 1169,
+  "latest_execution_evidence": "docs/PUBLIC_RELEASE_ENGINEERING_2026-11-07.md",
+  "source_manifest": "docs/NOV7_SOURCE_MANIFEST.json"
+}

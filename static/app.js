@@ -1,5 +1,4 @@
 let state = {
-  env: null,
   patients: [],
   currentPatient: null,
   conversations: [],
@@ -19,17 +18,18 @@ async function api(path, opts = {}) {
   return r.headers.get("content-type")?.includes("application/json") ? r.json() : r.text();
 }
 
-function el(html) {
+function el(className, text = "") {
   const d = document.createElement("div");
-  d.innerHTML = html.trim();
-  return d.firstChild;
+  d.className = className;
+  d.textContent = text;
+  return d;
 }
 
 function renderPatients() {
   const holder = document.getElementById("patient-list");
   holder.innerHTML = "";
   state.patients.forEach(p => {
-    const n = el(`<div class="row ${state.currentPatient?.id===p.id?'active':''}">${p.name}</div>`);
+    const n = el(`row ${state.currentPatient?.id===p.id?'active':''}`, p.name);
     n.onclick = async () => {
       state.currentPatient = p;
       await loadConversations();
@@ -43,7 +43,7 @@ function renderConversations() {
   const holder = document.getElementById("conv-list");
   holder.innerHTML = "";
   state.conversations.forEach(c => {
-    const n = el(`<div class="row ${state.currentConversation?.id===c.id?'active':''}">${c.title}</div>`);
+    const n = el(`row ${state.currentConversation?.id===c.id?'active':''}`, c.title);
     n.onclick = async () => {
       state.currentConversation = c;
       await loadMessages();
@@ -58,19 +58,15 @@ function renderMessages() {
   list.innerHTML = "";
   document.getElementById("center-title").style.display = state.messages.length ? "none" : "flex";
   state.messages.forEach(m => {
-    const bubble = el(`
-      <div class="msg ${m.role}">
-        <div class="role">${m.role === 'assistant' ? 'Raphael' : 'You'}</div>
-        <div class="content"></div>
-      </div>`);
-    bubble.querySelector(".content").textContent = m.content;
+    const bubble = el(`msg ${m.role === 'assistant' ? 'assistant' : 'user'}`);
+    bubble.appendChild(el("role", m.role === 'assistant' ? 'Raphael' : 'You'));
+    bubble.appendChild(el("content", m.content));
     list.appendChild(bubble);
   });
   list.scrollTop = list.scrollHeight;
 }
 
 async function boot() {
-  state.env = await api("/api/env");
   await loadPatients();
   bindUI();
 }
@@ -84,7 +80,8 @@ async function loadPatients() {
 
 async function loadConversations() {
   state.conversations = await api(`/api/conversations?patient_id=${state.currentPatient.id}`);
-  if (!state.currentConversation && state.conversations.length) state.currentConversation = state.conversations[0];
+  state.currentConversation = state.conversations.find(c => c.id === state.currentConversation?.id)
+    || state.conversations[0] || null;
   renderConversations();
   if (state.currentConversation) await loadMessages();
   else {
@@ -174,9 +171,13 @@ function bindUI() {
     if (!q) { results.innerHTML = ""; return; }
     timer = setTimeout(async () => {
       const hits = await api(`/api/docs/search?q=${encodeURIComponent(q)}`);
-      results.innerHTML = hits.map(h =>
-        `<div class="hit"><div class="h-title">${h.title}</div><div class="h-snippet">${h.snippet}</div></div>`
-      ).join("");
+      results.innerHTML = "";
+      hits.forEach(h => {
+        const hit = el("hit");
+        hit.appendChild(el("h-title", h.title));
+        hit.appendChild(el("h-snippet", h.snippet));
+        results.appendChild(hit);
+      });
     }, 250);
   });
 }

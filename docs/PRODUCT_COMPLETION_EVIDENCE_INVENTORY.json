@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-11-01T01:51:46.299442+00:00",
+  "read_only": true,
+  "uses_mock_services": false,
+  "remote_writes": 0,
+  "conversation_retried": false,
+  "collection": "raphael_evidence_v1",
+  "embedding_model": "text-embedding-3-small",
+  "actual_dimensions": 384,
+  "collection_dimensions": 384,
+  "distance": "Cosine",
+  "status": "passed",
+  "total_vectors": 48,
+  "active_vectors": 48,
+  "active_documents": 9,
+  "active_source_urls": [
+    "https://www.cdc.gov/antibiotic-use/about/index.html",
+    "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/adult-outpatient.html",
+    "https://www.cdc.gov/antibiotic-use/hcp/clinical-care/pediatric-outpatient.html",
+    "https://www.cdc.gov/asthma/about/index.html",
+    "https://www.cdc.gov/diabetes/signs-symptoms/index.html",
+    "https://www.cdc.gov/flu/signs-symptoms/index.html",
+    "https://www.cdc.gov/heart-disease/about/heart-attack.html",
+    "https://www.cdc.gov/sepsis/about/index.html",
+    "https://www.cdc.gov/stroke/signs-symptoms/index.html"
+  ],
+  "model_tags_compatible": true
+}

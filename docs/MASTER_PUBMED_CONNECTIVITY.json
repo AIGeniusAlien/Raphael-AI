@@ -1,0 +1,9 @@
+{
+  "uses_mock_services": false,
+  "provider": "NCBI PubMed",
+  "scope": "read_only_bibliographic_metadata_no_collection_writes",
+  "full_text_reuse_verified": false,
+  "status": "blocked",
+  "error_type": "ProxyError",
+  "http_status": null
+}

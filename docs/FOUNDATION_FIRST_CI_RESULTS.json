@@ -1,0 +1,12 @@
+{
+  "head_sha": "13a1628bca3caec2754ff7036ab1cd74fc5729dd",
+  "run_id": 41388665250,
+  "url": "https://github.com/AIGeniusAlien/Raphael-AI/actions/runs/41388665250",
+  "regression": "FAIL",
+  "dependency_audit": "PASS",
+  "native": "IN PROGRESS at evidence snapshot;inspect final run separately",
+  "defect": "Account storage-status enlarged320px overflow under DejaVu Sans fallback;comma-joined escrow/rotation/retention/secure token measured325.303px and document339px.",
+  "fix": "Readable spaces and scoped overflow-wrap:anywhere;stronger actual Chromium enlarged fallback regression;unchanged width assertion.",
+  "corrected_local_result": "9 checks PASS;326Python29frontend8Chromium5mobile-source;no provider requests",
+  "clinical_validation": false
+}

@@ -1,0 +1,53 @@
+{
+  "failures": [
+    {
+      "kind": "APPLICATION_DEFECT",
+      "check": "initial combined attachment migration/chart-access regressions",
+      "outcome": "failed twice",
+      "cause": "Late intelligence installation attempted to add attachment middleware after application startup;first duplicate guard did not cover first late installation.",
+      "correction": "Register shared attachment limiter at common portal bootstrap;reuse on repeated/late intelligence install.",
+      "verification": "6chart-access regressions plus311fullPython pass;oversized413 after reinstall test."
+    },
+    {
+      "kind": "TEST_INTERACTION_DEFECT",
+      "check": "first attachment browser followup",
+      "outcome": "failed",
+      "cause": "Details disclosure was closed after reload;test had not opened the actual visible user control.",
+      "correction": "Open the existing disclosure through real browser interaction;no authorization bypass.",
+      "verification": "Corrected7Chromium workflow pass."
+    },
+    {
+      "kind": "UI_DEFECT",
+      "check": "combined feedback responsive browser",
+      "outcome": "1failureof7",
+      "cause": "Unbounded native select forced328px scrollWidth in320px enlarged-text viewport.",
+      "correction": "Scope feedback select widths/minwidth and wrap report text.",
+      "verification": "7Chromium pass including320px/20pxfont;selected actual screenshots inspected."
+    },
+    {
+      "kind": "TEST_CONFIGURATION_DEFECT",
+      "check": "first metrics persistence test",
+      "outcome": "1failureof5",
+      "cause": "Removing direct routes did not replace nested FastAPI included-router transport;test still used the injected fixture.",
+      "correction": "Separate real FastAPI transport app with same authorized context/session and mocked SDK events;exercise actual stream and SQLite write.",
+      "verification": "5metrics tests pass;actual live2711providerusage persisted independently."
+    },
+    {
+      "kind": "VERIFICATION_RUNNER_DEFECT",
+      "check": "first protected launcher restart smoke",
+      "outcome": "ConnectError",
+      "cause": "Launcher parent exited before uvicorn graceful shutdown;readiness could briefly reach the old listener.",
+      "correction": "Bounded read-only wait for owned oldlistener closure before restart;no authenticated mutation retry.",
+      "verification": "Corrected actual2start persistence/MFA/decryption smoke pass."
+    },
+    {
+      "kind": "NATIVE_TEST_ASSUMPTION_DEFECT",
+      "check": "def5e65 exact-head native run41350847958",
+      "outcome": "25pass1fail0skip",
+      "cause": "Test-only secure accessibility mask-length assertion;real enrollment had returned200. Mask is not authoritative credential input proof.",
+      "correction": "Remove mask-length inspection;retain keyboard visibility/actual typing and full real server password/TOTP/recovery/replay/disable/revocation checks.",
+      "verification": "Fresh corrected-head actual native CI required;earlier5be27f7full26pass remains separate."
+    }
+  ],
+  "failures_count_as_passes": false
+}

@@ -1,0 +1,8 @@
+ios/Configuration/Local.xcconfig
+ios/build/
+ios/*.xcarchive
+ios/*.ipa
+**/xcuserdata/
+**/.DS_Store
+**/__pycache__/
+artifacts/

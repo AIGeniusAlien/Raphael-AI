@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "repository": "AIGeniusAlien/Raphael-AI",
+  "branch": "fix/sqlite-startup-recovery",
+  "baseline_commit": "906700fc43ede1c834ff89fff46bee58ba2fd1d9",
+  "checkpoint_commit": "Resolve actual checkout HEAD;this pre-commit record identifies tested source by NOV7_SOURCE_MANIFEST.json.",
+  "draft_pr": "https://github.com/AIGeniusAlien/Raphael-AI/pull/1",
+  "local_evidence": "docs/NOV7_LOCAL_RESULTS.json",
+  "native_evidence": "Pending exact-source two-profile MacCI at authoring;final actual outcome recorded on draftPR1.",
+  "requirements": 1169,
+  "whole_directives_complete": false,
+  "completed_bounded_rows": [
+    "PLATFORM-010",
+    "PLATFORM-011",
+    "PLATFORM-012",
+    "PLATFORM-013",
+    "PLATFORM-014"
+  ],
+  "deployment_status": "not_deployed",
+  "public_approval": false,
+  "clinical_validation": false,
+  "scheduler_active": false,
+  "next_executable_work": "See PLATFORM_CONTINUATION.md;do not restart audit or discard current changes.",
+  "external_blockers": [
+    "RecognizedApple/hostingbindings absent",
+    "AppleHTTPScurrentguidance retrieval blocked",
+    "Defaultbranchworkflowregistration requires authorizedreview/merge",
+    "Qualifiedclinical/legal/rights/operationalacceptance incomplete"
+  ]
+}

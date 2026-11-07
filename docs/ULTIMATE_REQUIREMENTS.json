@@ -1,0 +1,12 @@
+{
+  "starting_commit": "de485cc58d6f2e6987f86ba8a40a9069f61ff87d",
+  "prior_ids_descriptions_preserved": 1146,
+  "current": 1151,
+  "states": {
+    "PARTIAL": 870,
+    "NOT_IMPLEMENTED": 191,
+    "VERIFIED": 68,
+    "IMPLEMENTED_UNVERIFIED": 22
+  },
+  "full_product_complete": false
+}

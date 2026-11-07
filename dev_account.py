@@ -28,7 +28,7 @@ def now():return datetime.now(timezone.utc).isoformat()
 def session_id(value):return str(uuid.uuid5(uuid.NAMESPACE_URL,'raphael-session-display:'+value))
 def session_active(c,request,user):
     token=request.cookies.get(COOKIE_NAME,'')
-    return bool(token and c.execute(text('SELECT 1 FROM dev_sessions s JOIN dev_users u ON u.id=s.user_id WHERE s.token_hash=:h AND s.user_id=:u AND s.expires_at>:at AND u.active=1'),{'h':hashlib.sha256(token.encode()).hexdigest(),'u':user['id'],'at':now()}).scalar())
+    return bool(token and c.execute(text('SELECT 1 FROM dev_sessions s JOIN dev_users u ON u.id=s.user_id WHERE s.token_hash=:h AND s.user_id=:u AND s.expires_at>:at AND u.active=1 AND u.tenant=:t AND u.role=:r'),{'t':user['tenant'],'r':user['role'],'h':hashlib.sha256(token.encode()).hexdigest(),'u':user['id'],'at':now()}).scalar())
 def init_account_schema(engine):
     _require_synthetic(engine)
     with engine.begin() as c:
@@ -57,7 +57,7 @@ class Review(BaseModel):
     note:str=Field(min_length=1,max_length=1000)
 
 
-def install_account(app,ctx,patient_ai_exporter=None):
+def install_account(app,ctx,patient_ai_exporter=None,procedure_exporter=None):
     from account_lifecycle import install_lifecycle
     install_lifecycle(app,ctx)
     engine=ctx.engine
@@ -96,9 +96,11 @@ def install_account(app,ctx,patient_ai_exporter=None):
         if current:response.delete_cookie(COOKIE_NAME,path='/api/dev',httponly=True,samesite='strict')
         return {'revoked':True,'current_session':current}
     @router.get('/export')
-    def export(user=Depends(ctx.user)):
+    def export(request:Request,user=Depends(ctx.user)):
         if user['role']!='patient':raise HTTPException(403,'This export is for your linked patient records only.')
         with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            if not session_active(c,request,user):raise HTTPException(401,'Session revoked; no export was produced.')
             params={'u':user['id'],'t':user['tenant']}
             def bounded(query):
                 rows=[dict(r) for r in c.execute(text(query+' LIMIT 501'),params).mappings()]
@@ -115,6 +117,7 @@ def install_account(app,ctx,patient_ai_exporter=None):
             result['intakes']=bounded('SELECT id,patient_id,kind,symptoms,snapshot,state,recipient_id,purpose,expires_at,allow_ai,created_at,authorized_at,revoked_at FROM dev_care_intakes WHERE owner_id=:u AND tenant=:t ORDER BY id')
             result['approved_summaries']=bounded("SELECT s.* FROM dev_care_summaries s JOIN dev_care_intakes i ON i.id=s.intake_id WHERE i.owner_id=:u AND i.tenant=:t AND s.status='approved' ORDER BY s.id")
             if patient_ai_exporter:result['patient_ai']=patient_ai_exporter(c,user)
+            if procedure_exporter:result['procedure_pathways']=procedure_exporter(c,user)
             result['file_bytes']='Download permitted files individually through their authenticated document routes.'
             encoded=json.dumps(result).encode()
             if len(encoded)>5*1024*1024:raise HTTPException(413,'Export exceeds5MiB;no partial file was produced.')

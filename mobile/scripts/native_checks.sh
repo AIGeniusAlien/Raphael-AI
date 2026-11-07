@@ -6,11 +6,20 @@ if ! command -v xcodebuild >/dev/null || ! command -v xcrun >/dev/null; then
   exit 2
 fi
 : "${RAPHAEL_SIMULATOR_DESTINATION:?Set an installed iOS Simulator destination,for example platform=iOS Simulator,id=YOUR-SIMULATOR-UDID}"
+native_profile="${RAPHAEL_NATIVE_PROFILE:-development}"
+case "$native_profile" in
+  development) test_selectors=(-only-testing:RaphaelTests -only-testing:RaphaelUITests/RaphaelUITests) ;;
+  consumer_candidate) test_selectors=(-only-testing:RaphaelUITests/ConsumerCandidateUITests) ;;
+  *) echo 'Unknown native test profile; refusing to run.' >&2; exit 2 ;;
+esac
+if [[ "$native_profile" == "consumer_candidate" && "${RAPHAEL_AUTHENTICATED_CI:-}" != "1" ]]; then
+  echo 'Candidate profile requires the actual authenticated HTTPS CI backend.' >&2; exit 2
+fi
 python3 "$mobile_root/scripts/project_audit.py"
 mkdir -p "$mobile_root/artifacts"
-result_dir="$(mktemp -d "$mobile_root/artifacts/NativeRun.XXXXXX")"
+result_dir="$(mktemp -d "$mobile_root/artifacts/NativeRun.$native_profile.XXXXXX")"
 build_settings=()
 if [[ "${RAPHAEL_AUTHENTICATED_CI:-}" == "1" ]]; then
   build_settings+=(RAPHAEL_SERVER_URL=https://raphael-ci.test RAPHAEL_SERVER_HOST=raphael-ci.test)
 fi
-xcodebuild -project "$mobile_root/ios/Raphael.xcodeproj" -scheme Raphael -configuration Debug -sdk iphonesimulator -destination "$RAPHAEL_SIMULATOR_DESTINATION" -derivedDataPath "$mobile_root/artifacts/DerivedData" -resultBundlePath "$result_dir/NativeTests.xcresult" CODE_SIGNING_ALLOWED=NO "${build_settings[@]}" -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 300 test
+xcodebuild -project "$mobile_root/ios/Raphael.xcodeproj" -scheme Raphael -configuration Debug -sdk iphonesimulator -destination "$RAPHAEL_SIMULATOR_DESTINATION" -derivedDataPath "$mobile_root/artifacts/DerivedData" -resultBundlePath "$result_dir/NativeTests.xcresult" CODE_SIGNING_ALLOWED=NO "${build_settings[@]}" "${test_selectors[@]}" -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 300 test

@@ -7,7 +7,8 @@
     "synthetic_local_web_demonstration": "PASS",
     "controlled_synthetic_testflight": "BLOCKED",
     "controlled_clinical_pilot": "FAIL",
-    "clinical_production": "FAIL"
+    "clinical_production": "FAIL",
+    "public_app_store": "FAIL"
   },
   "capabilities": [
     {
@@ -285,6 +286,30 @@
       "status": "PASS",
       "evidence": "docs/FOUNDATION_IMPLEMENTATION_CHECKPOINT.md",
       "scope": "Local source-bound lexical alias review/retrieval only;not standard ontology or clinical competence."
+    },
+    {
+      "id": "consumer_candidate_server_boundary",
+      "status": "PASS",
+      "evidence": "docs/NOV7_LOCAL_RESULTS.json",
+      "scope": "Synthetic patient preview only;not public approval."
+    },
+    {
+      "id": "durable_readonly_jobs",
+      "status": "PASS",
+      "evidence": "tests/test_dev_jobs.py;e2e/test_jobs_browser.py",
+      "scope": "Two bounded inventories;no permanent scheduler."
+    },
+    {
+      "id": "source_bound_procedure_coordination",
+      "status": "PASS",
+      "evidence": "tests/test_dev_procedures.py;e2e/test_procedures_browser.py",
+      "scope": "Synthetic checklist coordination;not medicalconsent/procedure performance or clinical validation."
+    },
+    {
+      "id": "native_release_policy_profiles",
+      "status": "BLOCKED",
+      "cause": "Source/projectchecks passed;actualtwo-profileMacCI pending at this authoring snapshot.",
+      "next_verification": "Inspect draftPR1 exactcommit currentCI;minimum28development+1candidate withzero failures/skips."
     }
   ],
   "requirements": {
@@ -515,8 +540,10 @@
   },
   "final_followup_scope": "Evidence/documentation/acceptance metadata only after b6ab21c;final commit identified inPR/finalresponse;no futureCIresult claimed.",
   "latest_foundation_evidence": "docs/FOUNDATION_IMPLEMENTATION_CHECKPOINT.md",
-  "local_results": "docs/FOUNDATION_LOCAL_RESULTS.json",
+  "local_results": "docs/NOV7_LOCAL_RESULTS.json",
   "historical_implementation_commit": "b6ab21ca78443a9a0fee105eeb149838e0a5d4ce",
   "latest_implementation_commit": "Inspect current PR head;this pre-push evidence does not claim a future commit or CI outcome.",
-  "requirement_count": 1164
+  "requirement_count": 1169,
+  "latest_execution_evidence": "docs/PUBLIC_RELEASE_ENGINEERING_2026-11-07.md",
+  "source_manifest": "docs/NOV7_SOURCE_MANIFEST.json"
 }

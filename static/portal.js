@@ -123,6 +123,8 @@
     byId('note-form').hidden = !clinician();
     byId('assessment-panel').hidden = !clinician();
     byId('knowledge-link').hidden = !clinician();
+    byId('jobs-link').hidden = !clinician();
+    byId('procedures-link').hidden = !(clinician() || user.role === 'patient');
     byId('intelligence-link').hidden = !clinician();
     byId('patient-ai-link').hidden = clinician();
     byId('chart-access-link').hidden = clinician();

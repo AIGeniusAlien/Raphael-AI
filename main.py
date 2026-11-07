@@ -490,7 +490,7 @@ def startup():
         from dev_runtime import migrate
         migrate(engine)
     try:
-        if QDRANT_URL:
+        if QDRANT_URL and app.state.release_policy.scope != "consumer_candidate":
             ensure_qdrant_collection()
     except Exception as e:
         # SDK/proxy exception messages can reflect URLs, headers or credentials.
@@ -827,9 +827,15 @@ if DEV_PORTAL:
     from dev_patient_ai import install_patient_ai,export_patient_ai
     from dev_account import install_account
     install_patient_ai(app,portal_context)
-    install_account(app,portal_context,patient_ai_exporter=export_patient_ai)
+    from dev_procedures import export_patient_procedures
+    install_account(app,portal_context,patient_ai_exporter=export_patient_ai,
+                    procedure_exporter=lambda c,user:export_patient_procedures(c,user,allow_instructions=app.state.release_policy.scope=="development"))
     from dev_feedback import install_feedback
     install_feedback(app,portal_context)
+    from dev_jobs import install_jobs
+    install_jobs(app,portal_context)
+    from dev_procedures import install_procedures
+    install_procedures(app,portal_context)
 
     @app.get("/api/dev/status")
     def portal_status(user=Depends(portal_context.user)):
@@ -839,3 +845,8 @@ if DEV_PORTAL:
                 "llm": "configured_not_validated" if LLM_BASE_URL and LLM_API_KEY and LLM_API_KEY != "EMPTY" else "not_configured",
                 "external_messaging": "disabled", "live_billing": "disabled",
                 "clinical_validation": "not_established"}
+
+
+# Install last so capability restrictions also cover direct routes and static files.
+from release_policy import install_release_policy
+install_release_policy(app,globals().get("portal_context"))

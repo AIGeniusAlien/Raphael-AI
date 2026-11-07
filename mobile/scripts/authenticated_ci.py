@@ -31,6 +31,7 @@ def prepare():
     (private/'control-token').write_text(control_token);(private/'control-token').chmod(0o600)
     from cryptography.fernet import Fernet
     mfa_key=Fernet.generate_key().decode()
+    (private/'mfa-key').write_text(mfa_key);(private/'mfa-key').chmod(0o600)
     (private/'redactions.json').write_text(json.dumps([password,control_token,mfa_key]));(private/'redactions.json').chmod(0o600)
     (private/'password').write_text(password)
     (private/'password').chmod(0o600)
@@ -121,7 +122,7 @@ def prepare():
         source=source.replace(marker,value)
     test.write_text(source)
     with open(os.environ['GITHUB_ENV'],'a') as output:
-        output.write('RAPHAEL_AUTHENTICATED_CI=1\nRAPHAEL_NATIVE_CI_PRIVATE='+str(private)+'\n')
+        output.write('RAPHAEL_AUTHENTICATED_CI=1\nRAPHAEL_NATIVE_PROFILE=development\nRAPHAEL_NATIVE_CI_PRIVATE='+str(private)+'\n')
     print('Actual synthetic main:app HTTPS ready;simulator trust installed;no provider requests.')
 
 
@@ -153,8 +154,75 @@ def cleanup():
     print('::notice title=Raphael synthetic input matching::'+json.dumps(matches),flush=True)
     print('::notice title=Raphael native backend verification::'+json.dumps({'synthetic_sessions_remaining':remaining,'expired_sessions_retained':total-remaining,'provider_requests':0,'backend':'actual_main_app_https','audit_event_counts_including_provisioning':events}),flush=True)
     if remaining!=0:raise RuntimeError('Native workflow left an active synthetic server session;logout was not verified.')
+    (private/'cleanup-verified').write_text('zero active synthetic sessions')
     print('Ephemeral synthetic backend stopped. Runner destroys its private database and test certificate.')
 
 
+def candidate():
+    """Restart the same isolated fixture under the real candidate boundary."""
+    if platform.system() != 'Darwin' or os.getenv('GITHUB_ACTIONS') != 'true':
+        raise SystemExit('Candidate fixture is restricted to ephemeral macOS GitHub Actions runners.')
+    private = Path(os.environ['RAPHAEL_NATIVE_CI_PRIVATE'])
+    if not (private/'cleanup-verified').is_file():
+        raise RuntimeError('Verified development cleanup must precede candidate startup.')
+    import sqlite3
+    from datetime import datetime, timezone
+    with sqlite3.connect('file:'+str(private/'synthetic.db')+'?mode=ro', uri=True) as connection:
+        remaining = connection.execute('SELECT count(*) FROM dev_sessions WHERE expires_at>?', (datetime.now(timezone.utc).isoformat(),)).fetchone()[0]
+    if remaining:
+        raise RuntimeError('Candidate startup refused: active synthetic sessions remain.')
+    (private/'cleanup-verified').unlink()
+    # Cleanup sent TERM to both prior process groups. Require the original
+    # unprivileged TLS listener to release its port before starting a successor.
+    import socket
+    deadline = time.monotonic()+15
+    while True:
+        listening = False
+        for port in (443, 8443):
+            with socket.socket() as probe:
+                listening = listening or probe.connect_ex(('127.0.0.1', port)) == 0
+        if not listening: break
+        if time.monotonic() > deadline: raise RuntimeError('Previous synthetic backend did not stop.')
+        time.sleep(.2)
+    environment = {key:value for key,value in os.environ.items() if key in ('PATH','HOME','TMPDIR','LANG')}
+    environment.update({'DATABASE_URL':'sqlite:///'+str(private/'synthetic.db'), 'RAPHAEL_DEV_PORTAL':'1',
+        'RAPHAEL_DEV_SYNTHETIC_ONLY':'1', 'RAPHAEL_MFA_ENCRYPTION_KEY':(private/'mfa-key').read_text(),
+        'RAPHAEL_RELEASE_SCOPE':'consumer_candidate', 'PYTHONDONTWRITEBYTECODE':'1', 'GITHUB_ACTIONS':'true'})
+    forwarder = shutil.which('socat')
+    if not forwarder: raise RuntimeError('Isolated loopback TLS forwarder unavailable.')
+    command = [sys.executable,str(ROOT/'mobile/scripts/ci_backend.py'),'--key',str(private/'key.pem'),'--cert',str(private/'certificate.pem')]
+    with (private/'backend.log').open('a') as log:
+        process = subprocess.Popen(command,cwd=ROOT,env=environment,stdout=log,stderr=log,start_new_session=True)
+    with (private/'forwarder.log').open('a') as log:
+        bridge = subprocess.Popen(['sudo','-n',forwarder,'TCP-LISTEN:443,bind=127.0.0.1,reuseaddr,fork','TCP:127.0.0.1:8443'],stdout=log,stderr=log,start_new_session=True)
+    (private/'process.json').write_text(json.dumps({'server_group':process.pid,'forwarder_group':bridge.pid}))
+    import ssl
+    import httpx
+    tls = ssl.create_default_context(cafile=str(private/'certificate.pem'))
+    with httpx.Client(base_url='https://raphael-ci.test',verify=tls,trust_env=False,timeout=10) as client:
+        deadline = time.monotonic()+60
+        while True:
+            if process.poll() is not None or bridge.poll() is not None or time.monotonic()>deadline:
+                raise RuntimeError('Actual candidate HTTPS backend failed readiness.')
+            try:
+                response = client.get('/api/dev/release-policy')
+                if response.status_code == 200:
+                    manifest = response.json()
+                    if manifest.get('scope') != 'consumer_candidate' or manifest.get('api_version') != '1':
+                        raise RuntimeError('Candidate startup returned an unexpected release policy.')
+                    client.get('/readyz').raise_for_status()
+                    process.send_signal(signal.SIGUSR1)
+                    break
+            except httpx.TransportError: pass
+            time.sleep(.2)
+    with open(os.environ['GITHUB_ENV'],'a') as output:
+        output.write('RAPHAEL_NATIVE_PROFILE=consumer_candidate\n')
+    print('Actual main:app restarted with consumer candidate boundary;existing synthetic database and simulator TLS trust reused.')
+
+
 if __name__=='__main__':
-    cleanup() if sys.argv[1:]==['cleanup'] else prepare()
+    commands = {'prepare':prepare, 'cleanup':cleanup, 'candidate':candidate}
+    arguments = sys.argv[1:]
+    if len(arguments)>1 or (arguments and arguments[0] not in commands):
+        raise SystemExit('Expected prepare, cleanup or candidate.')
+    commands[arguments[0] if arguments else 'prepare']()

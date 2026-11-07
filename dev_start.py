@@ -32,7 +32,7 @@ def runtime_environment(database,live=False,document_key_file=None,mfa_key_file=
 
 def runtime_requirements():
     # Same lightweight dependency set exercised by actual native backend CI.
-    excluded=('sentence-transformers==','transformers==','filelock==','setuptools==')
+    excluded=('torch==','sentence-transformers==','transformers==','filelock==','setuptools==')
     return '\n'.join(line for line in (ROOT/'requirements.txt').read_text().splitlines() if not line.startswith(excluded))+'\n'
 
 def main():
@@ -48,7 +48,7 @@ def main():
             runtime=target/'runtime-requirements.txt';runtime.write_text(runtime_requirements())
             installs=[[str(python),'-m','pip','install','-r',str(runtime),'-c','requirements.lock']]
         else:
-            torch=['torch==2.6.0']
+            torch=['torch==2.15.0']
             if sys.platform!='darwin':torch+=['--index-url','https://download.pytorch.org/whl/cpu']
             dependencies=['--no-deps','-r','requirements.lock'] if sys.platform.startswith('linux') else ['-r','requirements.txt','-c','requirements.lock']
             installs=[[str(python),'-m','pip','install',*torch],[str(python),'-m','pip','install',*dependencies]]

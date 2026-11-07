@@ -52,7 +52,7 @@ struct PatientApplication: View {
                 // navigation-bar ownership during configured launch on iOS18.5.
                 HStack {
                     Menu {
-                        ForEach(session.identity?.role == "clinician" ? [.dashboard, .record, .intelligence, .messages, .appointments, .account] : PatientSection.allCases) { section in
+                        ForEach(session.availableSections) { section in
                             Button(section.title, systemImage: section.symbol) { session.open(section) }
                         }
                     } label: { Label("Sections", systemImage: "line.3.horizontal") }

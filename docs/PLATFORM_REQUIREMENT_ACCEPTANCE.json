@@ -1,12 +1,13 @@
 {
   "schema_version": 1,
   "source": "docs/ENGINEERING_LEDGER.json",
-  "requirement_count": 1164,
+  "requirement_count": 1169,
   "status_counts": {
     "IN PROGRESS": 872,
     "NOT STARTED": 189,
-    "VERIFIED IN SYNTHETIC TESTING": 81,
-    "IMPLEMENTED BUT UNVERIFIED": 22
+    "VERIFIED IN SYNTHETIC TESTING": 85,
+    "IMPLEMENTED BUT UNVERIFIED": 22,
+    "VERIFIED IN AUTHORIZED INTEGRATION TESTING": 1
   },
   "clinical_validation": false,
   "individual_original_source_and_risk_review_complete": false,
@@ -55882,6 +55883,269 @@
         "release_gate_record": "docs/RAPHAEL_FINAL_ACCEPTANCE.json"
       },
       "verification_evidence": "7 real API regressions and actual Chromium pending/review/alias/citation/revoke journey",
+      "status_scope": "Verification is bounded to the preserved row acceptance/evidence;IN PROGRESS includes historical partial implementation and does not assert an active assigned worker. No scope deferral is inferred."
+    },
+    {
+      "requirement_id": "PLATFORM-010",
+      "description": "Consumer-candidate capability boundary and provisioned patient record preview",
+      "state": "VERIFIED",
+      "code_location": "release_policy.py;static/release-preview.*;main.py",
+      "test_coverage": "Real API bypass,session/role-race,pause and Chromium checks pending consolidated acceptance",
+      "external_dependency": "Explicit synthetic portal and provisioned patient;no public authorization",
+      "remaining_work": "Self-registration,recovery,complete erasure,approved hosting/signing/legal/clinical acceptance remain;not public-release approval",
+      "acceptance_criteria": "Enforce exact HTTP/static allowlists and patient ownership;withhold changed-identity response bodies;paused exports fail closed;useful record/profile/feedback preview",
+      "next_implementation_action": "Self-registration,recovery,complete erasure,approved hosting/signing/legal/clinical acceptance remain;not public-release approval",
+      "priority": "P0",
+      "milestone": "M1/M5",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim.",
+      "verification_status": "VERIFIED IN SYNTHETIC TESTING",
+      "original_source": {
+        "directives": [
+          "docs/directives/DEFINITIVE_PUBLIC_LAUNCH_2026-11-07.md",
+          "docs/directives/FULL_PLATFORM_ENGINEERING_2026-11-07.md"
+        ],
+        "first_directive_phases": [
+          8,
+          12,
+          14
+        ],
+        "reconciliation": "docs/2026-11-07_DIRECTIVE_RECONCILIATION.json",
+        "preserved_canonical_matrix": "docs/REQUIREMENTS_MATRIX.md",
+        "line": 1246,
+        "requirement_id": "PLATFORM-010",
+        "historical_directive_attribution": "See preserved master directives;individual original-upload attribution has not been independently reconciled."
+      },
+      "functional_area": "Release-scoped consumer engineering preview",
+      "risk_classification": "UNREVIEWED:qualified intended-use assessment required.",
+      "implementation_files": "release_policy.py;static/release-preview.*;main.py",
+      "api_contracts": "GET /api/dev/release-policy;candidate fullmethod/path allowlist;role/session response-start fence;operator pause excludes record export.",
+      "ui_routes": "/static/release-preview.html;native dashboard respects release manifest (native execution pendingCI).",
+      "data_contracts": "Version1 policy fingerprint covers routes/static/continuity;unknown scopes/version/clinical paths fail closed;provisioned synthetic patient only.",
+      "verification_artifacts": "Real API bypass,session/role-race,pause and Chromium checks pending consolidated acceptance",
+      "clinical_validation_requirements": "Independent intended-use,population,safety and clinician review required;not established by software tests.",
+      "release_gate": "docs/RAPHAEL_FINAL_ACCEPTANCE.json;docs/DATABASE_STORAGE_CHECKPOINT.md",
+      "external_blockers": "Explicit synthetic portal and provisioned patient;no public authorization",
+      "canonical_state": "VERIFIED",
+      "status": "VERIFIED IN SYNTHETIC TESTING",
+      "exact_required_behavior": "Consumer-candidate capability boundary and provisioned patient record preview",
+      "safety_classification": "UNREVIEWED:qualified intended-use risk assessment required;software verification does not establish clinical safety.",
+      "root_cause_type": "NONE_WITHIN_RECORDED_SCOPE",
+      "owner_controlled_blockers": {
+        "assessment": "Not individually adjudicated;dependencies must not be assumed to be external-only blockers.",
+        "recorded_dependencies": "Explicit synthetic portal and provisioned patient;no public authorization",
+        "release_gate_record": "docs/RAPHAEL_FINAL_ACCEPTANCE.json"
+      },
+      "verification_evidence": "Real API bypass,session/role-race,pause and Chromium checks pending consolidated acceptance",
+      "status_scope": "Verification is bounded to the preserved row acceptance/evidence;IN PROGRESS includes historical partial implementation and does not assert an active assigned worker. No scope deferral is inferred."
+    },
+    {
+      "requirement_id": "PLATFORM-011",
+      "description": "Durable bounded read-only background queue and independent worker",
+      "state": "VERIFIED",
+      "code_location": "dev_jobs.py;static/jobs.*;dev_runtime.py",
+      "test_coverage": "10 targeted API/process/SQLCipher tests and actual Chromium workflow;combined acceptance pending",
+      "external_dependency": "Dedicated synthetic SQLite;separate operator worker;clinician/admin scoped job kinds",
+      "remaining_work": "Two read-only inventories only;not multistep clinical agents,external notifications,permanent scheduler or production availability",
+      "acceptance_criteria": "Idempotent enqueue;owner/tenant/role checks;transactional leases,fencing,retry/dead-letter,cancel,crash recovery and persistent history;no arbitrary actions",
+      "next_implementation_action": "Two read-only inventories only;not multistep clinical agents,external notifications,permanent scheduler or production availability",
+      "priority": "P0",
+      "milestone": "M1/M5",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim.",
+      "verification_status": "VERIFIED IN SYNTHETIC TESTING",
+      "original_source": {
+        "directives": [
+          "docs/directives/DEFINITIVE_PUBLIC_LAUNCH_2026-11-07.md",
+          "docs/directives/FULL_PLATFORM_ENGINEERING_2026-11-07.md"
+        ],
+        "first_directive_phases": [
+          7,
+          11,
+          13
+        ],
+        "reconciliation": "docs/2026-11-07_DIRECTIVE_RECONCILIATION.json",
+        "preserved_canonical_matrix": "docs/REQUIREMENTS_MATRIX.md",
+        "line": 1247,
+        "requirement_id": "PLATFORM-011",
+        "historical_directive_attribution": "See preserved master directives;individual original-upload attribution has not been independently reconciled."
+      },
+      "functional_area": "Durable read-only background operation",
+      "risk_classification": "UNREVIEWED:qualified intended-use assessment required.",
+      "implementation_files": "dev_jobs.py;static/jobs.*;dev_runtime.py",
+      "api_contracts": "GET/POST /api/dev/jobs;GET /jobs/status and /jobs/{id};POST /jobs/{id}/cancel;separate bounded python -m dev_jobs worker.",
+      "ui_routes": "/static/jobs.html;clinician/admin only with job-kind ownership.",
+      "data_contracts": "dev_jobs,dev_job_events,dev_job_worker_runs;UUID dedup;500history cap;3attempts;lease/fencing;owner revalidation;no arbitrary handler/network/clinical action.",
+      "verification_artifacts": "10 targeted API/process/SQLCipher tests and actual Chromium workflow;combined acceptance pending",
+      "clinical_validation_requirements": "Independent intended-use,population,safety and clinician review required;not established by software tests.",
+      "release_gate": "docs/RAPHAEL_FINAL_ACCEPTANCE.json;docs/DATABASE_STORAGE_CHECKPOINT.md",
+      "external_blockers": "Dedicated synthetic SQLite;separate operator worker;clinician/admin scoped job kinds",
+      "canonical_state": "VERIFIED",
+      "status": "VERIFIED IN SYNTHETIC TESTING",
+      "exact_required_behavior": "Durable bounded read-only background queue and independent worker",
+      "safety_classification": "UNREVIEWED:qualified intended-use risk assessment required;software verification does not establish clinical safety.",
+      "root_cause_type": "NONE_WITHIN_RECORDED_SCOPE",
+      "owner_controlled_blockers": {
+        "assessment": "Not individually adjudicated;dependencies must not be assumed to be external-only blockers.",
+        "recorded_dependencies": "Dedicated synthetic SQLite;separate operator worker;clinician/admin scoped job kinds",
+        "release_gate_record": "docs/RAPHAEL_FINAL_ACCEPTANCE.json"
+      },
+      "verification_evidence": "10 targeted API/process/SQLCipher tests and actual Chromium workflow;combined acceptance pending",
+      "status_scope": "Verification is bounded to the preserved row acceptance/evidence;IN PROGRESS includes historical partial implementation and does not assert an active assigned worker. No scope deferral is inferred."
+    },
+    {
+      "requirement_id": "PLATFORM-012",
+      "description": "Reviewed source-version-bound patient procedure checklist coordination",
+      "state": "VERIFIED",
+      "code_location": "dev_procedures.py;static/procedures.*;dev_account.py",
+      "test_coverage": "15 targeted API tests and actual main Chromium journey;combined acceptance pending",
+      "external_dependency": "Approved same-tenant source/template;explicit clinician publication;patient coordination authorization",
+      "remaining_work": "No medical content seeded;not actual procedure performance,medical consent,comprehensive procedure coverage or independent clinical validation",
+      "acceptance_criteria": "Immutable reviewed templates/snapshots;role/patient/consent isolation;session recheck;optimistic updates;source revocation;signoff;restricted own-record export",
+      "next_implementation_action": "No medical content seeded;not actual procedure performance,medical consent,comprehensive procedure coverage or independent clinical validation",
+      "priority": "P1",
+      "milestone": "M2/M3",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim.",
+      "verification_status": "VERIFIED IN SYNTHETIC TESTING",
+      "original_source": {
+        "directives": [
+          "docs/directives/DEFINITIVE_PUBLIC_LAUNCH_2026-11-07.md",
+          "docs/directives/FULL_PLATFORM_ENGINEERING_2026-11-07.md"
+        ],
+        "first_directive_phases": [
+          2,
+          5,
+          12
+        ],
+        "reconciliation": "docs/2026-11-07_DIRECTIVE_RECONCILIATION.json",
+        "preserved_canonical_matrix": "docs/REQUIREMENTS_MATRIX.md",
+        "line": 1248,
+        "requirement_id": "PLATFORM-012",
+        "historical_directive_attribution": "See preserved master directives;individual original-upload attribution has not been independently reconciled."
+      },
+      "functional_area": "Reviewed source-bound procedure checklist coordination",
+      "risk_classification": "UNREVIEWED:qualified intended-use assessment required.",
+      "implementation_files": "dev_procedures.py;static/procedures.*;dev_account.py",
+      "api_contracts": "GET/POST /api/dev/procedures/templates;approve/revoke;patient runs;publish/authorization/steps/complete;own account export callback.",
+      "ui_routes": "/static/procedures.html;clinician/patient roles;private drafts;explicit publication and coordination authorization.",
+      "data_contracts": "Immutable source-version templates/run snapshots;revision conflicts;append-only events;source/template revocation;transaction-time session/role check;candidate export withholds instructions.",
+      "verification_artifacts": "15 targeted API tests and actual main Chromium journey;combined acceptance pending",
+      "clinical_validation_requirements": "Independent intended-use,population,safety and clinician review required;not established by software tests.",
+      "release_gate": "docs/RAPHAEL_FINAL_ACCEPTANCE.json;docs/DATABASE_STORAGE_CHECKPOINT.md",
+      "external_blockers": "Approved same-tenant source/template;explicit clinician publication;patient coordination authorization",
+      "canonical_state": "VERIFIED",
+      "status": "VERIFIED IN SYNTHETIC TESTING",
+      "exact_required_behavior": "Reviewed source-version-bound patient procedure checklist coordination",
+      "safety_classification": "UNREVIEWED:qualified intended-use risk assessment required;software verification does not establish clinical safety.",
+      "root_cause_type": "NONE_WITHIN_RECORDED_SCOPE",
+      "owner_controlled_blockers": {
+        "assessment": "Not individually adjudicated;dependencies must not be assumed to be external-only blockers.",
+        "recorded_dependencies": "Approved same-tenant source/template;explicit clinician publication;patient coordination authorization",
+        "release_gate_record": "docs/RAPHAEL_FINAL_ACCEPTANCE.json"
+      },
+      "verification_evidence": "15 targeted API tests and actual main Chromium journey;combined acceptance pending",
+      "status_scope": "Verification is bounded to the preserved row acceptance/evidence;IN PROGRESS includes historical partial implementation and does not assert an active assigned worker. No scope deferral is inferred."
+    },
+    {
+      "requirement_id": "PLATFORM-013",
+      "description": "Read-only engineering audit CI metadata and proposed scheduled maintenance",
+      "state": "VERIFIED",
+      "code_location": "scripts/engineering_watch.py;.github/workflows/engineering-watch.yml;.github/workflows/development.yml",
+      "test_coverage": "5 tests and actual authenticated GitHub metadata audit;remote CI integration pending",
+      "external_dependency": "GitHub actions-read;trusted code;default-branch registration for schedule",
+      "remaining_work": "Daily schedule inactive until reviewed default-branch merge;not autonomous coding,24/7 execution or automatic release approval",
+      "acceptance_criteria": "Bounded source-scoped audit;canonical requirement proposals;no clinical database,code changes,merge or deployment;exclusive reports",
+      "next_implementation_action": "Daily schedule inactive until reviewed default-branch merge;not autonomous coding,24/7 execution or automatic release approval",
+      "priority": "P1",
+      "milestone": "M5/M6",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim.",
+      "verification_status": "VERIFIED IN AUTHORIZED INTEGRATION TESTING",
+      "original_source": {
+        "directives": [
+          "docs/directives/DEFINITIVE_PUBLIC_LAUNCH_2026-11-07.md",
+          "docs/directives/FULL_PLATFORM_ENGINEERING_2026-11-07.md"
+        ],
+        "first_directive_phases": [
+          11,
+          15
+        ],
+        "reconciliation": "docs/2026-11-07_DIRECTIVE_RECONCILIATION.json",
+        "preserved_canonical_matrix": "docs/REQUIREMENTS_MATRIX.md",
+        "line": 1249,
+        "requirement_id": "PLATFORM-013",
+        "historical_directive_attribution": "See preserved master directives;individual original-upload attribution has not been independently reconciled."
+      },
+      "functional_area": "Read-only engineering audit and proposed maintenance scheduler",
+      "risk_classification": "UNREVIEWED:qualified intended-use assessment required.",
+      "implementation_files": "scripts/engineering_watch.py;.github/workflows/engineering-watch.yml;.github/workflows/development.yml",
+      "api_contracts": "CLI python -m scripts.engineering_watch --github;GitHub actions-read metadata only;no code mutation or clinical database.",
+      "ui_routes": "CI engineering-watch artifact;no autonomous clinical or code-action UI.",
+      "data_contracts": "Bounded canonical ledger snapshot/proposals,exact head-scoped run metadata,exclusive private report;one shot is not persistent scheduling.",
+      "verification_artifacts": "5 tests and actual authenticated GitHub metadata audit;remote CI integration pending",
+      "clinical_validation_requirements": "Independent intended-use,population,safety and clinician review required;not established by software tests.",
+      "release_gate": "docs/RAPHAEL_FINAL_ACCEPTANCE.json;docs/DATABASE_STORAGE_CHECKPOINT.md",
+      "external_blockers": "GitHub actions-read;trusted code;default-branch registration for schedule",
+      "canonical_state": "VERIFIED",
+      "status": "VERIFIED IN AUTHORIZED INTEGRATION TESTING",
+      "exact_required_behavior": "Read-only engineering audit CI metadata and proposed scheduled maintenance",
+      "safety_classification": "UNREVIEWED:qualified intended-use risk assessment required;software verification does not establish clinical safety.",
+      "root_cause_type": "NONE_WITHIN_RECORDED_SCOPE",
+      "owner_controlled_blockers": {
+        "assessment": "Not individually adjudicated;dependencies must not be assumed to be external-only blockers.",
+        "recorded_dependencies": "GitHub actions-read;trusted code;default-branch registration for schedule",
+        "release_gate_record": "docs/RAPHAEL_FINAL_ACCEPTANCE.json"
+      },
+      "verification_evidence": "5 tests and actual authenticated GitHub metadata audit;remote CI integration pending",
+      "status_scope": "Verification is bounded to the preserved row acceptance/evidence;IN PROGRESS includes historical partial implementation and does not assert an active assigned worker. No scope deferral is inferred."
+    },
+    {
+      "requirement_id": "PLATFORM-014",
+      "description": "Patched local ML dependencies and fail-closed local-version advisory audit",
+      "state": "VERIFIED",
+      "code_location": "requirements.txt;requirements.lock;dev_start.py;scripts/audit_dependency_versions.py",
+      "test_coverage": "4 dependency/offline ML compatibility tests;normalized Torch2.15.0 audit;fresh full audit recorded separately",
+      "external_dependency": "Official CPU wheels;public PyPI advisory metadata;optional lightweight profile",
+      "remaining_work": "Upstream advisory metadata is not independent binary/supply-chain attestation or clinical model validation",
+      "acceptance_criteria": "Replace vulnerable upstream2.6 baseline;preserve real local adapters;normalize local build advisory lookup;metadata errors fail gate;retain lightweight runtime",
+      "next_implementation_action": "Upstream advisory metadata is not independent binary/supply-chain attestation or clinical model validation",
+      "priority": "P0",
+      "milestone": "M1/M5",
+      "verification_scope": "Only the bounded behavior and evidence in this row;historical verification is not a current full-product or clinical-validation claim.",
+      "verification_status": "VERIFIED IN SYNTHETIC TESTING",
+      "original_source": {
+        "directives": [
+          "docs/directives/DEFINITIVE_PUBLIC_LAUNCH_2026-11-07.md",
+          "docs/directives/FULL_PLATFORM_ENGINEERING_2026-11-07.md"
+        ],
+        "first_directive_phases": [
+          12,
+          14
+        ],
+        "reconciliation": "docs/2026-11-07_DIRECTIVE_RECONCILIATION.json",
+        "preserved_canonical_matrix": "docs/REQUIREMENTS_MATRIX.md",
+        "line": 1250,
+        "requirement_id": "PLATFORM-014",
+        "historical_directive_attribution": "See preserved master directives;individual original-upload attribution has not been independently reconciled."
+      },
+      "functional_area": "Local ML dependency security and compatibility",
+      "risk_classification": "UNREVIEWED:qualified intended-use assessment required.",
+      "implementation_files": "requirements.txt;requirements.lock;dev_start.py;scripts/audit_dependency_versions.py",
+      "api_contracts": "scripts/audit_dependency_versions.py public upstream advisory query for installed local versions;errors fail gate.",
+      "ui_routes": "No clinical UI/model capability introduced.",
+      "data_contracts": "Official Torch2.15.0+cpu and Sympy1.14;public base version advisories;real offline tensor/BERT/BoW adapter checks;lightweight startup still excludes localML.",
+      "verification_artifacts": "4 dependency/offline ML compatibility tests;normalized Torch2.15.0 audit;fresh full audit recorded separately",
+      "clinical_validation_requirements": "Independent intended-use,population,safety and clinician review required;not established by software tests.",
+      "release_gate": "docs/RAPHAEL_FINAL_ACCEPTANCE.json;docs/DATABASE_STORAGE_CHECKPOINT.md",
+      "external_blockers": "Official CPU wheels;public PyPI advisory metadata;optional lightweight profile",
+      "canonical_state": "VERIFIED",
+      "status": "VERIFIED IN SYNTHETIC TESTING",
+      "exact_required_behavior": "Patched local ML dependencies and fail-closed local-version advisory audit",
+      "safety_classification": "UNREVIEWED:qualified intended-use risk assessment required;software verification does not establish clinical safety.",
+      "root_cause_type": "NONE_WITHIN_RECORDED_SCOPE",
+      "owner_controlled_blockers": {
+        "assessment": "Not individually adjudicated;dependencies must not be assumed to be external-only blockers.",
+        "recorded_dependencies": "Official CPU wheels;public PyPI advisory metadata;optional lightweight profile",
+        "release_gate_record": "docs/RAPHAEL_FINAL_ACCEPTANCE.json"
+      },
+      "verification_evidence": "4 dependency/offline ML compatibility tests;normalized Torch2.15.0 audit;fresh full audit recorded separately",
       "status_scope": "Verification is bounded to the preserved row acceptance/evidence;IN PROGRESS includes historical partial implementation and does not assert an active assigned worker. No scope deferral is inferred."
     }
   ]

@@ -15,6 +15,7 @@ openai==2.6.1
 
 # Vector store + embeddings + PDF parsing
 qdrant-client==1.9.1
+torch==2.15.0
 sentence-transformers==6.2.0
 numpy==1.26.4
 pypdf==6.21.4

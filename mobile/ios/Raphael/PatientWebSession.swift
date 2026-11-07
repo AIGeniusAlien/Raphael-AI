@@ -14,6 +14,8 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     @Published var authenticationProblem: String?
     @Published private(set) var recordChoices: [NativeRecordChoice] = []
     @Published private(set) var pendingRecordSection: PatientSection?
+    @Published private(set) var releasePolicy: NativeReleasePolicy?
+    var availableSections: [PatientSection] { releasePolicy?.sections(role: identity?.role ?? "") ?? [] }
     private var navigationEpoch = 0
     private var recordAuthenticationEpoch = 0
     private var authenticationEpoch = 0
@@ -80,7 +82,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     }
 
     func open(_ section: PatientSection) {
-        guard identity != nil else { return }
+        guard identity != nil, availableSections.contains(section) else { return }
         finishConfirmation(false)
         navigationEpoch += 1
         cancelRecordSelection()
@@ -207,6 +209,13 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             guard (try? JSONDecoder().decode(NativeIdentity.self,from:data)) == expected else {
                 recoveringWorkspace = false; await clearAuthentication(); authenticationProblem = "Your session changed. Sign in again."; return
             }
+            let (policyData, policyResponse) = try await request("api/dev/release-policy")
+            guard auth == authenticationEpoch, identity == expected,
+                  attempt == foregroundProbeEpoch, recoveringWorkspace else { return }
+            guard policyResponse.statusCode == 200, policyResponse.mimeType == "application/json",
+                  (try? NativeReleasePolicy.validated(policyData)) == releasePolicy else {
+                recoveringWorkspace = false; await clearAuthentication(); authenticationProblem = "Release policy verification failed or changed. Sign in again."; return
+            }
             guard let cookie = nativeCookie, NativeIdentity.accepts(cookie,origin:configuration.origin) else {
                 recoveringWorkspace = false; await clearAuthentication(); authenticationProblem = "Your session ended. Sign in again."; return
             }
@@ -255,7 +264,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
 
     private func exportContext(_ expected: NativeIdentity, _ epoch: Int) throws {
         guard !Task.isCancelled, nativeExportEpoch == epoch, identity == expected,
-              expected.role == "patient", !authenticating else { throw URLError(.cancelled) }
+              expected.role == "patient", releasePolicy?.allowsExport == true, !authenticating else { throw URLError(.cancelled) }
     }
 
     /// Every transfer fetches a new own-record snapshot and rechecks the same
@@ -278,7 +287,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     }
 
     func prepareNativeExport() {
-        guard let expected = identity, expected.role == "patient", !nativeExportBusy else { return }
+        guard let expected = identity, expected.role == "patient", releasePolicy?.allowsExport == true, !nativeExportBusy else { return }
         cancelNativeExport()
         let epoch = nativeExportEpoch
         nativeExportBusy = true;nativeExportStatus = "Preparing an authorized, bounded record snapshot…"
@@ -345,7 +354,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     /// Cancelling UI work cannot undo a server mutation: refresh status after
     /// interruption rather than claiming that enrollment/disable was rolled back.
     func manageMFA(_ operation: NativeMFAOperation, password: String = "", code: String = "") async throws -> NativeMFAReply {
-        guard let expected = identity, !authenticating else { throw NativeMFAError.session }
+        guard let expected = identity, releasePolicy?.allowsMFA == true, !authenticating else { throw NativeMFAError.session }
         let epoch = authenticationEpoch
         var body: Data?
         if operation != .status {
@@ -386,6 +395,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         var request = URLRequest(url: self.configuration.origin.appendingPathComponent(path))
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("1", forHTTPHeaderField: "X-Raphael-API-Version")
         request.setValue(self.configuration.origin.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/")), forHTTPHeaderField: "Origin")
         // Native authentication must not await a not-yet-mounted WebKit process.
         // This private cookie is memory-only and scoped identically to WebKit.
@@ -417,6 +427,11 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         let epoch = authenticationEpoch
         defer { authenticating = false }
         do {
+            let (policyData, policyResponse) = try await request("api/dev/release-policy")
+            guard policyResponse.statusCode == 200, policyResponse.mimeType == "application/json" else { throw URLError(.badServerResponse) }
+            let policy = try NativeReleasePolicy.validated(policyData)
+            guard epoch == authenticationEpoch else { return }
+            releasePolicy = policy
             let (data, response) = try await request("api/dev/login", body: credentials)
             guard epoch == authenticationEpoch else { return }
             guard response.statusCode == 200 else {
@@ -424,7 +439,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
                 return
             }
             let user = try JSONDecoder().decode(NativeIdentity.self, from: data)
-            guard ["patient", "clinician", "org_admin"].contains(user.role) else { throw URLError(.badServerResponse) }
+            guard ["patient", "clinician", "org_admin"].contains(user.role), !policy.sections(role: user.role).isEmpty else { throw URLError(.badServerResponse) }
             let headers = response.allHeaderFields.reduce(into: [String:String]()) { result, pair in
                 if let key = pair.key as? String, let value = pair.value as? String { result[key] = value }
             }
@@ -446,7 +461,8 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
             open(.dashboard)
         } catch {
             let code = (error as NSError).code
-            authenticationProblem = "The secure service could not complete sign-in (error \(code)). Check your connection and service configuration, then try again."
+            await clearAuthentication()
+            authenticationProblem = "Release policy or secure service verification failed. The secure service could not complete sign-in (error \(code)). Check your connection and service configuration, then try again."
         }
     }
 
@@ -471,6 +487,16 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
                 guard (try? JSONDecoder().decode(NativeIdentity.self,from:data)) == identity else {
                     await clearAuthentication(); authenticationProblem = "Your session changed. Sign in again."; return
                 }
+                do {
+                    let (policyData, policyResponse) = try await request("api/dev/release-policy")
+                    guard policyResponse.statusCode == 200, policyResponse.mimeType == "application/json" else { throw URLError(.badServerResponse) }
+                    let policy = try NativeReleasePolicy.validated(policyData)
+                    guard epoch == authenticationEpoch, !authenticating else { return }
+                    guard policy == releasePolicy else { throw URLError(.badServerResponse) }
+                } catch {
+                    guard epoch == authenticationEpoch else { return }
+                    await clearAuthentication(); authenticationProblem = "Release policy verification failed or changed. Sign in again."; return
+                }
                 if problem == "Session verification unavailable. Check your connection and retry." { problem = nil }
                 if restoringWorkspace { probeForegroundWorkspace() }
             }
@@ -490,6 +516,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         authenticationStatus = "Clearing local session"
         defer { if epoch == authenticationEpoch { authenticating = alreadyAuthenticating } }
         identity = nil
+        releasePolicy = nil
         cancelRecordSelection()
         nativeCookie = nil
         finishConfirmation(false)
@@ -555,6 +582,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
         if url.absoluteString == "about:blank", webView.url == nil { decisionHandler(.allow); return }
         switch NavigationPolicy(origin: configuration.origin).decision(for: url) {
         case .sameOrigin:
+            guard releasePolicy?.allowsNavigation(url) == true else { problem = "This destination is unavailable in the verified release scope."; decisionHandler(.cancel); return }
             if action.shouldPerformDownload { problem = "Arbitrary downloads are unavailable. Use Protected record export in native settings for an explicit own-record JSON export;individual file downloads remain disabled."; decisionHandler(.cancel) }
             else { decisionHandler(.allow) }
         case .externalCDC:

@@ -1,0 +1,35 @@
+name: Read-only engineering maintenance
+on:
+  schedule:
+    - cron: '23 9 * * *'
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Synthetic development and native checks']
+    types: [completed]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: engineering-watch-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # workflow_run always audits trusted default-branch code,never fork code.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Bounded read-only audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m scripts.engineering_watch --github --output engineering-watch.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engineering-watch
+          path: engineering-watch.json
+          retention-days: 14

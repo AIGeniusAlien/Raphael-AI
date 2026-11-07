@@ -1,3 +1,13 @@
+# Current continuation — 2026-11-07
+
+Read PUBLIC_RELEASE_ENGINEERING_2026-11-07.md,NOV7_LOCAL_RESULTS.json,NOV7_SOURCE_MANIFEST.json and2026-11-07_DIRECTIVE_RECONCILIATION.json. Preserve currentbranch/draftPR1;inspectactualHEAD/CIbeforeacting. Newserverguard/preview,durablejobs,procedurecoordination/export,read-onlymaintenanceaudit and patchedTorchCPU are implemented;373Python29frontend11Chromium5mobile-source9checksPASS. Native source/project checks pass;actual28development+1candidateMacCI is pending in thispre-pushrecord. CheckPR1for actualfinalcommit/run/counts;never inferfutureCI.
+
+All1164priorIDs/descriptions/criteria preserved;1169rows. PublicAppStoreFAIL,TestFlightBLOCKED,clinicalproductionFAIL. No merge/deploy/Apple/realPHI/paidmodelcalls. Newcronworkflow NOTactiveuntildefaultbranchreview/merge andscheduledexecutionverified. Workeronlytwo read-onlyinventories;boundedCLI notdaemon. NewApplecurrentguidance retrieval blockedURLError/OSError;allowdeveloper.apple.comHTTPS viaenvironmentnetworkreview beforeclaimingreview. NamedApple/hosting bindingsabsent;do notinventbundle/supportassets/keys.
+
+Resume afteractualsourceCI with approvedconsumeridentity/recovery/deletion/support and explicitstagingops;install/verify persistentworker/scheduleonlyin authorizedenvironment. Continuelicensedprocedure/evidencecoverage andqualifiedclinicalreview,roles/guardian,radiology,voice/interoperability/international/prearrival/Android. ExistingElectron/preload/popupfilesremaintrackedprototype;MV3manifestwas replacedbyPWAmanifest historically andpopupusesobsoleteAPI;retain/recover safely,no nodeIntegration orlegacyportal bypass. Allclinical/model/publicauthorization remainsgated.
+
+Historical continuation follows:
+
 > CI follow-up:initial13a1628Linux browser width check failed;DejaVu Sans20px at320px reproduced339px document width. Scoped wrapping/readable spacing and a stronger fallback-font browser regression are fixed;corrected full local326/29/8/5and9checks pass. Read FOUNDATION_FIRST_CI_RESULTS.json and the draft PR for actual follow-up CI outcome;do not treat initial local success as CI acceptance. Source digest manifest records the exercised bytes.
 
 # Latest continuation after two verified foundation slices

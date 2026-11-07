@@ -6991,3 +6991,8 @@ The complete35section directive in `directives/ULTIMATE_MASTER_PLATFORM_2026-11-
 ## Definitive healthcare platform directive — additive 2026-11-01
 
 The complete owner directive is preserved verbatim in [DEFINITIVE_HEALTHCARE_PLATFORM_2026-11-01.md](directives/DEFINITIVE_HEALTHCARE_PLATFORM_2026-11-01.md), sections0–35. It is additive to all historical requirements, not a replacement or completion claim. Current storage implementation and unresolved gates are recorded in [DATABASE_STORAGE_CHECKPOINT.md](DATABASE_STORAGE_CHECKPOINT.md). Universal specialty/procedure competence and independent clinical validation remain unachieved.
+
+
+## Additive public launch and full-platform directives — 2026-11-07
+
+Both complete new owner directives are preserved in `directives/DEFINITIVE_PUBLIC_LAUNCH_2026-11-07.md` and `directives/FULL_PLATFORM_ENGINEERING_2026-11-07.md`. Public launch is a primary objective with release-specific capability restrictions;it does not retire the full medical platform or authorize publication,clinical activation,material spending or protected merges. `2026-11-07_DIRECTIVE_RECONCILIATION.json` preserves all17phases/61subsections/43sections and cumulative provenance gaps. `PUBLIC_RELEASE_ENGINEERING_2026-11-07.md` contains the actual bounded implementation and acceptance;all oldIDs/descriptions/criteria remain.

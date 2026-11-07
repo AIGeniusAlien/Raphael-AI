@@ -3,8 +3,10 @@ import UIKit
 import Vision
 import CryptoKit
 
+fileprivate let nativeFixturePassword = "__CI_SYNTHETIC_PASSWORD__"
+
 final class RaphaelUITests: XCTestCase {
-    private let fixturePassword = "__CI_SYNTHETIC_PASSWORD__"
+    private let fixturePassword = nativeFixturePassword
     private let fixtureControl = "__CI_CONTROL_TOKEN__"
     private let recoveryFirst = "__CI_RECOVERY_CODE__"
     private let recoverySecond = "__CI_RECOVERY_SECOND__"
@@ -642,5 +644,58 @@ private final class FixtureHTTPS {
 private final class ContractRedirectPolicy: NSObject, URLSessionTaskDelegate {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
         completionHandler(nil)
+    }
+}
+
+
+/// Selected only against the separately restarted actual candidate HTTPS server.
+/// No mocked manifest, alternate app code path or production test endpoint.
+final class ConsumerCandidateUITests: XCTestCase {
+    func testActualCandidatePatientPreviewHidesClinicalControlsAndSignsOut() throws {
+        continueAfterFailure = false
+        XCTAssertFalse(nativeFixturePassword.hasPrefix("__CI_"), "Actual ephemeral HTTPS fixture credentials must be injected.")
+        let app = XCUIApplication()
+        app.launch()
+        defer { app.terminate() }
+        let organization = app.textFields["Development organization"]
+        XCTAssertTrue(organization.waitForExistence(timeout:30))
+        organization.tap(); organization.typeText("native-ci")
+        let username = app.textFields["Username"]
+        XCTAssertTrue(username.waitForExistence(timeout:10))
+        username.tap(); username.typeText("native-patient")
+        let password = app.secureTextFields["native-password"]
+        XCTAssertTrue(password.waitForExistence(timeout:10))
+        password.tap(); password.typeText(nativeFixturePassword)
+        app.buttons["Sign in"].tap()
+        XCTAssertTrue(app.staticTexts["Personal records preview"].waitForExistence(timeout:45))
+        XCTAssertTrue(app.staticTexts["native-patient · native-ci"].waitForExistence(timeout:30))
+        XCTAssertTrue(app.staticTexts["My linked records"].exists)
+        XCTAssertTrue(app.staticTexts["Synthetic native approved note. No real clinical findings."].waitForExistence(timeout:20))
+        let sections = app.buttons["Patient sections"]
+        XCTAssertTrue(sections.waitForExistence(timeout:10))
+        sections.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.5)).tap()
+        XCTAssertTrue(app.buttons["Dashboard"].waitForExistence(timeout:10))
+        for title in ["Medical record", "Emergency information", "Prepare a visit", "AI education", "Care messages", "Appointments", "Account and privacy"] {
+            XCTAssertFalse(app.buttons[title].exists, "Unsupported native section must be absent: " + title)
+        }
+        app.buttons["Dashboard"].tap()
+        let settings = app.buttons["Privacy and session settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout:10))
+        settings.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.5)).tap()
+        XCTAssertTrue(app.buttons["Account, records and feedback preview"].waitForExistence(timeout:10))
+        XCTAssertFalse(app.buttons["native-mfa-manage"].exists)
+        XCTAssertFalse(app.buttons["Account, export and deletion review"].exists)
+        let logout = app.buttons["Sign out and clear local session"]
+        XCTAssertTrue(logout.waitForExistence(timeout:10))
+        logout.tap()
+        let confirmation = app.buttons["native-confirm-sign-out"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout:10))
+        confirmation.tap()
+        XCTAssertTrue(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30))
+        let idle = expectation(for:NSPredicate(format:"exists == false"),evaluatedWith:app.staticTexts["native-authentication-status"])
+        wait(for:[idle],timeout:20)
+        XCTAssertFalse(app.staticTexts["native-authentication-problem"].exists)
+        // The fixture cleanup independently queries the actual DB and fails
+        // the job unless this native sign-out left zero active sessions.
     }
 }

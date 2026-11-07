@@ -16,7 +16,7 @@ class AccountTests(unittest.TestCase):
   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.engine=create_engine('sqlite:///'+self.tmp.name+'/synthetic.db');self.addCleanup(self.engine.dispose)
   env=patch.dict(os.environ,{'RAPHAEL_DEV_SYNTHETIC_ONLY':'1'});env.start();self.addCleanup(env.stop);migrate(self.engine);self.password='Synthetic-account-password'
   for tenant,name,role in [('one','patient','patient'),('one','other','patient'),('one','doctor','clinician'),('one','admin','org_admin'),('two','foreign','org_admin')]:create_dev_user(self.engine,tenant,name,self.password,role)
-  self.app=FastAPI();ctx=install_dev_portal(self.app,self.engine);install_chart(self.app,ctx);install_care(self.app,ctx);install_account(self.app,ctx)
+  self.app=FastAPI();self.ctx=ctx=install_dev_portal(self.app,self.engine);install_chart(self.app,ctx);install_care(self.app,ctx);install_account(self.app,ctx)
   self.client=TestClient(self.app);self.addCleanup(self.client.close);self.login('doctor')
   self.pid=self.client.post('/api/dev/patients',json={'name':'Synthetic own record','patient_username':'patient'}).json()['id']
   self.client.post('/api/dev/patients',json={'name':'OTHER-PATIENT-MUST-NOT-EXPORT','patient_username':'other'}).raise_for_status();self.login()
@@ -66,3 +66,20 @@ class AccountTests(unittest.TestCase):
   self.assertEqual(result.status_code,413)
   self.assertNotIn('content-disposition',result.headers)
   self.assertNotIn('SYNTHETIC-OVERSIZE',result.text)
+
+ def test_export_revalidates_session_and_role_after_authentication(self):
+  from fastapi import Request
+  original=self.ctx.user
+  for mutation in ('DELETE FROM dev_sessions WHERE user_id=:u',"UPDATE dev_users SET role='org_admin' WHERE id=:u"):
+   def revoke_after_dependency(request:Request):
+    user=original(request)
+    with self.engine.begin() as c:c.execute(text(mutation),{'u':user['id']})
+    return user
+   self.app.dependency_overrides[original]=revoke_after_dependency
+   result=self.client.get('/api/dev/account/export')
+   self.assertEqual(result.status_code,401,result.text)
+   self.assertNotIn('content-disposition',result.headers)
+   self.assertNotIn('Synthetic own record',result.text)
+   self.app.dependency_overrides.clear()
+   with self.engine.begin() as c:c.execute(text("UPDATE dev_users SET role='patient' WHERE tenant='one' AND username='patient'"))
+   self.login()

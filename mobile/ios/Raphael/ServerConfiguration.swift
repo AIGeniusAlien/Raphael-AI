@@ -97,3 +97,41 @@ struct NavigationPolicy {
         return .blocked
     }
 }
+
+/// Display policy only. Every request remains subject to server authorization.
+struct NativeReleasePolicy: Decodable, Equatable {
+    let scope: String
+    let api_version: String
+    let policy_sha256: String
+    let operator_paused: Bool
+    let capabilities: [String: Bool]?
+    let public_distribution_authorized: Bool
+    let clinical_production_authorized: Bool
+
+    static func validated(_ data: Data) throws -> NativeReleasePolicy {
+        let value = try JSONDecoder().decode(Self.self, from: data)
+        guard value.api_version == "1", ["development", "consumer_candidate"].contains(value.scope),
+              value.policy_sha256.count == 64,
+              value.policy_sha256.allSatisfy({ "0123456789abcdef".contains($0) }),
+              !value.public_distribution_authorized, !value.clinical_production_authorized else { throw URLError(.badServerResponse) }
+        if value.scope == "consumer_candidate" {
+            let allowed: Set<String> = ["own_linked_records", "own_approved_notes", "own_document_download", "own_account_preferences", "own_record_export", "own_feedback"]
+            let denied: Set<String> = ["registration", "external_password_recovery", "clinical_assessment", "clinical_generation", "radiology", "ambient_recording", "clinical_tools", "external_clinical_communications", "administration", "complete_account_erasure"]
+            guard let capabilities = value.capabilities,
+                  Set(capabilities.keys) == allowed.union(denied),
+                  denied.allSatisfy({ capabilities[$0] == false }) else { throw URLError(.badServerResponse) }
+        } else if value.capabilities != nil { throw URLError(.badServerResponse) }
+        return value
+    }
+    var isCandidate: Bool { scope == "consumer_candidate" }
+    var allowsMFA: Bool { !isCandidate }
+    var allowsExport: Bool { !isCandidate || (!operator_paused && capabilities?["own_record_export"] == true) }
+    func sections(role: String) -> [PatientSection] {
+        if isCandidate { return role == "patient" ? [.dashboard] : [] }
+        return role == "clinician" ? [.dashboard, .record, .intelligence, .messages, .appointments, .account] : PatientSection.allCases
+    }
+    func allowsNavigation(_ url: URL) -> Bool {
+        guard isCandidate else { return true }
+        return ["", "/", "/static/release-preview.html"].contains(url.path) && url.query == nil
+    }
+}

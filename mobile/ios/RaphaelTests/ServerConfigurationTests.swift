@@ -7,6 +7,35 @@ import UniformTypeIdentifiers
 @testable import Raphael
 
 final class ServerConfigurationTests: XCTestCase {
+    func testReleasePolicyValidatesActualManifestContractAndLimitsCandidateNavigation() throws {
+        func manifest(scope: String = "consumer_candidate", version: String = "1", hash: String = String(repeating: "a", count: 64), capabilities: [String: Bool]? = nil) throws -> Data {
+            let candidate: [String: Bool] = ["own_linked_records": true, "own_approved_notes": true, "own_document_download": true, "own_account_preferences": true, "own_record_export": true, "own_feedback": true, "registration": false, "external_password_recovery": false, "clinical_assessment": false, "clinical_generation": false, "radiology": false, "ambient_recording": false, "clinical_tools": false, "external_clinical_communications": false, "administration": false, "complete_account_erasure": false]
+            return try JSONSerialization.data(withJSONObject: ["scope": scope, "api_version": version, "policy_sha256": hash, "operator_paused": false, "capabilities": scope == "development" ? NSNull() as Any : (capabilities ?? candidate) as Any, "public_distribution_authorized": false, "clinical_production_authorized": false])
+        }
+        let candidate = try NativeReleasePolicy.validated(manifest())
+        XCTAssertEqual(candidate.sections(role: "patient"), [.dashboard])
+        XCTAssertEqual(candidate.sections(role: "clinician"), [])
+        XCTAssertFalse(candidate.allowsMFA)
+        XCTAssertTrue(candidate.allowsExport)
+        var pausedObject = try XCTUnwrap(JSONSerialization.jsonObject(with: manifest()) as? [String: Any])
+        pausedObject["operator_paused"] = true
+        let paused = try NativeReleasePolicy.validated(JSONSerialization.data(withJSONObject: pausedObject))
+        XCTAssertFalse(paused.allowsExport)
+        pausedObject["clinical_production_authorized"] = true
+        XCTAssertThrowsError(try NativeReleasePolicy.validated(JSONSerialization.data(withJSONObject: pausedObject)))
+        XCTAssertTrue(candidate.allowsNavigation(URL(string: "https://raphael.example.org/")!))
+        XCTAssertTrue(candidate.allowsNavigation(URL(string: "https://raphael.example.org/static/release-preview.html")!))
+        for path in ["/static/chart.html", "/static/account.html", "/static/intelligence.html", "/?patient_id=1"] {
+            XCTAssertFalse(candidate.allowsNavigation(URL(string: "https://raphael.example.org" + path)!))
+        }
+        let development = try NativeReleasePolicy.validated(manifest(scope: "development"))
+        XCTAssertEqual(development.sections(role: "patient"), PatientSection.allCases)
+        XCTAssertTrue(development.allowsMFA)
+        for data in [try manifest(scope: "unknown"), try manifest(version: "2"), try manifest(hash: "bad"), try manifest(capabilities: ["clinical_generation": true]), Data("{}".utf8)] {
+            XCTAssertThrowsError(try NativeReleasePolicy.validated(data))
+        }
+    }
+
     @MainActor
     func testMFAEditorsSurviveRepeatedReconciliationAndExplicitlyEraseBothFields() {
         let credentials=NativeMFACredentials()

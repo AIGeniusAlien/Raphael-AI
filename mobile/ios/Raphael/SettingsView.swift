@@ -31,16 +31,23 @@ struct SettingsView: View {
                     Text("Checks only the configured synthetic database service. No patient data, cookies or provider keys are sent. This does not check AI availability or clinical safety.").font(.footnote)
                 }
                 Section("Account and privacy") {
+                    if session.releasePolicy?.isCandidate == true {
+                        Button("Account, records and feedback preview") { dismiss(); session.open(.dashboard) }
+                        Text("Synthetic candidate preview. Profile, session and deletion-review controls are provided by the server. Complete account erasure is unavailable.").font(.footnote)
+                    } else {
                     Button("Account, export and deletion review") { dismiss(); session.open(.account) }
                     Text("The account page provides profile, consent, sessions and web export. Requesting deletion review is not completed medical-record erasure; retention and identity review remain required.")
                         .font(.footnote)
+                    }
                     Button("Sign out and clear local session", role: .destructive) { confirmSignOut = true }.disabled(session.authenticating)
                 }
+                if session.releasePolicy?.allowsMFA == true {
                 Section("Authenticator protection") {
                     Button("Manage authenticator") { showMFA = true }.accessibilityIdentifier("native-mfa-manage")
                     Text("Enroll an authenticator,confirm a code and save one-time recovery codes privately. This verifies an account factor,not clinical or legal identity.").font(.footnote)
                 }
-                if session.identity?.role == "patient" {
+                }
+                if session.identity?.role == "patient", session.releasePolicy?.allowsExport == true {
                     Section("Protected record export") {
                         Text("Own linked records only, up to 500 rows per section and 5 MiB. File bytes and unsigned clinician drafts are excluded. The snapshot is refreshed before copying or sharing.").font(.footnote)
                         Text(session.nativeExportStatus).accessibilityIdentifier("native-export-status")

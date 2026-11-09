@@ -39,6 +39,38 @@ class AccountTests(unittest.TestCase):
   self.client.post('/api/dev/account/sessions/'+target+'/revoke',json={}).raise_for_status();self.assertEqual(second.get('/api/dev/session').status_code,401)
   current=self.client.get('/api/dev/account/sessions').json()[0]['id'];self.login('other');self.assertEqual(self.client.post('/api/dev/account/sessions/'+current+'/revoke',json={}).status_code,404)
   self.login();own=next(s for s in self.client.get('/api/dev/account/sessions').json() if s['current']);response=self.client.post('/api/dev/account/sessions/'+own['id']+'/revoke',json={});self.assertIn('Path=/api/dev',response.headers['set-cookie']);self.assertEqual(self.client.get('/api/dev/session').status_code,401)
+ def test_revoke_other_sessions_preserves_current_and_scopes_to_account(self):
+  second=TestClient(self.app);self.addCleanup(second.close);self.login(client=second)
+  other=TestClient(self.app);self.addCleanup(other.close);self.login('other',client=other)
+  self.assertEqual(len(self.client.get('/api/dev/account/sessions').json()),2)
+  result=self.client.post('/api/dev/account/sessions/revoke-others',json={})
+  self.assertEqual(result.status_code,200,result.text)
+  self.assertEqual(result.json(),{'revoked_other_sessions':1,'current_session_preserved':True})
+  self.assertEqual(second.get('/api/dev/session').status_code,401)
+  self.assertEqual(self.client.get('/api/dev/session').status_code,200)
+  self.assertEqual(other.get('/api/dev/session').status_code,200)
+  self.assertEqual(self.client.post('/api/dev/account/sessions/revoke-others',json={}).json()['revoked_other_sessions'],0)
+
+ def test_revoke_other_sessions_fails_closed_if_session_revoked_during_request(self):
+  from fastapi import Request
+  original=self.ctx.user
+  second=TestClient(self.app);self.addCleanup(second.close);self.login(client=second)
+  def revoke_after_auth(request:Request):
+   user=original(request)
+   token=request.cookies.get('raphael_dev_session','')
+   from dev_portal import COOKIE_NAME
+   import hashlib
+   token=request.cookies.get(COOKIE_NAME,'')
+   with self.engine.begin() as c:
+    c.execute(text('DELETE FROM dev_sessions WHERE token_hash=:h'),{'h':hashlib.sha256(token.encode()).hexdigest()})
+   return user
+  self.app.dependency_overrides[original]=revoke_after_auth
+  try:
+   result=self.client.post('/api/dev/account/sessions/revoke-others',json={})
+   self.assertEqual(result.status_code,401,result.text)
+   self.assertEqual(second.get('/api/dev/session').status_code,200)
+  finally:self.app.dependency_overrides.clear()
+
  def test_deletion_review_persists_is_idempotent_and_never_erases(self):
   path='/api/dev/account/deletion-requests';body={'confirm_review_request':True}
   first=self.client.post(path,json=body).json();self.assertFalse(first['erasure_performed']);self.assertEqual(self.client.post(path,json=body).json()['id'],first['id'])

@@ -95,6 +95,20 @@ def install_account(app,ctx,patient_ai_exporter=None,procedure_exporter=None):
         current=hashlib.sha256(request.cookies.get(COOKIE_NAME,'').encode()).hexdigest()==token
         if current:response.delete_cookie(COOKIE_NAME,path='/api/dev',httponly=True,samesite='strict')
         return {'revoked':True,'current_session':current}
+    @router.post('/sessions/revoke-others')
+    def revoke_other_sessions(request:Request,user=Depends(ctx.user)):
+        """Atomically preserve the authenticated session and revoke every other session."""
+        token=request.cookies.get(COOKIE_NAME,'')
+        if not token:raise HTTPException(401,'An active session is required.')
+        current_hash=hashlib.sha256(token.encode()).hexdigest()
+        with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            current=c.execute(text('SELECT 1 FROM dev_sessions s JOIN dev_users u ON u.id=s.user_id WHERE s.token_hash=:h AND s.user_id=:uid AND s.expires_at>:at AND u.active=1 AND u.tenant=:tenant AND u.role=:role'),{'h':current_hash,'uid':user['id'],'at':now(),'tenant':user['tenant'],'role':user['role']}).scalar()
+            if not current:raise HTTPException(401,'Session revoked; no sessions were changed.')
+            removed=c.execute(text('DELETE FROM dev_sessions WHERE user_id=:uid AND token_hash!=:h'),{'uid':user['id'],'h':current_hash}).rowcount
+            ctx.audit(c,user,'revoke_other_account_sessions','user',user['id'])
+        return {'revoked_other_sessions':removed,'current_session_preserved':True}
+
     @router.get('/export')
     def export(request:Request,user=Depends(ctx.user)):
         if user['role']!='patient':raise HTTPException(403,'This export is for your linked patient records only.')

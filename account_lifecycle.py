@@ -52,6 +52,10 @@ class Credential(BaseModel):
 class Deactivate(Credential):
     confirm:StrictBool
     request_credential_erasure:StrictBool=False
+class ChangePassword(Credential):
+    new_password:SecretStr=Field(min_length=12,max_length=128)
+    confirm:StrictBool
+
 class Policy(Credential):
     reference:str=Field(min_length=5,max_length=200)
     minimum_inactive_days:StrictInt=Field(ge=0,le=36500)
@@ -122,6 +126,29 @@ def install_lifecycle(app,ctx):
             if body.request_credential_erasure:ctx.audit(c,user,'request_limited_credential_erasure','user',user['id'])
         response.delete_cookie(COOKIE_NAME,path='/api/dev',httponly=True,samesite='strict')
         return {'deactivated':True,'sessions_revoked':True,'clinical_records_deleted':False,'credential_erasure_requested':body.request_credential_erasure,'notice':'Account deactivated. All sessions revoked. Records retained. An organization administrator can reactivate access unless a separately authorized credential-erasure action is completed.'}
+    @router.post('/password')
+    def change_password(body:ChangePassword,request:Request,response:Response,user=Depends(management_user)):
+        """Change a synthetic password and revoke every session, including this one."""
+        if not body.confirm:raise HTTPException(422,'Explicit password change confirmation required.')
+        new_value=body.new_password.get_secret_value()
+        if not new_value.strip() or new_value!=new_value.strip():
+            raise HTTPException(422,'Password must not be blank or padded with whitespace.')
+        token=request.cookies.get(COOKIE_NAME,'')
+        with ctx.engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            session_hash=hashlib.sha256(token.encode()).hexdigest()
+            if not token or not c.execute(text('SELECT 1 FROM dev_sessions s JOIN dev_users u ON u.id=s.user_id WHERE s.token_hash=:h AND s.user_id=:uid AND s.expires_at>:at AND u.active=1 AND u.tenant=:tenant AND u.role=:role'),{'h':session_hash,'uid':user['id'],'at':now(),'tenant':user['tenant'],'role':user['role']}).scalar():
+                raise HTTPException(401,'Session revoked; password was not changed.')
+            credentials(c,user,body)
+            if _password_matches(new_value,c.execute(text('SELECT password_hash FROM dev_users WHERE id=:u'),{'u':user['id']}).scalar()):
+                raise HTTPException(422,'Choose a different password.')
+            c.execute(text('UPDATE dev_users SET password_hash=:h WHERE id=:u AND tenant=:t AND active=1'),{'h':_password_hash(new_value),'u':user['id'],'t':user['tenant']})
+            c.execute(text('DELETE FROM dev_sessions WHERE user_id=:u'),{'u':user['id']})
+            ctx.audit(c,user,'change_account_password','user',user['id'])
+        response.delete_cookie(COOKIE_NAME,path='/api/dev',httponly=True,samesite='strict')
+        response.headers['Cache-Control']='no-store'
+        return {'password_changed':True,'sessions_revoked':True,'notice':'Password changed. Sign in again on every device.'}
+
     @router.get('/administration')
     def administration(user=Depends(admin)):
         with ctx.engine.begin() as c:

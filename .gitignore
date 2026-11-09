@@ -11,3 +11,6 @@ verification-results/
 # Explicit development key files must remain outside source control.
 *.key
 *.key.backup
+
+# Local coding-agent execution logs (may contain sensitive output).
+.raphael-agent/

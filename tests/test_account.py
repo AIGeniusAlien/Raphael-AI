@@ -70,6 +70,24 @@ class AccountTests(unittest.TestCase):
    self.assertEqual(second.get('/api/dev/session').status_code,200)
   finally:self.app.dependency_overrides.clear()
 
+ def test_session_inventory_fails_closed_if_current_session_revoked_after_auth(self):
+  from fastapi import Request
+  from dev_portal import COOKIE_NAME
+  import hashlib
+  original=self.ctx.user
+  def revoke_after_auth(request:Request):
+   user=original(request)
+   token=request.cookies.get(COOKIE_NAME,'')
+   with self.engine.begin() as c:
+    c.execute(text('DELETE FROM dev_sessions WHERE token_hash=:h'),{'h':hashlib.sha256(token.encode()).hexdigest()})
+   return user
+  self.app.dependency_overrides[original]=revoke_after_auth
+  try:
+   result=self.client.get('/api/dev/account/sessions')
+   self.assertEqual(result.status_code,401,result.text)
+   self.assertNotIn('token_hash',result.text)
+  finally:self.app.dependency_overrides.clear()
+
  def test_targeted_revoke_fails_closed_if_current_session_revoked_after_auth(self):
   from fastapi import Request
   from dev_portal import COOKIE_NAME

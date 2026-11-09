@@ -70,6 +70,26 @@ class AccountTests(unittest.TestCase):
    self.assertEqual(second.get('/api/dev/session').status_code,200)
   finally:self.app.dependency_overrides.clear()
 
+ def test_targeted_revoke_fails_closed_if_current_session_revoked_after_auth(self):
+  from fastapi import Request
+  from dev_portal import COOKIE_NAME
+  import hashlib
+  second=TestClient(self.app);self.addCleanup(second.close);self.login(client=second)
+  target=next(s['id'] for s in self.client.get('/api/dev/account/sessions').json() if not s['current'])
+  original=self.ctx.user
+  def revoke_after_auth(request:Request):
+   user=original(request)
+   token=request.cookies.get(COOKIE_NAME,'')
+   with self.engine.begin() as c:
+    c.execute(text('DELETE FROM dev_sessions WHERE token_hash=:h'),{'h':hashlib.sha256(token.encode()).hexdigest()})
+   return user
+  self.app.dependency_overrides[original]=revoke_after_auth
+  try:
+   result=self.client.post('/api/dev/account/sessions/'+target+'/revoke',json={})
+   self.assertEqual(result.status_code,401,result.text)
+   self.assertEqual(second.get('/api/dev/session').status_code,200)
+  finally:self.app.dependency_overrides.clear()
+
  def test_deletion_review_persists_is_idempotent_and_never_erases(self):
   path='/api/dev/account/deletion-requests';body={'confirm_review_request':True}
   first=self.client.post(path,json=body).json();self.assertFalse(first['erasure_performed']);self.assertEqual(self.client.post(path,json=body).json()['id'],first['id'])

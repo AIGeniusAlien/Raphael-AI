@@ -26,6 +26,33 @@ class AccountLifecycleTests(unittest.TestCase):
         body={'password':self.password,'confirm':True,'target_username':'patient','expected_revision':1,'policy_revision':1};body.update(changes)
         return self.client.post(f'/api/dev/account/lifecycle/accounts/{identifier}/erase-credentials',json=body)
 
+    def test_password_change_revokes_every_session_and_requires_new_credentials(self):
+        other=TestClient(self.app);self.addCleanup(other.close);self.login(client=other)
+        path='/api/dev/account/lifecycle/password'
+        body={'password':self.password,'new_password':'Different-Synthetic-Password-2026','confirm':True}
+        self.assertEqual(self.client.post(path,json={**body,'confirm':False}).status_code,422)
+        self.assertEqual(self.client.post(path,json={**body,'password':'wrong'}).status_code,403)
+        self.assertEqual(self.client.get('/api/dev/session').status_code,200)
+        response=self.client.post(path,json=body)
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertTrue(response.json()['sessions_revoked'])
+        self.assertEqual(self.client.get('/api/dev/session').status_code,401)
+        self.assertEqual(other.get('/api/dev/session').status_code,401)
+        self.assertEqual(self.client.post('/api/dev/login',json={'tenant':'one','username':'patient','password':self.password}).status_code,401)
+        self.client.post('/api/dev/login',json={'tenant':'one','username':'patient','password':body['new_password']}).raise_for_status()
+        self.assertEqual(self.client.get('/api/dev/session').status_code,200)
+
+    def test_password_change_requires_mfa_and_preserves_other_accounts(self):
+        codes=self.enroll()
+        self.login('other')
+        other=TestClient(self.app);self.addCleanup(other.close);self.login('other',client=other)
+        self.login()
+        body={'password':self.password,'new_password':'Another-Synthetic-Password-2026','confirm':True}
+        self.assertEqual(self.client.post('/api/dev/account/lifecycle/password',json=body).status_code,403)
+        response=self.client.post('/api/dev/account/lifecycle/password',json={**body,'code':codes[0]})
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(other.get('/api/dev/session').status_code,200)
+
     def test_deactivate_revokes_all_sessions_preserves_records_and_admin_restores_access(self):
         identifier=self.uid();other=TestClient(self.app);self.addCleanup(other.close);self.login(client=other)
         self.assertEqual(self.deactivate(password='WRONG-SYNTHETIC-PASSWORD').status_code,403)

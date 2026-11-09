@@ -88,11 +88,16 @@ def install_account(app,ctx,patient_ai_exporter=None,procedure_exporter=None):
         with engine.connect() as c:return [{'id':session_id(row['token_hash']),'expires_at':row['expires_at'],'current':row['token_hash']==current,'device_identity':'not_verified'} for row in c.execute(text('SELECT token_hash,expires_at FROM dev_sessions WHERE user_id=:u AND expires_at>:at'),{'u':user['id'],'at':now()}).mappings()]
     @router.post('/sessions/{identifier}/revoke')
     def revoke_session(identifier:str,response:Response,request:Request,user=Depends(ctx.user)):
+        current_hash=hashlib.sha256(request.cookies.get(COOKIE_NAME,'').encode()).hexdigest()
         with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            if not c.execute(text('SELECT 1 FROM dev_sessions s JOIN dev_users u ON u.id=s.user_id WHERE s.token_hash=:h AND s.user_id=:uid AND s.expires_at>:at AND u.active=1 AND u.tenant=:tenant AND u.role=:role'),{'h':current_hash,'uid':user['id'],'at':now(),'tenant':user['tenant'],'role':user['role']}).scalar():
+                raise HTTPException(401,'Session revoked; no sessions were changed.')
             token=next((row[0] for row in c.execute(text('SELECT token_hash FROM dev_sessions WHERE user_id=:u'),{'u':user['id']}) if session_id(row[0])==identifier),None)
             if token is None:raise HTTPException(404,'Session not found.')
-            c.execute(text('DELETE FROM dev_sessions WHERE token_hash=:h AND user_id=:u'),{'h':token,'u':user['id']});ctx.audit(c,user,'revoke_account_session','user',user['id'])
-        current=hashlib.sha256(request.cookies.get(COOKIE_NAME,'').encode()).hexdigest()==token
+            c.execute(text('DELETE FROM dev_sessions WHERE token_hash=:h AND user_id=:u'),{'h':token,'u':user['id']})
+            ctx.audit(c,user,'revoke_account_session','user',user['id'])
+        current=current_hash==token
         if current:response.delete_cookie(COOKIE_NAME,path='/api/dev',httponly=True,samesite='strict')
         return {'revoked':True,'current_session':current}
     @router.post('/sessions/revoke-others')

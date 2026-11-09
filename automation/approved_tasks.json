@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "description": "Only manually approved bounded tasks may run. Initial tasks intentionally disabled.",
+  "tasks": [
+    {
+      "id": "patient-account-lifecycle",
+      "status": "proposed",
+      "approved": false,
+      "objective": "Implement and test the next bounded synthetic consumer account-lifecycle increment based on the existing account_lifecycle.py and dev_account.py. Preserve existing authentication and privacy safeguards. Do not claim production readiness."
+    }
+  ]
+}

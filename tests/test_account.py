@@ -57,7 +57,6 @@ class AccountTests(unittest.TestCase):
   second=TestClient(self.app);self.addCleanup(second.close);self.login(client=second)
   def revoke_after_auth(request:Request):
    user=original(request)
-   token=request.cookies.get('raphael_dev_session','')
    from dev_portal import COOKIE_NAME
    import hashlib
    token=request.cookies.get(COOKIE_NAME,'')

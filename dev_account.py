@@ -85,7 +85,11 @@ def install_account(app,ctx,patient_ai_exporter=None,procedure_exporter=None):
     @router.get('/sessions')
     def sessions(request:Request,user=Depends(ctx.user)):
         current=hashlib.sha256(request.cookies.get(COOKIE_NAME,'').encode()).hexdigest()
-        with engine.connect() as c:return [{'id':session_id(row['token_hash']),'expires_at':row['expires_at'],'current':row['token_hash']==current,'device_identity':'not_verified'} for row in c.execute(text('SELECT token_hash,expires_at FROM dev_sessions WHERE user_id=:u AND expires_at>:at'),{'u':user['id'],'at':now()}).mappings()]
+        with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            if not c.execute(text('SELECT 1 FROM dev_sessions s JOIN dev_users u ON u.id=s.user_id WHERE s.token_hash=:h AND s.user_id=:uid AND s.expires_at>:at AND u.active=1 AND u.tenant=:tenant AND u.role=:role'),{'h':current,'uid':user['id'],'at':now(),'tenant':user['tenant'],'role':user['role']}).scalar():
+                raise HTTPException(401,'Session revoked; session details unavailable.')
+            return [{'id':session_id(row['token_hash']),'expires_at':row['expires_at'],'current':row['token_hash']==current,'device_identity':'not_verified'} for row in c.execute(text('SELECT token_hash,expires_at FROM dev_sessions WHERE user_id=:u AND expires_at>:at'),{'u':user['id'],'at':now()}).mappings()]
     @router.post('/sessions/{identifier}/revoke')
     def revoke_session(identifier:str,response:Response,request:Request,user=Depends(ctx.user)):
         current_hash=hashlib.sha256(request.cookies.get(COOKIE_NAME,'').encode()).hexdigest()

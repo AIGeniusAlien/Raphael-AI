@@ -70,6 +70,33 @@ class PixelTests(unittest.TestCase):
             with self.subTest(length=len(data)), self.assertRaises(ValueError):
                 validate_dicom(data)
 
+    def test_identity_markers_do_not_override_hidden_identifying_dicom_tags(self):
+        for field, value in (
+            ("PatientBirthDate", "19800101"),
+            ("PatientAddress", "Real Street"),
+            ("AccessionNumber", "CONFIDENTIAL"),
+            ("InstitutionName", "Real Hospital"),
+            ("ReferringPhysicianName", "Real^Name"),
+            ("StudyComments", "Confidential subject information"),
+        ):
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, "forbidden identifying field"):
+                    validate_dicom(synthetic_dicom(**{field: value}))
+
+    def test_private_tags_and_nested_sequences_are_rejected(self):
+        data = pydicom.dcmread(io.BytesIO(synthetic_dicom()))
+        data.add_new((0x0011, 0x1010), "LO", "Confidential private metadata")
+        stream = io.BytesIO()
+        data.save_as(stream, write_like_original=False)
+        with self.assertRaisesRegex(ValueError, "Private tags"):
+            validate_dicom(stream.getvalue())
+        data = pydicom.dcmread(io.BytesIO(synthetic_dicom()))
+        data.add_new((0x0008, 0x1111), "SQ", [pydicom.dataset.Dataset()])
+        stream = io.BytesIO()
+        data.save_as(stream, write_like_original=False)
+        with self.assertRaisesRegex(ValueError, "nested DICOM sequences"):
+            validate_dicom(stream.getvalue())
+
     def test_compressed_transfer_syntax_is_rejected_before_decoding(self):
         ds = pydicom.dcmread(io.BytesIO(synthetic_dicom()))
         ds.file_meta.TransferSyntaxUID = "1.2.840.10008.1.2.4.50"

@@ -57,6 +57,26 @@ def install_scheduling(app,ctx):
                   WHERE tenant=:t ORDER BY start_utc LIMIT 200"""),{'t':user['tenant']}).mappings()
             return [dict(row) for row in rows]
 
+    @router.get('/conflicts')
+    def resource_conflicts(start:str,end:str,resource:str,user=Depends(ctx.user)):
+        """Read-only preflight; booking still rechecks atomically under a write lock."""
+        if user['role'] not in ('clinician','org_admin'):
+            raise HTTPException(403,'Scheduling staff permission required.')
+        if not resource or len(resource)>100 or resource!=resource.strip():
+            raise HTTPException(422,'A valid resource identifier is required.')
+        try:
+            beginning,finish=validate_interval(start,end)
+        except ValueError as exc:
+            raise HTTPException(422,str(exc)) from exc
+        with ctx.engine.begin() as c:
+            busy=c.execute(text("""SELECT 1 FROM dev_appointments a
+                JOIN dev_appointment_resources r ON r.appointment_id=a.id
+                WHERE a.tenant=:t AND a.status='scheduled' AND r.resource=:r
+                AND a.start_utc<:end AND a.end_utc>:start LIMIT 1"""),
+                {'t':user['tenant'],'r':resource,'start':beginning.isoformat(),'end':finish.isoformat()}).scalar()
+        return {'resource':resource,'conflict':bool(busy),'availability_confirmed':False,
+                'notice':'Conflict preflight only. Hours, eligibility, and external calendars are not verified.'}
+
     @router.post('/appointments',status_code=201)
     def create(body:AppointmentInput,user=Depends(ctx.user)):
         if user['role'] not in ('clinician','org_admin'):

@@ -74,6 +74,38 @@
     details.append(summary, list); holder.append(details);
     const rules = node('details'); rules.append(node('summary', 'Comparison rules and limits'), node('p', review.limitations, 'meta')); holder.append(rules);
   }
+  async function loadDicomWorklist(version) {
+    const section = byId('dicom-worklist-section'), holder = byId('dicom-worklist');
+    section.hidden = !clinician();
+    holder.replaceChildren();
+    if (!clinician()) return;
+    const workspaceLink = node('a', 'Open synthetic DICOM imaging workspace');
+    workspaceLink.href = '/static/imaging.html?patient=' + encodeURIComponent(String(patientId));
+    holder.append(workspaceLink);
+    try {
+      const studies = await api(base() + '/imaging/studies');
+      if (version !== generation || !user || !clinician()) return;
+      if (!studies.length) {
+        holder.append(node('p', 'No synthetic DICOM studies are currently stored for this chart.'));
+        return;
+      }
+      const list = node('ul');
+      for (const study of studies) {
+        const item = node('li');
+        const meta = study.metadata || {}, counts = study.report_summary || {};
+        const heading = node('strong', `${meta.Modality || 'Study'} · ${meta.frames ?? '?'} frame(s)`);
+        const details = node('p', `Drafts: ${counts.drafts ?? 0} · approved: ${counts.approved ?? 0} · withdrawn: ${counts.withdrawn ?? 0} · added ${study.created_at}`, 'meta');
+        const link = node('a', 'Review study in imaging workspace');
+        link.href = '/static/imaging.html?patient=' + encodeURIComponent(String(patientId));
+        item.append(heading, details, link);
+        list.append(item);
+      }
+      holder.append(list);
+    } catch (error) {
+      if (version !== generation || !user) return;
+      holder.append(node('p', 'Imaging worklist unavailable. No report status is assumed; open the imaging workspace to retry.', 'flag'));
+    }
+  }
   function renderImagingReview() {
     const section = byId('imaging-review-section');
     const holder = byId('imaging-review');
@@ -216,6 +248,7 @@
     byId('patient-name').textContent = `${chart.patient.name} · Synthetic chart`;
     byId('chart-content').hidden = false;
     renderLongitudinal(); renderEntries(); renderImagingReview(); renderEncounters(); renderAppointments(); renderDocuments();
+    await loadDicomWorklist(version);
     if (user.role === 'patient') {
       const consents = await api(base() + '/document-consents');
       if (version !== generation || !user) return;

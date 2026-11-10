@@ -44,9 +44,7 @@ class AccountLifecycleTests(unittest.TestCase):
 
     def test_password_change_requires_mfa_and_preserves_other_accounts(self):
         codes=self.enroll()
-        self.login('other')
         other=TestClient(self.app);self.addCleanup(other.close);self.login('other',client=other)
-        self.login()
         body={'password':self.password,'new_password':'Another-Synthetic-Password-2026','confirm':True}
         self.assertEqual(self.client.post('/api/dev/account/lifecycle/password',json=body).status_code,403)
         response=self.client.post('/api/dev/account/lifecycle/password',json={**body,'code':codes[0]})

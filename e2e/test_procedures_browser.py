@@ -57,7 +57,7 @@ class ProceduresBrowserTests(unittest.TestCase):
                             run_id=contexts['doctor'].request.get(f'/api/dev/procedures/patients/{patient_id}/runs').json()['runs'][0]['id'];self.assertEqual(contexts['patient'].request.get(f'/api/dev/procedures/runs/{run_id}').status,404)
                             self.assertEqual(contexts['other'].request.get(f'/api/dev/procedures/runs/{run_id}').status,404)
                             patient.goto('/static/procedures.html');expect(patient.locator('#runs')).to_contain_text('No visible checklists');expect(patient.locator('#clinician-workspace')).to_be_hidden()
-                            doctor.locator('#run-detail input[type=checkbox]').check();doctor.get_by_role('button',name='Publish reviewed checklist',exact=True).click();expect(doctor.locator('#run-detail')).to_contain_text('published')
+                            doctor.locator('#run-detail input[type=checkbox]').check();doctor.get_by_role('button',name='Publish reviewed checklist',exact=True).click();expect(doctor.locator('#run-detail > p').first).to_contain_text('published ·')
                             visible=contexts['patient'].request.get(f'/api/dev/procedures/patients/{patient_id}/runs')
                             self.assertEqual(visible.status,200,visible.text())
                             self.assertEqual([row['id'] for row in visible.json()['runs']],[run_id],

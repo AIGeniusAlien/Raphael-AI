@@ -60,6 +60,49 @@ class StructuredChartTests(unittest.TestCase):
         from observation_extraction import HEADERS
         return (','.join(HEADERS)+f"\n{patient or self.patient['id']},lab,Synthetic analyte,2020-01-01T00:00:00+00:00,{value},test-unit,,\n").encode()
 
+    def test_approval_requires_open_encounter_and_preserves_patient_visibility(self):
+        created = self.client.post(
+            self.prefix + "/encounters",
+            json={"title": "Synthetic imaging review", "summary": "Fixture only"},
+        )
+        self.assertEqual(created.status_code, 200, created.text)
+        encounter_id = created.json()["id"]
+        entry = self.entry(
+            encounter_id=encounter_id, kind="imaging_report",
+            label="Synthetic imaging report", text="Synthetic findings for review only",
+        )
+        entry_id = entry["id"]
+        self.assertEqual(entry["status"], "draft")
+        self.login("patient")
+        self.assertNotIn(entry_id, [row["id"] for row in self.client.get(self.prefix + "/entries").json()])
+        self.login()
+        closed = self.client.patch(
+            f"/api/dev/encounters/{encounter_id}",
+            json={"status": "closed", "summary": "Synthetic encounter closed"},
+        )
+        self.assertEqual(closed.status_code, 200, closed.text)
+        denied = self.client.post(
+            f"/api/dev/chart-entries/{entry_id}/approve", json={"revision": entry["revision"]},
+        )
+        self.assertEqual(denied.status_code, 409, denied.text)
+        self.login("patient")
+        self.assertNotIn(entry_id, [row["id"] for row in self.client.get(self.prefix + "/entries").json()])
+        self.login()
+        reopened = self.client.patch(
+            f"/api/dev/encounters/{encounter_id}",
+            json={"status": "open", "summary": "Synthetic review resumed"},
+        )
+        self.assertEqual(reopened.status_code, 200, reopened.text)
+        approved = self.client.post(
+            f"/api/dev/chart-entries/{entry_id}/approve", json={"revision": entry["revision"]},
+        )
+        self.assertEqual(approved.status_code, 200, approved.text)
+        self.assertEqual(approved.json()["status"], "approved")
+        self.login("patient")
+        self.assertIn(entry_id, [row["id"] for row in self.client.get(self.prefix + "/entries").json()])
+        self.login("outsider", "beta")
+        self.assertEqual(self.client.get(self.prefix + "/chart").status_code, 404)
+
     def test_reviewed_extraction_is_explicit_idempotent_and_provenance_survives_edits(self):
         document=self.upload(self.observation_source()).json()['id'];path=f'/api/dev/documents/{document}'
         preview=self.client.get(path+'/observation-preview');self.assertEqual(preview.status_code,200,preview.text)

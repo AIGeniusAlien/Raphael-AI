@@ -33,11 +33,15 @@
           if (!result.isFinal) { this.onStatus('Recognizing: ' + text); continue; }
           finalized.add(i);
           if (!text) continue;
-          this.onText(text);
           const phrase = wakePhrase.trim().toLowerCase();
-          if (mode === 'handsfree' && phrase && text.toLowerCase().startsWith(phrase)) {
+          if (mode === 'handsfree' && phrase && text.toLowerCase().startsWith(phrase)
+              && (text.length === phrase.length || /[,\\s]/.test(text[phrase.length]))) {
             const command = text.slice(phrase.length).replace(/^[,\s]+/, '');
+            // A wake command is an interaction request, never clinical dictation.
+            // Suppress both empty wake-only results and automatic transcript writes.
             if (command) { window.speechSynthesis?.cancel(); this.onCommand(command); }
+          } else {
+            this.onText(text);
           }
         }
       };

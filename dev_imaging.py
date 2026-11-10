@@ -78,6 +78,25 @@ def validate_dicom(data):
             raise ValueError("Only explicitly synthetic, identity-removed development DICOM is accepted.")
         if not str(getattr(ds, "PatientID", "")).startswith("SYNTHETIC-") or not str(getattr(ds, "PatientName", "")).upper().startswith("SYNTHETIC"):
             raise ValueError("Use an explicitly labeled SYNTHETIC test patient ID and name.")
+        # Explicitly synthetic fixtures can still conceal identifying DICOM tags.
+        # Reject common identifier fields, private tags, and nested sequences
+        # rather than accidentally persisting them in the development database.
+        # This is a bounded defense, NOT a certification of de-identification.
+        identifying_fields = (
+            "PatientBirthDate", "PatientAddress", "PatientTelephoneNumbers",
+            "OtherPatientIDs", "OtherPatientNames", "PatientComments",
+            "AccessionNumber", "InstitutionName", "InstitutionAddress",
+            "ReferringPhysicianName", "PerformingPhysicianName",
+            "OperatorsName", "RequestingPhysician", "StudyComments", "ImageComments",
+        )
+        for field in identifying_fields:
+            if str(getattr(ds, field, "")).strip():
+                raise ValueError("Synthetic DICOM contains a forbidden identifying field.")
+        if len(ds) > 1024:
+            raise ValueError("Synthetic DICOM metadata exceeds the development limit.")
+        for element in ds:
+            if element.tag.is_private or element.VR == "SQ":
+                raise ValueError("Private tags and nested DICOM sequences are not supported in synthetic uploads.")
         rows, columns = int(ds.Rows), int(ds.Columns)
         frames = int(getattr(ds, "NumberOfFrames", 1))
         if not (1 <= rows <= 2048 and 1 <= columns <= 2048 and 1 <= frames <= 64) or rows * columns * frames > MAX_PIXELS:

@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Raphael — Appointment scheduling</title><link rel="stylesheet" href="/static/portal.css">
+<script defer src="/static/scheduling.js"></script></head>
+<body><header><h1>Appointment scheduling</h1><p class="notice">Synthetic development only. No real appointments, external notifications, insurance verification, staff calendars, or clinical care are provided.</p><nav><a href="/">Portal</a> · <a href="/static/account.html">Account</a></nav><p id="identity"></p></header>
+<p id="status" role="status" aria-live="polite"></p>
+<main><section id="booking" hidden><h2>Book a synthetic appointment</h2>
+<form id="booking-form"><label for="patient">Synthetic patient ID</label><input id="patient" type="number" min="1" required>
+<label for="start">Start (local time)</label><input id="start" type="datetime-local" required>
+<label for="end">End (local time)</label><input id="end" type="datetime-local" required>
+<label for="resources">Required resource IDs (comma-separated)</label><input id="resources" required maxlength="2000" placeholder="clinician:doctor, room:one">
+<label for="reason">Visit reason (synthetic only)</label><input id="reason" required maxlength="300">
+<button type="submit">Create synthetic appointment</button></form>
+<p>Times are converted to UTC. Conflicts are rechecked when booking. This does not verify operating hours, credentials, or patient eligibility.</p></section>
+<section><h2>Appointments</h2><button id="refresh" type="button">Refresh appointments</button><div id="appointments" aria-live="polite"></div></section></main></body></html>

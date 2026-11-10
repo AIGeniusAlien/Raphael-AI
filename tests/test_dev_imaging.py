@@ -220,6 +220,30 @@ class ImagingApiTests(unittest.TestCase):
         self.login("outsider", "beta")
         self.assertEqual(self.client.get(path).status_code, 404)
 
+    def test_clinician_study_worklist_tracks_drafts_without_exposing_them_to_patient(self):
+        study = self.upload().json()
+        study_path = f"/api/dev/imaging/studies/{study['id']}/reports"
+        first = self.client.post(study_path, json={
+            "findings": "Synthetic entered findings",
+            "impression": "Synthetic entered impression",
+        })
+        self.assertEqual(first.status_code, 200, first.text)
+        clinician_list = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies")
+        self.assertEqual(clinician_list.status_code, 200, clinician_list.text)
+        self.assertEqual(clinician_list.json()[0]["report_summary"], {"drafts": 1, "approved": 0})
+        self.login("patient")
+        patient_list = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies")
+        self.assertEqual(patient_list.status_code, 200, patient_list.text)
+        self.assertNotIn("report_summary", patient_list.json()[0])
+        self.assertEqual(self.client.get(study_path).json(), [])
+        self.login()
+        approved = self.client.post(f"/api/dev/imaging/reports/{first.json()['id']}/approve", json={})
+        self.assertEqual(approved.status_code, 200, approved.text)
+        worklist = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").json()
+        self.assertEqual(worklist[0]["report_summary"], {"drafts": 0, "approved": 1})
+        self.login("outsider", "beta")
+        self.assertEqual(self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").status_code, 404)
+
     def test_fhir_absent_configuration_is_explicit_and_does_not_import(self):
         r = self.client.get(f"/api/dev/patients/{self.patient_id}/fhir-preview?resource_id=synthetic")
         self.assertEqual(r.status_code, 503)

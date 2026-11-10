@@ -8,7 +8,7 @@
   <p id="session-label"></p>
   <label for="patient">Authorized synthetic record</label><select id="patient"><option value="">Select a record</option></select>
   <section id="workspace" hidden>
-    <h2 id="patient-heading"></h2>
+    <h2 id="patient-heading"></h2><p><a id="chart-link" href="/static/portal.html">Open this patient's structured chart</a></p>
     <form id="upload-form" hidden><h3>Upload a synthetic DICOM image</h3><p>Maximum 10 MiB. Requires PatientIdentityRemoved=YES and SYNTHETIC patient name/ID. These declarations do not detect real patient information. Only bounded uncompressed monochrome CT, MR, CR, DX and US images are supported.</p><label for="dicom-file">DICOM file</label><input id="dicom-file" type="file" accept=".dcm,application/dicom" required><button type="submit">Upload test image</button></form>
     <h3>Stored images</h3><div id="studies"></div>
     <section id="viewer" hidden><h3>Image and metadata</h3><p>Pixel values are normalized to the image minimum/maximum for display. This is not a calibrated diagnostic viewer.</p><label for="frame">Frame (zero based)</label><input id="frame" type="number" min="0" value="0"><button id="view-frame" type="button">View frame</button>

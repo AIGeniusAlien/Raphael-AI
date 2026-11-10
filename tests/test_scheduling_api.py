@@ -1,14 +1,12 @@
 """Synthetic scheduling API integration; no live healthcare appointments."""
 import unittest
 from datetime import datetime, timedelta, timezone
-from tests.test_account import AccountTests
-from dev_portal import create_dev_user
-from sqlalchemy import text
+import test_account as fixture
 
 
 class SchedulingTests(unittest.TestCase):
-    setUp=AccountTests.setUp
-    login=AccountTests.login
+    setUp=fixture.AccountTests.setUp
+    login=fixture.AccountTests.login
 
     def appointment(self,patient=None,resources=None,start=None):
         start=start or datetime.now(timezone.utc)+timedelta(days=3)

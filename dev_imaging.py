@@ -170,8 +170,21 @@ def install_imaging(app, ctx):
         with ctx.engine.begin() as c:
             ctx.patient_for(c, patient_id, user)
             rows = c.execute(text("SELECT * FROM dev_imaging_studies WHERE patient_id=:p ORDER BY id DESC"), {"p": patient_id}).mappings().all()
+            response = [public_study(row) for row in rows]
+            if user["role"] == "clinician":
+                counts = c.execute(text(
+                    "SELECT r.study_id, "
+                    "SUM(CASE WHEN r.status='draft' THEN 1 ELSE 0 END) AS drafts, "
+                    "SUM(CASE WHEN r.status='approved' THEN 1 ELSE 0 END) AS approved "
+                    "FROM dev_imaging_reports r "
+                    "JOIN dev_imaging_studies s ON s.id=r.study_id "
+                    "WHERE s.patient_id=:p GROUP BY r.study_id"
+                ), {"p": patient_id}).mappings().all()
+                summaries = {row["study_id"]: {"drafts": int(row["drafts"]), "approved": int(row["approved"])} for row in counts}
+                for item in response:
+                    item["report_summary"] = summaries.get(item["id"], {"drafts": 0, "approved": 0})
             ctx.audit(c, user, "list_imaging", "patient", patient_id)
-            return [public_study(row) for row in rows]
+            return response
 
     @router.post("/patients/{patient_id}/imaging/studies")
     async def upload(patient_id: int, request: Request, user=Depends(ctx.clinician)):

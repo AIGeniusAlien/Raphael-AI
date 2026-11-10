@@ -230,7 +230,7 @@ class ImagingApiTests(unittest.TestCase):
         self.assertEqual(first.status_code, 200, first.text)
         clinician_list = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies")
         self.assertEqual(clinician_list.status_code, 200, clinician_list.text)
-        self.assertEqual(clinician_list.json()[0]["report_summary"], {"drafts": 1, "approved": 0})
+        self.assertEqual(clinician_list.json()[0]["report_summary"], {"drafts": 1, "approved": 0, "withdrawn": 0})
         self.login("patient")
         patient_list = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies")
         self.assertEqual(patient_list.status_code, 200, patient_list.text)
@@ -240,9 +240,39 @@ class ImagingApiTests(unittest.TestCase):
         approved = self.client.post(f"/api/dev/imaging/reports/{first.json()['id']}/approve", json={})
         self.assertEqual(approved.status_code, 200, approved.text)
         worklist = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").json()
-        self.assertEqual(worklist[0]["report_summary"], {"drafts": 0, "approved": 1})
+        self.assertEqual(worklist[0]["report_summary"], {"drafts": 0, "approved": 1, "withdrawn": 0})
         self.login("outsider", "beta")
         self.assertEqual(self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").status_code, 404)
+
+    def test_approved_report_withdrawal_hides_patient_copy_and_preserves_audit(self):
+        study = self.upload().json()
+        path = f"/api/dev/imaging/studies/{study['id']}/reports"
+        draft = self.client.post(path, json={
+            "findings": "Synthetic manual findings",
+            "impression": "Synthetic manual impression",
+        })
+        self.assertEqual(draft.status_code, 200, draft.text)
+        report_id = draft.json()["id"]
+        self.assertEqual(self.client.post(f"/api/dev/imaging/reports/{report_id}/approve", json={}).status_code, 200)
+        self.login("patient")
+        self.assertEqual(len(self.client.get(path).json()), 1)
+        self.assertEqual(self.client.post(f"/api/dev/imaging/reports/{report_id}/withdraw", json={"reason": "Synthetic correction required"}).status_code, 403)
+        self.login()
+        withdrawn = self.client.post(f"/api/dev/imaging/reports/{report_id}/withdraw", json={"reason": "Synthetic correction required"})
+        self.assertEqual(withdrawn.status_code, 200, withdrawn.text)
+        self.assertEqual(withdrawn.json()["status"], "withdrawn")
+        self.assertEqual(self.client.post(f"/api/dev/imaging/reports/{report_id}/withdraw", json={"reason": "Synthetic correction required"}).status_code, 409)
+        self.assertEqual(self.client.get(path).json()[0]["status"], "withdrawn")
+        worklist = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").json()
+        self.assertEqual(worklist[0]["report_summary"], {"drafts": 0, "approved": 0, "withdrawn": 1})
+        with self.engine.connect() as c:
+            original = c.execute(text("SELECT status,findings FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).one()
+            self.assertEqual(original.status, "approved")
+            self.assertEqual(original.findings, "Synthetic manual findings")
+            self.assertEqual(c.execute(text("SELECT COUNT(*) FROM dev_imaging_report_withdrawals WHERE report_id=:id"), {"id": report_id}).scalar(), 1)
+        self.login("patient")
+        self.assertEqual(self.client.get(path).json(), [])
+        self.assertNotIn("report_summary", self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").json()[0])
 
     def test_fhir_absent_configuration_is_explicit_and_does_not_import(self):
         r = self.client.get(f"/api/dev/patients/{self.patient_id}/fhir-preview?resource_id=synthetic")

@@ -46,7 +46,7 @@
         }
       };
       r.onerror = event => { if (this.recognition !== r) return; this.stop(); this.onStatus('Speech service error: ' + event.error + '. Microphone stopped.'); };
-      r.onend = () => { if (this.recognition !== r) return; if (this.active && mode === 'handsfree') { try { r.start(); } catch (_) { this.stop(); } } else this.stop(); };
+      r.onend = () => { if (this.recognition !== r) return; if (this.active && mode === 'handsfree') { try { finalized.clear(); r.start(); } catch (_) { this.stop(); } } else this.stop(); };
       try { r.start(); } catch (error) { this.stop(); throw error; }
       this.timer = setTimeout(() => { this.stop(); this.onStatus('Voice session timed out. Start again explicitly.'); }, 120000);
       this.onStatus('Listening. Browser speech services may send audio to the browser vendor.');

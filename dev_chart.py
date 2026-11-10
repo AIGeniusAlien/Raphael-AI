@@ -326,6 +326,9 @@ def install_chart(app, ctx):
                       "limitations": "Synthetic records only. Range flags compare entered values and ranges; no diagnosis, dosing, reminder delivery or clinical validation is performed. Document consent applies only to private document access, not all chart access."}
             from longitudinal import review
             result['longitudinal']=review(result['entries'])
+            if user["role"] == "clinician":
+                from imaging_review_queue import summarize_imaging_reports
+                result["imaging_review"] = summarize_imaging_reports(result["entries"], result["encounters"])
             ctx.audit(c, user, "read_structured_chart", "patient", patient_id)
             return result
 

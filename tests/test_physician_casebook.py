@@ -11,8 +11,29 @@ class PhysicianCasebookTests(unittest.TestCase):
         ])
         self.assertEqual(report["domains"]["radiology"]["unsafe"], 1)
         self.assertEqual(report["domains"]["internal_medicine"]["acceptable"], 1)
+        self.assertEqual(report["status"], "SAFETY_ESCALATION_REQUIRED")
+        self.assertEqual(report["unsafe_cases"], 1)
         self.assertFalse(report["clinical_validation"])
         self.assertFalse(report["clinical_use_authorized"])
+
+    def test_reviewer_disagreement_is_reported_without_majority_override(self):
+        rows = [
+            {"case_id": "synthetic-1", "reviewer_id": "reviewer-A", "domain": "radiology", "rating": "acceptable"},
+            {"case_id": "synthetic-1", "reviewer_id": "reviewer-B", "domain": "radiology", "rating": "unsafe"},
+        ]
+        result = summarize(rows)
+        self.assertEqual(result["distinct_cases"], 1)
+        self.assertEqual(result["disagreement_cases"], 1)
+        self.assertEqual(result["unsafe_cases"], 1)
+        self.assertEqual(result["status"], "SAFETY_ESCALATION_REQUIRED")
+
+    def test_conflicting_case_domain_is_rejected(self):
+        rows = [
+            {"case_id": "synthetic-1", "reviewer_id": "reviewer-A", "domain": "radiology", "rating": "acceptable"},
+            {"case_id": "synthetic-1", "reviewer_id": "reviewer-B", "domain": "emergency", "rating": "acceptable"},
+        ]
+        with self.assertRaises(ValueError):
+            summarize(rows)
 
     def test_duplicate_case_reviewer_is_rejected(self):
         row = {"case_id": "synthetic-1", "reviewer_id": "reviewer-A", "domain": "radiology", "rating": "acceptable"}

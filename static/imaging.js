@@ -36,7 +36,9 @@
     reset(); const epoch = state.epoch;
     const patient = await api(`/patients/${id}`);
     if (epoch !== state.epoch) return;
-    state.patient = patient; el('patient-heading').textContent = patient.name; el('workspace').hidden = false;
+    state.patient = patient; el('patient-heading').textContent = patient.name;
+    el('chart-link').href = '/static/chart.html?patient_id=' + encodeURIComponent(String(patient.id));
+    el('workspace').hidden = false;
     await loadStudies(epoch);
   }
   async function loadReports(epoch = state.epoch, studyId = state.study?.id) {

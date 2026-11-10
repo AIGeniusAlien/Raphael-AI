@@ -15,6 +15,18 @@ class AccountSessionUiTests(unittest.TestCase):
         self.assertIn("await sessions()", js)
         self.assertIn("Your current session remains active.", js)
 
+    def test_password_change_form_is_connected_and_clears_secrets(self):
+        html = (ROOT / "static" / "account.html").read_text(encoding="utf-8")
+        js = (ROOT / "static" / "account.js").read_text(encoding="utf-8")
+        for element in ("password-current", "password-new", "password-repeat", "password-code", "change-password"):
+            self.assertIn('id="' + element + '"', html)
+        handler = js.split("$('change-password').onclick=", 1)[1].split("async function requests()", 1)[0]
+        self.assertIn("api('/lifecycle/password'", handler)
+        self.assertIn("new_password:newPassword", handler)
+        self.assertIn("if(!confirm(", handler)
+        self.assertIn("finally{", handler)
+        self.assertIn("'password-repeat','password-code'", handler)
+
     def test_user_must_confirm_bulk_revocation(self):
         js = (ROOT / "static" / "account.js").read_text(encoding="utf-8")
         handler = js.split("$('revoke-other-sessions').onclick=", 1)[1].split("async function requests()", 1)[0]

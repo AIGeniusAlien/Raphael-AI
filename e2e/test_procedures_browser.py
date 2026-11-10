@@ -58,7 +58,20 @@ class ProceduresBrowserTests(unittest.TestCase):
                             self.assertEqual(contexts['other'].request.get(f'/api/dev/procedures/runs/{run_id}').status,404)
                             patient.goto('/static/procedures.html');expect(patient.locator('#runs')).to_contain_text('No visible checklists');expect(patient.locator('#clinician-workspace')).to_be_hidden()
                             doctor.locator('#run-detail input[type=checkbox]').check();doctor.get_by_role('button',name='Publish reviewed checklist',exact=True).click();expect(doctor.locator('#run-detail')).to_contain_text('published')
-                            patient.locator('#refresh').click();patient.locator('#runs button').click();expect(patient.locator('#run-detail')).to_contain_text('coordination awaiting');expect(patient.locator('[data-step=step_2] button').first).to_be_disabled()
+                            visible=contexts['patient'].request.get(f'/api/dev/procedures/patients/{patient_id}/runs')
+                            self.assertEqual(visible.status,200,visible.text())
+                            self.assertEqual([row['id'] for row in visible.json()['runs']],[run_id],
+                                             'Published workflow must be visible to the authorized patient in the API before UI review.')
+                            patient.locator('#refresh').click()
+                            try:
+                                expect(patient.locator('#runs button')).to_have_count(1,timeout=15000)
+                            except AssertionError:
+                                self.fail('Patient refresh did not render the authorized published checklist: '
+                                          +repr({'status':patient.locator('#status').inner_text(),
+                                                 'runs':patient.locator('#runs').inner_text(),
+                                                 'selected_patient':patient.locator('#patient').input_value(),
+                                                 'page_errors':errors}))
+                            patient.locator('#runs button').click();expect(patient.locator('#run-detail')).to_contain_text('coordination awaiting');expect(patient.locator('[data-step=step_2] button').first).to_be_disabled()
                             patient.locator('#run-detail input[type=checkbox]').check();patient.get_by_role('button',name='Authorize coordination',exact=True).click();expect(patient.locator('#run-detail')).to_contain_text('coordination granted')
                             patient.locator('[data-step=step_2]').get_by_role('button',name='Acknowledge step',exact=True).click();expect(patient.locator('[data-step=step_2]')).to_contain_text('acknowledged')
                             doctor.locator('#refresh').click();doctor.locator('#runs button').click();doctor.locator('[data-step=step_1]').get_by_role('button',name='Acknowledge step',exact=True).click();expect(doctor.locator('[data-step=step_1]')).to_contain_text('acknowledged')

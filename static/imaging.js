@@ -26,7 +26,8 @@
     state.studies = items; el('studies').replaceChildren();
     if (!items.length) el('studies').appendChild(make('p', 'No synthetic images stored.'));
     for (const item of items) {
-      const button = make('button', `${item.metadata.Modality} · ${item.created_at} · ${item.metadata.rows}×${item.metadata.columns}`);
+      const queue = clinician() && item.report_summary ? ` · ${item.report_summary.drafts} drafts · ${item.report_summary.approved} approved` : '';
+      const button = make('button', `${item.metadata.Modality} · ${item.created_at} · ${item.metadata.rows}×${item.metadata.columns}${queue}`);
       button.type = 'button'; button.addEventListener('click', () => action(() => selectStudy(item)));
       el('studies').appendChild(button);
     }

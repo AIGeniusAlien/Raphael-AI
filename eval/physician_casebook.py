@@ -66,7 +66,7 @@ def main(argv=None):
         print(json.dumps({"status": "BLOCKED", "error": type(exc).__name__}))
         return 1
     print(json.dumps(result, indent=2))
-    return 0
+    return 1 if result["status"] == "SAFETY_ESCALATION_REQUIRED" else 0
 
 
 if __name__ == "__main__":

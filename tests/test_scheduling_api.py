@@ -15,7 +15,7 @@ class SchedulingTests(unittest.TestCase):
         start=start.replace(microsecond=0)
         return {'patient_id':patient or self.pid,'start':start.isoformat(),
                 'end':(start+timedelta(minutes=30)).isoformat(),
-                'resources':resources or ['clinician:doctor','room:one'],
+                'resources':['clinician:doctor','room:one'] if resources is None else resources,
                 'reason':'Synthetic consultation'}
 
     def test_booking_conflicts_cancel_and_patient_visibility(self):

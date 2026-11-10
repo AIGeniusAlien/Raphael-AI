@@ -35,7 +35,7 @@
           if (!text) continue;
           const phrase = wakePhrase.trim().toLowerCase();
           if (mode === 'handsfree' && phrase && text.toLowerCase().startsWith(phrase)
-              && (text.length === phrase.length || /[,\\s]/.test(text[phrase.length]))) {
+              && (text.length === phrase.length || /[,\s]/.test(text[phrase.length]))) {
             const command = text.slice(phrase.length).replace(/^[,\s]+/, '');
             // A wake command is an interaction request, never clinical dictation.
             // Suppress both empty wake-only results and automatic transcript writes.

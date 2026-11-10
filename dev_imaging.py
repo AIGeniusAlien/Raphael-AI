@@ -186,14 +186,16 @@ def install_imaging(app, ctx):
                 counts = c.execute(text(
                     "SELECT r.study_id, "
                     "SUM(CASE WHEN r.status='draft' THEN 1 ELSE 0 END) AS drafts, "
-                    "SUM(CASE WHEN r.status='approved' THEN 1 ELSE 0 END) AS approved "
+                    "SUM(CASE WHEN r.status='approved' AND w.report_id IS NULL THEN 1 ELSE 0 END) AS approved, "
+                    "SUM(CASE WHEN w.report_id IS NOT NULL THEN 1 ELSE 0 END) AS withdrawn "
                     "FROM dev_imaging_reports r "
                     "JOIN dev_imaging_studies s ON s.id=r.study_id "
+                    "LEFT JOIN dev_imaging_report_withdrawals w ON w.report_id=r.id "
                     "WHERE s.patient_id=:p GROUP BY r.study_id"
                 ), {"p": patient_id}).mappings().all()
-                summaries = {row["study_id"]: {"drafts": int(row["drafts"]), "approved": int(row["approved"])} for row in counts}
+                summaries = {row["study_id"]: {"drafts": int(row["drafts"]), "approved": int(row["approved"]), "withdrawn": int(row["withdrawn"])} for row in counts}
                 for item in response:
-                    item["report_summary"] = summaries.get(item["id"], {"drafts": 0, "approved": 0})
+                    item["report_summary"] = summaries.get(item["id"], {"drafts": 0, "approved": 0, "withdrawn": 0})
             ctx.audit(c, user, "list_imaging", "patient", patient_id)
             return response
 
@@ -297,13 +299,11 @@ def install_imaging(app, ctx):
             study_for(c, report["study_id"], user)
             if report["status"] != "approved":
                 raise HTTPException(409, "Only an approved report can be withdrawn.")
-            existing = c.execute(text("SELECT report_id FROM dev_imaging_report_withdrawals WHERE report_id=:id"),
-                                 {"id": report_id}).first()
-            if existing:
+            result = c.execute(text("INSERT OR IGNORE INTO dev_imaging_report_withdrawals(report_id,withdrawn_by,withdrawn_at,reason) "
+                                    "VALUES (:id,:u,:at,:reason)"),
+                               {"id": report_id, "u": user["id"], "at": _now(), "reason": body.reason})
+            if result.rowcount != 1:
                 raise HTTPException(409, "This report is already withdrawn.")
-            c.execute(text("INSERT INTO dev_imaging_report_withdrawals(report_id,withdrawn_by,withdrawn_at,reason) "
-                           "VALUES (:id,:u,:at,:reason)"),
-                      {"id": report_id, "u": user["id"], "at": _now(), "reason": body.reason})
             ctx.audit(c, user, "withdraw_imaging_report", "imaging_report", report_id)
             return {"id": report_id, "status": "withdrawn", "clinical_use_authorized": False}
 

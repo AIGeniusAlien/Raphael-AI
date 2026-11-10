@@ -38,6 +38,21 @@ def sandbox_base_url():
     return base
 
 
+def declared_synthetic(resource):
+    """Require an explicit synthetic marker on each individual FHIR resource.
+
+    This is a development provenance declaration, not de-identification proof.
+    """
+    if not isinstance(resource, dict):
+        return False
+    meta = resource.get("meta")
+    tags = meta.get("tag") if isinstance(meta, dict) else None
+    return isinstance(tags, list) and any(
+        isinstance(tag, dict) and tag.get("system") == "urn:raphael:development"
+        and tag.get("code") == "synthetic" for tag in tags
+    )
+
+
 async def preview_patient(resource_id: str, *, transport=None):
     """Read one explicitly tagged synthetic patient plus supported FHIR resources.
 
@@ -78,18 +93,19 @@ async def preview_patient(resource_id: str, *, transport=None):
             patient = await get("Patient/" + resource_id)
             if patient.get("resourceType") != "Patient" or patient.get("id") != resource_id:
                 raise SandboxUnavailable("FHIR patient identity does not match the requested sandbox resource.")
-            meta = patient.get("meta", {})
-            tags = meta.get("tag", []) if isinstance(meta, dict) else []
-            if not isinstance(tags, list):
-                raise SandboxUnavailable("FHIR patient has invalid synthetic metadata.")
-            if not any(isinstance(tag, dict) and tag.get("system") == "urn:raphael:development"
-                       and tag.get("code") == "synthetic" for tag in tags):
+            if not declared_synthetic(patient):
                 raise SandboxUnavailable("FHIR preview requires an explicitly tagged synthetic patient.")
             resources = []
             for kind in RESOURCE_TYPES:
                 bundle = await get(kind, {"patient": resource_id, "_count": 25})
-                if bundle.get("resourceType") != "Bundle" or not isinstance(bundle.get("entry", []), list):
-                    raise SandboxUnavailable("FHIR sandbox search did not return a resource bundle.")
+                if (bundle.get("resourceType") != "Bundle" or bundle.get("type") != "searchset"
+                        or not isinstance(bundle.get("entry", []), list)):
+                    raise SandboxUnavailable("FHIR sandbox search did not return a valid searchset bundle.")
+                links = bundle.get("link", [])
+                if not isinstance(links, list) or any(
+                    not isinstance(link, dict) or link.get("relation") == "next" for link in links
+                ):
+                    raise SandboxUnavailable("FHIR sandbox pagination cannot be verified in this bounded preview.")
                 entries = bundle.get("entry", [])
                 if len(entries) > 25:
                     raise SandboxUnavailable("FHIR sandbox search exceeds the preview entry limit.")
@@ -97,6 +113,8 @@ async def preview_patient(resource_id: str, *, transport=None):
                     resource = entry.get("resource") if isinstance(entry, dict) else None
                     if not isinstance(resource, dict) or resource.get("resourceType") != kind:
                         raise SandboxUnavailable("FHIR sandbox search contains an unexpected resource type.")
+                    if not declared_synthetic(resource):
+                        raise SandboxUnavailable("FHIR preview requires each returned resource to be explicitly synthetic.")
                     references = [resource.get(key, {}).get("reference") for key in ("subject", "patient")
                                   if isinstance(resource.get(key, {}), dict)]
                     if "Patient/" + resource_id not in references:
@@ -108,5 +126,5 @@ async def preview_patient(resource_id: str, *, transport=None):
             "retrieved_at": datetime.now(timezone.utc).isoformat(), "patient": patient,
             "resources": resources, "imported": False,
             "limitations": ["Read-only synthetic sandbox preview; no chart records were overwritten.",
-                            "Synthetic tags are operator declarations, not deidentification or clinical validation.",
+                            "Every returned resource must declare synthetic provenance; tags are not proof of de-identification or clinical validation.",
                             "At most 25 resources of each supported type; this is not a complete clinical record."]}

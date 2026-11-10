@@ -35,6 +35,21 @@ class SchedulingTests(unittest.TestCase):
         self.client.post('/api/dev/scheduling/appointments/'+str(first.json()['id'])+'/cancel').raise_for_status()
         self.assertEqual(self.client.post('/api/dev/scheduling/appointments',json=payload).status_code,201)
 
+    def test_conflict_preflight_is_private_and_not_a_booking_guarantee(self):
+        self.login('doctor')
+        payload=self.appointment()
+        params={'start':payload['start'],'end':payload['end'],'resource':'room:one'}
+        initial=self.client.get('/api/dev/scheduling/conflicts',params=params)
+        self.assertEqual(initial.status_code,200,initial.text)
+        self.assertFalse(initial.json()['conflict'])
+        self.assertFalse(initial.json()['availability_confirmed'])
+        self.client.post('/api/dev/scheduling/appointments',json=payload).raise_for_status()
+        self.assertTrue(self.client.get('/api/dev/scheduling/conflicts',params=params).json()['conflict'])
+        self.login()
+        self.assertEqual(self.client.get('/api/dev/scheduling/conflicts',params=params).status_code,403)
+        self.login('foreign',tenant='two')
+        self.assertFalse(self.client.get('/api/dev/scheduling/conflicts',params=params).json()['conflict'])
+
     def test_tenant_and_patient_isolation(self):
         self.login('doctor')
         self.assertEqual(self.client.post('/api/dev/scheduling/appointments',json=self.appointment(patient=999999)).status_code,404)

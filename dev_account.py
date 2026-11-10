@@ -60,6 +60,8 @@ class Review(BaseModel):
 def install_account(app,ctx,patient_ai_exporter=None,procedure_exporter=None):
     from account_lifecycle import install_lifecycle
     install_lifecycle(app,ctx)
+    from dev_scheduling import install_scheduling
+    install_scheduling(app,ctx)
     engine=ctx.engine
     router=APIRouter(prefix='/api/dev/account',dependencies=[Depends(ctx.same_origin_json)])
     @router.get('/storage')

@@ -408,6 +408,10 @@ def install_chart(app, ctx):
             existing = entry_for(c, entry_id, user)
             if existing["status"] != "draft":
                 raise HTTPException(409, "Only draft records can be approved.")
+            if existing["encounter_id"]:
+                encounter = encounter_for(c, existing["encounter_id"], user)
+                if encounter["status"] == "closed":
+                    raise HTTPException(409, "Reopen the encounter before approving its draft records.")
             result = c.execute(text("UPDATE dev_chart_entries SET status='approved',approved_by=:u,approved_at=:at,revision=revision+1 "
                                     "WHERE id=:id AND status='draft' AND revision=:r"),
                                {"u": user["id"], "at": now(), "id": entry_id, "r": body.revision})

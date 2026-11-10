@@ -45,15 +45,31 @@
     el('reports').replaceChildren();
     if (!items.length) el('reports').appendChild(make('p', 'No visible reports for this image.'));
     for (const report of items) {
-      const article = make('article'); article.appendChild(make('h4', report.status === 'approved' ? 'Clinician-approved report (synthetic test workflow)' : 'Draft — clinician review required'));
+      const article = make('article'); article.appendChild(make('h4', report.status === 'approved' ? 'Clinician-approved report (synthetic test workflow)' : report.status === 'withdrawn' ? 'Withdrawn report — historical record only' : 'Draft — clinician review required'));
+      if (report.status === 'withdrawn') article.appendChild(make('p', 'Withdrawal reason: ' + (report.withdrawal_reason || 'Not supplied')));
       for (const key of ['findings', 'impression', 'recommendation']) { article.appendChild(make('strong', key)); article.appendChild(make('p', report[key])); }
       if (clinician() && report.status === 'draft') {
         const button = make('button', 'Approve report for patient visibility'); button.type = 'button';
         button.addEventListener('click', () => action(async () => {
           if (epoch !== state.epoch || state.study?.id !== studyId) return;
           await post(`/imaging/reports/${report.id}/approve`);
-          await loadReports(epoch, studyId);
+          await loadReports(epoch, studyId); await loadStudies(epoch);
         })); article.appendChild(button);
+      }
+      if (clinician() && report.status === 'approved') {
+        const label = make('label', 'Reason to withdraw approved synthetic report');
+        const reason = make('textarea'); reason.maxLength = 500; reason.minLength = 5;
+        label.appendChild(reason);
+        const button = make('button', 'Withdraw report from patient visibility'); button.type = 'button';
+        button.addEventListener('click', () => action(async () => {
+          if (epoch !== state.epoch || state.study?.id !== studyId) return;
+          const explanation = reason.value.trim();
+          if (explanation.length < 5) throw new Error('Enter a withdrawal reason of at least five characters.');
+          await post(`/imaging/reports/${report.id}/withdraw`, {reason: explanation});
+          await loadReports(epoch, studyId); await loadStudies(epoch);
+          status('Report withdrawn from patient visibility. Historical clinician record retained.');
+        }));
+        article.append(label, button);
       }
       el('reports').appendChild(article);
     }

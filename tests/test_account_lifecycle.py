@@ -26,6 +26,54 @@ class AccountLifecycleTests(unittest.TestCase):
         body={'password':self.password,'confirm':True,'target_username':'patient','expected_revision':1,'policy_revision':1};body.update(changes)
         return self.client.post(f'/api/dev/account/lifecycle/accounts/{identifier}/erase-credentials',json=body)
 
+    def test_password_change_revokes_every_session_and_requires_new_credentials(self):
+        other=TestClient(self.app);self.addCleanup(other.close);self.login(client=other)
+        path='/api/dev/account/lifecycle/password'
+        body={'password':self.password,'new_password':'Different-Synthetic-Password-2026','confirm':True}
+        self.assertEqual(self.client.post(path,json={**body,'confirm':False}).status_code,422)
+        self.assertEqual(self.client.post(path,json={**body,'password':'wrong'}).status_code,403)
+        self.assertEqual(self.client.get('/api/dev/session').status_code,200)
+        response=self.client.post(path,json=body)
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertTrue(response.json()['sessions_revoked'])
+        self.assertEqual(self.client.get('/api/dev/session').status_code,401)
+        self.assertEqual(other.get('/api/dev/session').status_code,401)
+        self.assertEqual(self.client.post('/api/dev/login',json={'tenant':'one','username':'patient','password':self.password}).status_code,401)
+        self.client.post('/api/dev/login',json={'tenant':'one','username':'patient','password':body['new_password']}).raise_for_status()
+        self.assertEqual(self.client.get('/api/dev/session').status_code,200)
+
+    def test_password_change_requires_mfa_and_preserves_other_accounts(self):
+        codes=self.enroll()
+        other=TestClient(self.app);self.addCleanup(other.close);self.login('other',client=other)
+        body={'password':self.password,'new_password':'Another-Synthetic-Password-2026','confirm':True}
+        self.assertEqual(self.client.post('/api/dev/account/lifecycle/password',json=body).status_code,403)
+        response=self.client.post('/api/dev/account/lifecycle/password',json={**body,'code':codes[0]})
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(other.get('/api/dev/session').status_code,200)
+
+    def test_password_change_fails_closed_after_session_revocation_race(self):
+        from fastapi import Request
+        from dev_portal import COOKIE_NAME
+        import hashlib
+        original=self.ctx.user
+        def revoke_after_auth(request:Request):
+            user=original(request)
+            token=request.cookies.get(COOKIE_NAME,'')
+            with self.engine.begin() as c:
+                c.execute(text('DELETE FROM dev_sessions WHERE token_hash=:h'),{'h':hashlib.sha256(token.encode()).hexdigest()})
+            return user
+        self.app.dependency_overrides[original]=revoke_after_auth
+        try:
+            response=self.client.post('/api/dev/account/lifecycle/password',json={
+                'password':self.password,'new_password':'Different-Synthetic-Password-2026','confirm':True})
+            self.assertEqual(response.status_code,401,response.text)
+            with self.engine.connect() as c:
+                stored=c.execute(text('SELECT password_hash FROM dev_users WHERE tenant=:t AND username=:n'),{'t':'one','n':'patient'}).scalar()
+            from dev_portal import _password_matches
+            self.assertTrue(_password_matches(self.password,stored))
+        finally:
+            self.app.dependency_overrides.clear()
+
     def test_deactivate_revokes_all_sessions_preserves_records_and_admin_restores_access(self):
         identifier=self.uid();other=TestClient(self.app);self.addCleanup(other.close);self.login(client=other)
         self.assertEqual(self.deactivate(password='WRONG-SYNTHETIC-PASSWORD').status_code,403)

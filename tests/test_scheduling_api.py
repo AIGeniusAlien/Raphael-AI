@@ -28,9 +28,9 @@ class SchedulingTests(unittest.TestCase):
         self.assertEqual(visible.status_code,200,visible.text)
         self.assertEqual(len(visible.json()),1)
         self.assertEqual(self.client.post('/api/dev/scheduling/appointments',json=payload).status_code,403)
-        self.assertEqual(self.client.post('/api/dev/scheduling/appointments/1/cancel').status_code,403)
+        self.assertEqual(self.client.post('/api/dev/scheduling/appointments/1/cancel',json={}).status_code,403)
         self.login('doctor')
-        self.client.post('/api/dev/scheduling/appointments/'+str(first.json()['id'])+'/cancel').raise_for_status()
+        self.client.post('/api/dev/scheduling/appointments/'+str(first.json()['id'])+'/cancel',json={}).raise_for_status()
         self.assertEqual(self.client.post('/api/dev/scheduling/appointments',json=payload).status_code,201)
 
     def test_conflict_preflight_is_private_and_not_a_booking_guarantee(self):

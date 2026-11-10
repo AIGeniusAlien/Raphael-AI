@@ -50,3 +50,14 @@ test('wake phrase must be delimited; command-like utterances are never dictated'
  assert.deepEqual(a.commands,['explain the synthetic example']);
  a.voice.stop();
 });
+
+test('handsfree restart accepts new final result at reset browser index zero',async()=>{
+ const a=setup();await a.voice.start({consent:true,mode:'handsfree',wakePhrase:'Hey Raphael'});
+ const r=a.instances[0],result=transcript=>Object.assign([{transcript}],{isFinal:true});
+ r.onresult({resultIndex:0,results:[result('First synthetic dictation')]});
+ r.onend();
+ assert.equal(r.started,true);
+ r.onresult({resultIndex:0,results:[result('Second synthetic dictation')]});
+ assert.deepEqual(a.texts,['First synthetic dictation','Second synthetic dictation']);
+ a.voice.stop();
+});

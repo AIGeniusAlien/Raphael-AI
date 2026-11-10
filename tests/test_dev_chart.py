@@ -60,6 +60,51 @@ class StructuredChartTests(unittest.TestCase):
         from observation_extraction import HEADERS
         return (','.join(HEADERS)+f"\n{patient or self.patient['id']},lab,Synthetic analyte,2020-01-01T00:00:00+00:00,{value},test-unit,,\n").encode()
 
+    def test_imaging_review_queue_enforces_clinician_visibility_and_encounter_flags(self):
+        encounter = self.client.post(
+            self.prefix + "/encounters",
+            json={"title": "Synthetic radiology encounter"},
+        )
+        self.assertEqual(encounter.status_code, 200, encounter.text)
+        encounter_id = encounter.json()["id"]
+        report = self.entry(
+            kind="imaging_report", label="Synthetic imaging draft",
+            text="Synthetic report text, not a diagnosis", encounter_id=encounter_id,
+        )
+        review = self.client.get(self.prefix + "/chart")
+        self.assertEqual(review.status_code, 200, review.text)
+        imaging = review.json()["imaging_review"]
+        self.assertEqual(imaging["total_reports"], 1)
+        self.assertEqual(imaging["drafts"], 1)
+        self.assertIn("clinician_approval_pending", imaging["reports"][0]["review_flags"])
+        closed = self.client.patch(
+            f"/api/dev/encounters/{encounter_id}",
+            json={"status": "closed", "summary": "Synthetic case closed"},
+        )
+        self.assertEqual(closed.status_code, 200, closed.text)
+        flags = self.client.get(self.prefix + "/chart").json()["imaging_review"]["reports"][0]["review_flags"]
+        self.assertIn("encounter_closed_for_approval", flags)
+        self.login("patient")
+        patient_chart = self.client.get(self.prefix + "/chart")
+        self.assertEqual(patient_chart.status_code, 200, patient_chart.text)
+        self.assertNotIn("imaging_review", patient_chart.json())
+        self.assertFalse(any(e["id"] == report["id"] for e in patient_chart.json()["entries"]))
+        self.login()
+        self.client.patch(
+            f"/api/dev/encounters/{encounter_id}",
+            json={"status": "open", "summary": "Synthetic case reopened"},
+        ).raise_for_status()
+        approved = self.client.post(
+            f"/api/dev/chart-entries/{report['id']}/approve",
+            json={"revision": report["revision"]},
+        )
+        self.assertEqual(approved.status_code, 200, approved.text)
+        imaging = self.client.get(self.prefix + "/chart").json()["imaging_review"]
+        self.assertEqual(imaging["drafts"], 0)
+        self.assertEqual(imaging["approved"], 1)
+        self.login("outsider", "beta")
+        self.assertEqual(self.client.get(self.prefix + "/chart").status_code, 404)
+
     def test_approval_requires_open_encounter_and_preserves_patient_visibility(self):
         created = self.client.post(
             self.prefix + "/encounters",

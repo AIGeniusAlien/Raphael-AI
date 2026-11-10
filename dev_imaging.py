@@ -47,6 +47,12 @@ CREATE TABLE IF NOT EXISTS dev_imaging_reports (
  approved_at TEXT,
  created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS dev_imaging_report_withdrawals (
+ report_id INTEGER PRIMARY KEY REFERENCES dev_imaging_reports(id),
+ withdrawn_by INTEGER NOT NULL REFERENCES dev_users(id),
+ withdrawn_at TEXT NOT NULL,
+ reason TEXT NOT NULL
+);
 """
 
 
@@ -151,6 +157,11 @@ class ReportInput(BaseModel):
     recommendation: str = Field(default="", max_length=5000)
 
 
+class WithdrawReportInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    reason: str = Field(min_length=5, max_length=500)
+
+
 def install_imaging(app, ctx):
     router = APIRouter(prefix="/api/dev", dependencies=[Depends(ctx.request_guard)], tags=["synthetic imaging and FHIR sandbox"])
 
@@ -236,11 +247,22 @@ def install_imaging(app, ctx):
     def reports(study_id: int, user=Depends(ctx.user)):
         with ctx.engine.begin() as c:
             study_for(c, study_id, user)
-            clause = " AND r.status='approved'" if user["role"] == "patient" else ""
-            rows = c.execute(text("SELECT r.*,u.username AS author_username FROM dev_imaging_reports r JOIN dev_users u ON u.id=r.author_id "
+            clause = " AND r.status='approved' AND w.report_id IS NULL" if user["role"] == "patient" else ""
+            rows = c.execute(text("SELECT r.*,u.username AS author_username,w.withdrawn_at,w.reason AS withdrawal_reason "
+                                  "FROM dev_imaging_reports r JOIN dev_users u ON u.id=r.author_id "
+                                  "LEFT JOIN dev_imaging_report_withdrawals w ON w.report_id=r.id "
                                   "WHERE r.study_id=:s" + clause + " ORDER BY r.id"), {"s": study_id}).mappings().all()
             ctx.audit(c, user, "read_imaging_reports", "imaging_study", study_id)
-            return [dict(row) for row in rows]
+            response = []
+            for row in rows:
+                item = dict(row)
+                if item["withdrawn_at"]:
+                    item["status"] = "withdrawn"
+                elif user["role"] == "patient":
+                    item.pop("withdrawn_at", None)
+                    item.pop("withdrawal_reason", None)
+                response.append(item)
+            return response
 
     @router.post("/imaging/studies/{study_id}/reports", dependencies=[Depends(ctx.same_origin_json)])
     def create_report(study_id: int, body: ReportInput, user=Depends(ctx.clinician)):
@@ -265,6 +287,25 @@ def install_imaging(app, ctx):
                 raise HTTPException(409, "Only a draft report can be approved.")
             ctx.audit(c, user, "approve_imaging_report", "imaging_report", report_id)
             return dict(c.execute(text("SELECT * FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).mappings().one())
+
+    @router.post("/imaging/reports/{report_id}/withdraw", dependencies=[Depends(ctx.same_origin_json)])
+    def withdraw_report(report_id: int, body: WithdrawReportInput, user=Depends(ctx.clinician)):
+        with ctx.engine.begin() as c:
+            report = c.execute(text("SELECT * FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).mappings().first()
+            if not report:
+                raise HTTPException(404, "Imaging report not found.")
+            study_for(c, report["study_id"], user)
+            if report["status"] != "approved":
+                raise HTTPException(409, "Only an approved report can be withdrawn.")
+            existing = c.execute(text("SELECT report_id FROM dev_imaging_report_withdrawals WHERE report_id=:id"),
+                                 {"id": report_id}).first()
+            if existing:
+                raise HTTPException(409, "This report is already withdrawn.")
+            c.execute(text("INSERT INTO dev_imaging_report_withdrawals(report_id,withdrawn_by,withdrawn_at,reason) "
+                           "VALUES (:id,:u,:at,:reason)"),
+                      {"id": report_id, "u": user["id"], "at": _now(), "reason": body.reason})
+            ctx.audit(c, user, "withdraw_imaging_report", "imaging_report", report_id)
+            return {"id": report_id, "status": "withdrawn", "clinical_use_authorized": False}
 
     @router.get("/patients/{patient_id}/fhir-preview")
     async def fhir_preview(patient_id: int, resource_id: str = Query(min_length=1, max_length=64), user=Depends(ctx.clinician)):

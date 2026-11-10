@@ -22,7 +22,8 @@ def fixture(path):
         return patient()
     kind = path.split("/")[-1].split("?")[0]
     return {"resourceType": "Bundle", "type": "searchset", "entry": [
-        {"resource": {"resourceType": kind, "id": "fixture", "subject": {"reference": "Patient/synthetic-1"}}}
+        {"resource": {"resourceType": kind, "id": "fixture", "subject": {"reference": "Patient/synthetic-1"},
+                       "meta": {"tag": [{"system": "urn:raphael:development", "code": "synthetic"}]}}}
     ] if kind == "Observation" else []}
 
 
@@ -78,6 +79,29 @@ class FhirSandboxTests(unittest.TestCase):
         with self.assertRaises(SandboxUnavailable): self.call(respond)
         with self.assertRaises(SandboxUnavailable):
             self.call(lambda _: httpx.Response(200, content=b"x" * (MAX_RESPONSE + 1)))
+
+    def test_each_returned_resource_needs_its_own_synthetic_declaration(self):
+        def responder(request):
+            result = fixture(request.url.path)
+            if result.get("resourceType") == "Bundle" and result["entry"]:
+                result["entry"][0]["resource"]["meta"] = {}
+            return httpx.Response(200, json=result)
+        with self.assertRaisesRegex(SandboxUnavailable, "each returned resource"):
+            self.call(responder)
+
+    def test_pagination_and_non_searchset_bundles_fail_closed(self):
+        for mutation in (
+            {"type": "collection"},
+            {"link": [{"relation": "next", "url": "https://untrusted.invalid/next"}]},
+            {"link": "not-an-array"},
+        ):
+            def responder(request):
+                result = fixture(request.url.path)
+                if result.get("resourceType") == "Bundle":
+                    result.update(mutation)
+                return httpx.Response(200, json=result)
+            with self.subTest(mutation=mutation), self.assertRaises(SandboxUnavailable):
+                self.call(responder)
 
     def test_real_local_http_sandbox_fixture_is_read_only(self):
         requests = []

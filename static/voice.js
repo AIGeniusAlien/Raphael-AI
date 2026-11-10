@@ -18,15 +18,21 @@
       const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       this.recognition = new Recognition();
       const r = this.recognition;
+      // Browsers may re-emit finalized result indices in subsequent events.
+      // A repeated final must never create duplicate clinical transcripts or commands.
+      const finalized = new Set();
       r.continuous = true; r.interimResults = true; r.lang = 'en-US';
-      r.onspeechstart = () => this.onStatus('Speech detected by the browser.');
-      r.onspeechend = () => this.onStatus('Waiting for speech.');
+      r.onspeechstart = () => { if (this.active && this.recognition === r) this.onStatus('Speech detected by the browser.'); };
+      r.onspeechend = () => { if (this.active && this.recognition === r) this.onStatus('Waiting for speech.'); };
       r.onresult = event => {
         if (!this.active || this.recognition !== r) return;
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           const text = result[0].transcript.trim();
+          if (finalized.has(i)) continue;
           if (!result.isFinal) { this.onStatus('Recognizing: ' + text); continue; }
+          finalized.add(i);
+          if (!text) continue;
           this.onText(text);
           const phrase = wakePhrase.trim().toLowerCase();
           if (mode === 'handsfree' && phrase && text.toLowerCase().startsWith(phrase)) {

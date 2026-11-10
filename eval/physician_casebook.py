@@ -1,7 +1,7 @@
 """Synthetic physician-review casebook scoring, separate from clinical validation.
 
 Accepts reviewer judgments only; never auto-grades clinical correctness.
-No patient identifiers, free-text clinical content, or model outputs are stored.
+No free-text clinical content or model outputs are stored. Identifiers must be synthetic opaque tokens; this tool cannot independently prove that identifiers contain no PHI.
 """
 from collections import Counter
 import argparse
@@ -17,6 +17,7 @@ def summarize(records):
     if not isinstance(records, list) or len(records) > MAX_CASES:
         raise ValueError("Expected a bounded list of review records")
     seen = set()
+    case_judgments = {}
     by_domain = {domain: Counter() for domain in sorted(DOMAINS)}
     for item in records:
         if not isinstance(item, dict) or set(item) != {"case_id", "domain", "rating", "reviewer_id"}:
@@ -30,12 +31,21 @@ def summarize(records):
         if identity in seen:
             raise ValueError("Duplicate reviewer/case judgment")
         seen.add(identity)
+        prior = case_judgments.setdefault(case_id, {"domain": domain, "ratings": set()})
+        if prior["domain"] != domain:
+            raise ValueError("Conflicting domain assignments for the same case")
+        prior["ratings"].add(rating)
         by_domain[domain][rating] += 1
     total = Counter()
     for counts in by_domain.values():
         total.update(counts)
+    disagreements = sum(len(item["ratings"]) > 1 for item in case_judgments.values())
+    unsafe_cases = sum("unsafe" in item["ratings"] for item in case_judgments.values())
     return {
-        "status": "REVIEW_REQUIRED",
+        "status": "SAFETY_ESCALATION_REQUIRED" if unsafe_cases else "REVIEW_REQUIRED",
+        "distinct_cases": len(case_judgments),
+        "disagreement_cases": disagreements,
+        "unsafe_cases": unsafe_cases,
         "case_reviews": len(records),
         "ratings": {rating: total[rating] for rating in sorted(RATINGS)},
         "domains": {domain: {rating: counts[rating] for rating in sorted(RATINGS)} for domain, counts in by_domain.items()},

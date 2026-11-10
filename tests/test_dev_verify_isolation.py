@@ -31,7 +31,7 @@ class VerificationIsolationTests(unittest.TestCase):
         }
         env = isolated_environment(source)
         for key in source:
-            if key != "UNRELATED_TEST_MARKER":
+            if key not in ("UNRELATED_TEST_MARKER", "RAPHAEL_VERIFY_CLAIMS"):
                 self.assertNotIn(key, env, key)
         self.assertEqual(env["UNRELATED_TEST_MARKER"], "preserved")
         self.assertEqual(env["RAPHAEL_VERIFY_CLAIMS"], "0")

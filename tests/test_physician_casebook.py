@@ -1,6 +1,11 @@
 """Deterministic, no-provider tests for clinician review casebook."""
 import unittest
-from eval.physician_casebook import summarize
+import json
+import tempfile
+from pathlib import Path
+from contextlib import redirect_stdout
+import io
+from eval.physician_casebook import summarize, main
 
 
 class PhysicianCasebookTests(unittest.TestCase):
@@ -34,6 +39,17 @@ class PhysicianCasebookTests(unittest.TestCase):
         ]
         with self.assertRaises(ValueError):
             summarize(rows)
+
+    def test_cli_returns_failure_when_review_contains_unsafe_case(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "synthetic-review.json"
+            path.write_text(json.dumps([
+                {"case_id": "synthetic-1", "reviewer_id": "reviewer-A", "domain": "radiology", "rating": "unsafe"}
+            ]), encoding="utf-8")
+            with redirect_stdout(io.StringIO()) as output:
+                exit_code = main([str(path)])
+            self.assertEqual(exit_code, 1)
+            self.assertEqual(json.loads(output.getvalue())["status"], "SAFETY_ESCALATION_REQUIRED")
 
     def test_duplicate_case_reviewer_is_rejected(self):
         row = {"case_id": "synthetic-1", "reviewer_id": "reviewer-A", "domain": "radiology", "rating": "acceptable"}

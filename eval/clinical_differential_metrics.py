@@ -69,7 +69,8 @@ def evaluate(cases):
         if not _token(row["case_id"]) or row["case_id"] in seen:
             raise ValueError("Case ID must be unique, opaque and bounded")
         seen.add(row["case_id"])
-        if row["synthetic"] is not True or row["domain"] not in DOMAINS or not _token(row["reference"]):
+        if (row["synthetic"] is not True or not isinstance(row["domain"], str)
+                or row["domain"] not in DOMAINS or not _token(row["reference"])):
             raise ValueError("Only supported synthetic case labels are accepted")
         predictions = row["ranked_predictions"]
         if (not isinstance(predictions, list) or len(predictions) > MAX_CANDIDATES

@@ -48,3 +48,27 @@ test('patient stream rejection without revoked session does not conceal accessib
  assert.equal(h.elements['patient-ai'].hidden,false);
  assert.equal(h.elements.prompt.value,'Synthetic educational question');
 });
+
+test('late accepted patient response after stop cannot consume old stream or clear a new draft',async()=>{
+ const h=setup(),pending=h.send('Synthetic educational question');
+ h.state.abort.abort();
+ h.state.busy=false;
+ h.elements.prompt.value='Another synthetic draft';
+ let touched=false;
+ h.resolve({ok:true,body:{getReader(){touched=true;throw Error('Canceled response accessed a stream');}}});
+ await pending;
+ assert.equal(touched,false);
+ assert.equal(h.elements.prompt.value,'Another synthetic draft');
+ assert.equal(h.events.length,0);
+});
+test('old response after switching patient context cannot modify new conversation',async()=>{
+ const h=setup(),pending=h.send('Synthetic educational question');
+ h.state.epoch++;
+ h.state.thread={id:88,consent_ai:true};
+ h.elements.prompt.value='New synthetic patient question';
+ let touched=false;
+ h.resolve({ok:true,body:{getReader(){touched=true;throw Error('Wrong patient stream consumed');}}});
+ await pending;
+ assert.equal(touched,false);
+ assert.equal(h.elements.prompt.value,'New synthetic patient question');
+});

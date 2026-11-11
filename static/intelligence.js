@@ -39,7 +39,7 @@
     }
   }
   function capturedFields(){const fields={};for(const name of documentationFormats[$('format').value]||[]){const value=$('document-field-'+name)?.value.trim();if(value)fields[name]={text:value,chart_entry_ids:[],transcript_segment_ids:[]};}return fields;}
-  async function loadThreads() { const rows=await api('/intelligence/threads?q='+encodeURIComponent($('search').value));$('threads').replaceChildren();for(const t of rows){const b=node('button',t.title);b.onclick=()=>action(()=>selectThread(t.id));$('threads').append(b);} }
+  async function loadThreads() { const rows=await api('/intelligence/threads?q='+encodeURIComponent($('search').value));$('threads').replaceChildren();for(const t of rows){const b=node('button',t.title);b.type='button';b.dataset.threadId=String(t.id);b.setAttribute('aria-current',String(state.thread?.id===t.id));b.onclick=()=>action(()=>selectThread(t.id));$('threads').append(b);} }
   function renderConversation(thread) {
     $('messages').replaceChildren();$('evidence').replaceChildren();
     for(const m of thread.messages){entry(m.role,m.content,m.status);if(m.patient_context && m.role==='assistant'){const details=node('details'),summary=node('summary','Inspect prepared patient context for response '+m.id),body=node('pre',JSON.stringify(m.patient_context,null,2));details.append(summary,node('p','Authorized preparation snapshot,not independently verified findings or proof of transmission. Omitted facts are unknown,not negative findings.'),body);$('messages').append(details);}if(m.evidence?.length){const inspect=node('button','Inspect evidence for response '+m.id);inspect.onclick=()=>renderEvidence(m.evidence);$('messages').append(inspect);}}
@@ -101,7 +101,7 @@
     const epoch=state.epoch;
     const thread=await api('/intelligence/threads/'+id);
     if(epoch!==state.epoch)return;
-    state.thread=thread;$('thread-scope').textContent=thread.intake_id?'Uses only the authorized intake snapshot. No live chart is included; expired or revoked consent denies future access.':thread.patient_id?'A selected authorized chart snapshot is prepared. Omitted facts remain unknown; inspect saved context.':'General research conversation; no patient chart is included.';$('thread-title').textContent=state.thread.title;$('patient').value=state.thread.patient_id||'';$('patient').disabled=true;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();
+    state.thread=thread;for(const choice of $('threads').querySelectorAll('button[data-thread-id]'))choice.setAttribute('aria-current',String(choice.dataset.threadId===String(thread.id)));$('thread-scope').textContent=thread.intake_id?'Uses only the authorized intake snapshot. No live chart is included; expired or revoked consent denies future access.':thread.patient_id?'A selected authorized chart snapshot is prepared. Omitted facts remain unknown; inspect saved context.':'General research conversation; no patient chart is included.';$('thread-title').textContent=state.thread.title;$('patient').value=state.thread.patient_id||'';$('patient').disabled=true;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();
     renderConversation(thread);
     $('intake-return').hidden=!thread.intake_id;
     $('intake-return').href=thread.intake_id?'/static/care.html?intake='+thread.intake_id+'&thread='+thread.id:'/static/care.html';

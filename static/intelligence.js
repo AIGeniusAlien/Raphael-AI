@@ -11,15 +11,20 @@
     return data;
   }
   async function action(fn) { try { await fn(); } catch (error) { status(error.message); } }
-  function entry(role, content, result='') { const item=node('article','');item.className='chat-entry';item.append(node('strong',role+' · '+result),node('p',content));item.lastChild.className='chat-text';$('messages').append(item);return item.lastChild; }
+  function entry(role, content, result='') { const item=node('article','');item.className='chat-entry';item.classList.add(role==='user'?'from-user':'from-raphael');item.append(node('strong',role==='assistant'?'Raphael · '+result:role+' · '+result),node('p',content));item.lastChild.className='chat-text';$('messages').append(item);return item.lastChild; }
   function renderMarkdown(holder, text) {
     // Deliberately restricted Markdown: no HTML, embedded images or model URLs.
+    const pane=$('messages');
+    const follow=pane.scrollHeight-pane.scrollTop-pane.clientHeight<110;
     holder.replaceChildren();
     for (const line of text.split('\n')) {
       const heading = line.match(/^#{1,3}\s+(.+)/);
       const bullet = line.match(/^[-*]\s+(.+)/);
       holder.append(node(heading ? 'strong' : 'div', heading ? heading[1] : bullet ? '• ' + bullet[1] : line));
     }
+    // Keep up with streaming only when the clinician has not scrolled back
+    // to inspect earlier responses or evidence.
+    if(follow)pane.scrollTop=pane.scrollHeight;
   }
   function renderEvidence(sources) {
     $('evidence').replaceChildren();

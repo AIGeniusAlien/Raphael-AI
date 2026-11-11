@@ -14,7 +14,7 @@ function harness(){
  const elements={
    'attachment-ai-consent':{checked:false},
    cancel:{disabled:true},send:{disabled:false},retry:{disabled:false},
-   prompt:{value:'Original synthetic request'},speak:{checked:false}
+   prompt:{value:'Original synthetic request'},speak:{checked:false},intelligence:{hidden:false}
  };
  const statuses=[],outputs=[],events=[];
  const state={thread:{id:41,requires_attachment_authorization:false},busy:false,attachmentSelected:new Set(),
@@ -28,7 +28,7 @@ function harness(){
    renderMarkdown:(holder,value)=>{holder.textContent=value;},
    renderEvidence:()=>{events.push('evidence');},
    status:value=>statuses.push(value),
-   voice:{speak:()=>events.push('speech')},
+   voice:{speak:()=>events.push('speech'),stop:()=>events.push('microphone-stopped')},
    fetch:()=>request,
    AbortController,TextDecoder,Uint8Array,JSON
  });
@@ -61,4 +61,16 @@ test('a clinician editing while a request is pending retains updated text',async
  h.resolve({ok:true,body:{getReader(){return {async read(){return {done:true,value:new Uint8Array()};}};}}});
  await pending;
  assert.equal(h.elements.prompt.value,'Updated synthetic question');
+});
+
+test('expired or forbidden clinician stream hides chart and stops voice before reporting error',async()=>{
+ for(const code of [401,403]){
+  const h=harness(),pending=h.send('Original synthetic request');
+  h.resolve({ok:false,status:code,async json(){return {detail:'Synthetic authorization denied'};}});
+  await assert.rejects(pending,/Synthetic authorization denied/);
+  assert.equal(h.elements.intelligence.hidden,true);
+  assert.deepEqual(h.events,['microphone-stopped']);
+  assert.equal(h.elements.prompt.value,'Original synthetic request');
+  assert.equal(h.state.busy,false);
+ }
 });

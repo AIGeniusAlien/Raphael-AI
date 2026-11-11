@@ -71,8 +71,13 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             source=context.request.post('/api/dev/knowledge/sources',data={'title':'Nonclinical synthetic fixture','url':'https://example.org/synthetic-fixture','content':'Violet calibrator baseline measurement. Synthetic nonclinical fixture text.','license_declaration':'Test-owned nonclinical fixture text.','permission_attested':True,'tier':'D','org':'Synthetic test','source_date':'2024-01-01'}).json()
                             self.assertIn('id',source);self.assertEqual(context.request.post(f"/api/dev/knowledge/sources/{source['id']}/approve",data={}).status,200)
                             page.goto('/static/intelligence.html?patient='+str(patient['id']));expect(page.locator('#intelligence')).to_be_visible()
+                            # The original Raphael logo and accessible conversation-first
+                            # ChatGPT-style composer are actual browser features, not mockups.
+                            expect(page.locator('.intelligence-brand img')).to_be_visible()
+                            expect(page.locator('.conversation-pane')).to_be_visible()
+                            expect(page.locator('#prompt-form')).to_be_visible()
                             page.locator('#title').fill('Synthetic clinical thread');page.locator('#thread-form button').click();expect(page.locator('#thread-title')).to_have_text('Synthetic clinical thread')
-                            page.locator('#prompt').fill('violet calibrator');page.locator('#prompt-form button').click();expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete')
+                            page.locator('#prompt').fill('violet calibrator');page.locator('#prompt').press('Enter');expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete')
                             expect(page.locator('#evidence')).to_contain_text('Nonclinical synthetic fixture');expect(page.locator('#evidence a[href^="/api/dev/knowledge/citations/"]')).to_have_attribute('href',__import__('re').compile(r'/api/dev/knowledge/citations/'))
                             # Separate real attachment conversation,actual encrypted API/SDK
                             # fixture path;the provider remains nonclinical and local.

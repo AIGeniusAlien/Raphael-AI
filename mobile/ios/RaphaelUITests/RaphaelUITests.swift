@@ -250,6 +250,7 @@ final class RaphaelUITests: XCTestCase {
         var flags:[String:Any] = ["application_state":app.state.rawValue,
             "native_privacy_cover_ax":app.staticTexts["Private workspace hidden"].exists,
             "native_sections_ax":app.buttons["Patient sections"].exists,
+            "native_recovery_ax":app.buttons["Verify session and recover workspace"].exists,
             "native_notice_ax":app.staticTexts["synthetic-notice"].exists,
             "sign_in_button_ax":app.buttons["Sign in"].exists,
             "ocr_available":false]
@@ -261,6 +262,7 @@ final class RaphaelUITests: XCTestCase {
                 // Never publish recognized text: only fixed synthetic UI flags.
                 flags["ocr_available"]=true
                 flags["pixels_privacy_cover"]=text.contains("private workspace hidden")
+                flags["pixels_recovery_notice"]=text.contains("secure workspace interrupted")
                 flags["pixels_patient_workspace"]=text.contains("patient workspace")
                 flags["pixels_sign_in"]=text.contains("sign in")
                 flags["pixels_synthetic_notice"]=text.contains("synthetic development")

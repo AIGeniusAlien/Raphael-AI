@@ -92,11 +92,28 @@ struct PatientApplication: View {
                     }
                     .padding().frame(maxWidth: .infinity).background(Color.orange.opacity(0.15))
                 }
-                PatientWebView(webView: session.webView)
-                    .id(ObjectIdentifier(session.webView))
+                if session.workspaceNeedsRecovery {
+                    VStack(spacing: 14) {
+                        Image(systemName: "lock.shield").font(.largeTitle)
+                            .accessibilityHidden(true)
+                        Text("Secure workspace interrupted")
+                            .font(.headline)
+                        Text("The protected browser session stopped. Patient information is hidden. You can verify the session and reopen the workspace. Unsaved edits may be lost.")
+                            .multilineTextAlignment(.center)
+                        Button("Verify session and recover workspace") { session.retry() }
+                            .disabled(session.authenticating)
+                    }
+                    .padding(24)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .accessibilityHidden(session.authenticating)
-                    .accessibilityIdentifier("patient-web-workspace")
+                    .accessibilityIdentifier("native-workspace-recovery")
+                    .privacySensitive()
+                } else {
+                    PatientWebView(webView: session.webView)
+                        .id(ObjectIdentifier(session.webView))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .accessibilityHidden(session.authenticating)
+                        .accessibilityIdentifier("patient-web-workspace")
+                }
             }
             .privacySensitive()
             .accessibilityHidden(scenePhase != .active)

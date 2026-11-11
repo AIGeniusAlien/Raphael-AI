@@ -252,7 +252,10 @@ struct NativePlainEntry: UIViewRepresentable {
         input.placeholder = title
         input.accessibilityLabel = title
         input.accessibilityIdentifier = identifier
-        input.textContentType = kind
+        // Organization identifiers are not natural-language organization names.
+        // System semantic suggestions and AutoFill can replace a partially
+        // entered tenant ID while XCTest or a clinician is typing.
+        input.textContentType = kind == .organizationName ? nil : kind
         input.autocapitalizationType = .none
         input.autocorrectionType = .no
         input.spellCheckingType = .no
@@ -272,7 +275,8 @@ struct NativePlainEntry: UIViewRepresentable {
         input.placeholder = title
         input.accessibilityLabel = title
         input.accessibilityIdentifier = identifier
-        if input.textContentType != kind { input.textContentType = kind }
+        let semantic: UITextContentType? = kind == .organizationName ? nil : kind
+        if input.textContentType != semantic { input.textContentType = semantic }
         // Do not move the insertion point in the user's active field.
         // External explicit clearing is still respected when focus is gone.
         if !input.isFirstResponder && input.text != text { input.text = text }

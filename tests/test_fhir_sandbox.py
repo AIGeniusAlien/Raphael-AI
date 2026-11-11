@@ -80,6 +80,22 @@ class FhirSandboxTests(unittest.TestCase):
         with self.assertRaises(SandboxUnavailable):
             self.call(lambda _: httpx.Response(200, content=b"x" * (MAX_RESPONSE + 1)))
 
+    def test_conflicting_or_unverified_patient_reference_is_rejected(self):
+        for changes in (
+            {"patient": {"reference": "Patient/other"}},
+            {"patient": {"reference": "https://sandbox.invalid/fhir/Patient/other"}},
+            {"subject": {"reference": "Patient/other"}, "patient": {"reference": "Patient/synthetic-1"}},
+            {"patient": "Patient/synthetic-1"},
+            {"subject": {"display": "Synthetic subject"}, "patient": {"reference": "Patient/synthetic-1"}},
+        ):
+            def responder(request):
+                result = fixture(request.url.path)
+                if result.get("resourceType") == "Bundle" and result["entry"]:
+                    result["entry"][0]["resource"].update(changes)
+                return httpx.Response(200, json=result)
+            with self.subTest(changes=changes), self.assertRaisesRegex(SandboxUnavailable, "patient"):
+                self.call(responder)
+
     def test_each_returned_resource_needs_its_own_synthetic_declaration(self):
         def responder(request):
             result = fixture(request.url.path)

@@ -130,3 +130,11 @@ body:has(#intelligence)>#status{margin:0;padding:.45rem clamp(1rem,2vw,2rem);fon
 @media(prefers-reduced-motion:reduce){
   #intelligence button{transition:none}
 }
+
+
+/* Chat author distinction remains accessible without depending on color alone. */
+#messages .from-user{max-width:min(85%,680px);margin-left:auto;margin-right:0;padding:.8rem 1rem;
+  background:#edf5f8;border:1px solid #d5e5ed;border-radius:1.15rem}
+#messages .from-user>strong{color:#17546b}
+#messages .from-raphael{margin-left:0;margin-right:auto}
+#threads button[aria-current="true"]{background:#12394b;color:white;border-color:#12394b}

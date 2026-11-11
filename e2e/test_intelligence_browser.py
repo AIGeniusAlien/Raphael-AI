@@ -79,6 +79,17 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             page.locator('#title').fill('Synthetic clinical thread');page.locator('#thread-form button').click();expect(page.locator('#thread-title')).to_have_text('Synthetic clinical thread')
                             page.locator('#prompt').fill('violet calibrator');page.locator('#prompt').press('Enter');expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete')
                             expect(page.locator('#evidence')).to_contain_text('Nonclinical synthetic fixture');expect(page.locator('#evidence a[href^="/api/dev/knowledge/citations/"]')).to_have_attribute('href',__import__('re').compile(r'/api/dev/knowledge/citations/'))
+                            # Capture actual conversation-first layout in the real
+                            # synthetic streaming browser journey, at desktop and phone widths.
+                            if os.getenv('RAPHAEL_VISUAL_OUTPUT'):
+                                visual=Path(os.environ['RAPHAEL_VISUAL_OUTPUT']);visual.mkdir(parents=True,exist_ok=True)
+                                for name,width,height in [('conversation-desktop',1440,900),('conversation-phone',390,844)]:
+                                    page.set_viewport_size({'width':width,'height':height})
+                                    self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth+1'),
+                                                     name+' main conversation overflow')
+                                    expect(page.locator('#prompt-form')).to_be_visible()
+                                    page.screenshot(path=str(visual/(name+'.png')),full_page=True)
+                                page.set_viewport_size({'width':1280,'height':900})
                             # Separate real attachment conversation,actual encrypted API/SDK
                             # fixture path;the provider remains nonclinical and local.
                             page.locator('#new-draft').click();page.locator('#title').fill('Attachment privacy workflow');page.locator('#thread-form button').click()

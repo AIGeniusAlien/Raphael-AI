@@ -77,6 +77,7 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             expect(page.locator('.conversation-pane')).to_be_visible()
                             expect(page.locator('#prompt-form')).to_be_visible()
                             page.locator('#title').fill('Synthetic clinical thread');page.locator('#thread-form button').click();expect(page.locator('#thread-title')).to_have_text('Synthetic clinical thread')
+                            expect(page.locator('#imaging-link')).to_have_attribute('href','/static/imaging.html?patient='+str(patient['id']))
                             page.locator('#prompt').fill('violet calibrator');page.locator('#prompt').press('Enter');expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete')
                             expect(page.locator('#evidence')).to_contain_text('Nonclinical synthetic fixture');expect(page.locator('#evidence a[href^="/api/dev/knowledge/citations/"]')).to_have_attribute('href',__import__('re').compile(r'/api/dev/knowledge/citations/'))
                             # Capture actual conversation-first layout in the real

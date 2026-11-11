@@ -122,16 +122,18 @@
     if(!state.thread)throw new Error('Create or select a conversation.');if(state.busy)throw new Error('A generation is already running.');if(!prompt.trim())return;
     const selected=[...state.attachmentSelected],authorized=$('attachment-ai-consent').checked;
     if((selected.length||state.thread.requires_attachment_authorization)&&!authorized)throw new Error('Authorize selected text and attachment-derived history for this question before sending.');
-    state.lastPrompt=prompt;state.busy=true;state.generation=null;state.controller=new AbortController();$('cancel').disabled=false;$('send').disabled=true;$('retry').disabled=true;entry('user',prompt);const output=entry('Raphael','Provisional stream — awaiting clinician review.');let full='';
+    state.lastPrompt=prompt;state.busy=true;state.generation=null;state.controller=new AbortController();const controller=state.controller,threadId=state.thread.id,epoch=state.epoch;const active=()=>state.controller===controller&&state.epoch===epoch&&state.thread?.id===threadId&&!controller.signal.aborted;$('cancel').disabled=false;$('send').disabled=true;$('retry').disabled=true;entry('user',prompt);const output=entry('Raphael','Provisional stream — awaiting clinician review.');let full='';
     try {
-      const response=await fetch('/api/dev/intelligence/threads/'+state.thread.id+'/stream',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:prompt,attachment_ids:selected,allow_attachment_ai:authorized}),signal:state.controller.signal});
+      const response=await fetch('/api/dev/intelligence/threads/'+threadId+'/stream',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:prompt,attachment_ids:selected,allow_attachment_ai:authorized}),signal:controller.signal});
+      if(!active())return;
       if(!response.ok){const error=await response.json();throw new Error(error.detail||'Provider request failed.');}
+      if(!active())return;
       // Clear only the exact question the server accepted. A failed request
       // leaves the clinician's draft intact for correction or retry.
       if ($('prompt').value === prompt) $('prompt').value = '';
       if(selected.length)state.thread.requires_attachment_authorization=true;
       const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
-      for(;;){const {done,value}=await reader.read();buffer+=decoder.decode(value||new Uint8Array(),{stream:!done});buffer=buffer.replaceAll('\r\n','\n');let boundary;
+      for(;;){const {done,value}=await reader.read();if(!active()){await reader.cancel();return;}buffer+=decoder.decode(value||new Uint8Array(),{stream:!done});buffer=buffer.replaceAll('\r\n','\n');let boundary;
         while((boundary=buffer.indexOf('\n\n'))>=0){const frame=buffer.slice(0,boundary);buffer=buffer.slice(boundary+2);const type=frame.split('\n').find(l=>l.startsWith('event: '))?.slice(7);const payload=frame.split('\n').filter(l=>l.startsWith('data: ')).map(l=>l.slice(6)).join('\n');if(!payload)continue;const data=JSON.parse(payload);
           if(type==='start')state.generation=data.generation_id;
           if(type==='delta'){full+=data.text;renderMarkdown(output,full);}
@@ -144,7 +146,7 @@
           if(type==='cancelled')status('Generation cancelled.');
         }if(done)break;
       }
-    }catch(error){if(!state.controller?.signal.aborted)throw error;status('Generation stopped.');}finally{$('attachment-ai-consent').checked=false;state.busy=false;state.generation=null;state.controller=null;$('cancel').disabled=true;$('send').disabled=false;$('retry').disabled=false;}
+    }catch(error){if(!controller.signal.aborted&&active())throw error;if(active())status('Generation stopped.');}finally{if(state.controller===controller){$('attachment-ai-consent').checked=false;state.busy=false;state.generation=null;state.controller=null;$('cancel').disabled=true;$('send').disabled=false;$('retry').disabled=false;}}
   }
   async function cancel(){voice.stop();try{if(state.generation)await api('/intelligence/generations/'+encodeURIComponent(state.generation)+'/cancel',{});}finally{state.controller?.abort();state.busy=false;state.generation=null;$('cancel').disabled=true;$('send').disabled=false;status('Generation stopped.');} }
   async function loadSession(){if(!state.session)throw new Error('Start or resume a documentation session.');const session=state.session,epoch=state.epoch;const s=await api('/intelligence/sessions/'+session);if(session!==state.session||epoch!==state.epoch)return null;if(!s.consent)voice.stop();state.sessionPatientId=String(s.patient_id);$('transcript').textContent=s.segments.map(v=>v.origin+': '+v.content).join('\n');$('consent').checked=!!s.consent;const latest=s.notes.at(-1);state.version=latest?.version||0;if(!state.dirty){$('note').value=latest?.content||'';if(latest)$('format').value=latest.format;if(!state.structuredDirty){documentFields();const fields=latest?.source_snapshot?JSON.parse(latest.source_snapshot).clinician_fields||{}:{};for(const [key,field] of Object.entries(fields)){const input=$('document-field-'+key);if(input)input.value=field.text;}}}$('note-status').textContent=latest?'Version '+latest.version+' · '+latest.status:'';$('versions').replaceChildren();for(const v of s.notes){const b=node('button','View version '+v.version+' · '+v.status);b.onclick=()=>{status('Historical note: '+v.content);};$('versions').append(b);}const audit=await api('/intelligence/sessions/'+session+'/audit');if(session!==state.session||epoch!==state.epoch)return null;$('audit').replaceChildren(...audit.map(e=>node('p',e.created_at+' · '+e.event)));return s;}

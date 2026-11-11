@@ -114,7 +114,7 @@
     await encounters();await loadAttachments();if(thread.intake_id)$('thread-title').textContent=thread.title+' · consented snapshot only';
   }
   async function encounters() {
-    $('encounter').replaceChildren();const id=$('patient').value;$('chart-link').href=id?'/static/chart.html?patient_id='+encodeURIComponent(id):'/';
+    $('encounter').replaceChildren();const id=$('patient').value;$('chart-link').href=id?'/static/chart.html?patient_id='+encodeURIComponent(id):'/';$('imaging-link').href=id?'/static/imaging.html?patient='+encodeURIComponent(id):'/static/imaging.html';
     if(!id)return;
     const rows=await api('/patients/'+id+'/encounters');for(const e of rows.filter(e=>e.status==='open')){const o=node('option',e.title);o.value=e.id;$('encounter').append(o);}
   }

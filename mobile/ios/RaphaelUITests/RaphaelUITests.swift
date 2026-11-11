@@ -208,8 +208,20 @@ final class RaphaelUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout: 15))
         let organization = app.textFields["Development organization"]
         XCTAssertTrue(organization.exists)
-        organization.tap(); organization.typeText("synthetic-accessibility-check")
-        XCTAssertEqual(organization.value as? String, "synthetic-accessibility-check")
+        organization.tap()
+        // SwiftUI can temporarily dismiss/recreate the software keyboard as
+        // the native form lays out. Assert the entire real field, not a WebKit
+        // proxy or a simulated input value.
+        let entry = "synthetic-accessibility-check"
+        for chunk in ["synthetic-", "accessibility-", "check"] {
+            organization.typeText(chunk)
+            XCTAssertTrue(organization.waitForExistence(timeout: 5))
+            if organization.value as? String != entry {
+                // A real tap reestablishes focus after simulator layout.
+                organization.tap()
+            }
+        }
+        XCTAssertEqual(organization.value as? String, entry)
         XCTAssertTrue(app.secureTextFields["Password"].exists)
         XCTAssertFalse(app.webViews.firstMatch.exists)
     }
@@ -309,9 +321,13 @@ final class RaphaelUITests: XCTestCase {
         // Accept only its explicit existing recovery UI,then prove the actual
         // authenticated web workspace after one real user retry. Never bypass
         // sign-in or accept a native-only identity as web-session proof.
-        if !resumed && problem.exists && problem.label.hasPrefix("The secure web session stopped.") {
+        if !resumed && app.buttons["Verify session and recover workspace"].exists {
+            try tapHeader(app.buttons["Verify session and recover workspace"])
+            resumed = identity.waitForExistence(timeout:45)
+            print("::notice title=Raphael native background recovery::Explicit user verification after reported WebKit process termination;authenticated web identity remains required.")
+        } else if !resumed && problem.exists && problem.label.hasPrefix("The secure web session stopped.") {
             try tapHeader(app.buttons["Retry this section"])
-            resumed = identity.waitForExistence(timeout:30)
+            resumed = identity.waitForExistence(timeout:45)
             print("::notice title=Raphael native background recovery::Explicit user retry after reported WebKit content-process termination;authenticated web identity remains required.")
         }
         let stopped = problem.exists && problem.label.hasPrefix("The secure web session stopped.")

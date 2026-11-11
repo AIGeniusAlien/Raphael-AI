@@ -78,7 +78,7 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             expect(page.locator('#prompt-form')).to_be_visible()
                             page.locator('#title').fill('Synthetic clinical thread');page.locator('#thread-form button').click();expect(page.locator('#thread-title')).to_have_text('Synthetic clinical thread')
                             expect(page.locator('#imaging-link')).to_have_attribute('href','/static/imaging.html?patient='+str(patient['id']))
-                            page.locator('#prompt').fill('violet calibrator');page.locator('#prompt').press('Enter');expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete')
+                            page.locator('#prompt').fill('violet calibrator');page.locator('#prompt').press('Enter');expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete');expect(page.locator('#prompt')).to_have_value('')
                             expect(page.locator('#evidence')).to_contain_text('Nonclinical synthetic fixture');expect(page.locator('#evidence a[href^="/api/dev/knowledge/citations/"]')).to_have_attribute('href',__import__('re').compile(r'/api/dev/knowledge/citations/'))
                             # Capture actual conversation-first layout in the real
                             # synthetic streaming browser journey, at desktop and phone widths.
@@ -105,7 +105,7 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             page.once('dialog',lambda dialog:dialog.accept());page.get_by_role('button',name='Authorize reviewed text for provider use',exact=True).click()
                             expect(page.locator('#attachment-list')).to_contain_text('reviewed')
                             page.get_by_label('Use Reviewed synthetic attachment as reported context',exact=True).check()
-                            before=len(requests);page.locator('#prompt').fill('violet calibrator attachment');page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Authorize selected text')
+                            before=len(requests);page.locator('#prompt').fill('violet calibrator attachment');page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Authorize selected text');expect(page.locator('#prompt')).to_have_value('violet calibrator attachment')
                             self.assertEqual(len(requests),before)
                             page.locator('#attachment-ai-consent').check();page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Draft complete')
                             self.assertIn('Violet calibrator reported attachment value.',requests[-1]['messages'][0]['content'])

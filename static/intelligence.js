@@ -126,6 +126,9 @@
     try {
       const response=await fetch('/api/dev/intelligence/threads/'+state.thread.id+'/stream',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:prompt,attachment_ids:selected,allow_attachment_ai:authorized}),signal:state.controller.signal});
       if(!response.ok){const error=await response.json();throw new Error(error.detail||'Provider request failed.');}
+      // Clear only the exact question the server accepted. A failed request
+      // leaves the clinician's draft intact for correction or retry.
+      if ($('prompt').value === prompt) $('prompt').value = '';
       if(selected.length)state.thread.requires_attachment_authorization=true;
       const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
       for(;;){const {done,value}=await reader.read();buffer+=decoder.decode(value||new Uint8Array(),{stream:!done});buffer=buffer.replaceAll('\r\n','\n');let boundary;

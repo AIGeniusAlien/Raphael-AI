@@ -56,3 +56,12 @@ input[type="checkbox"], input[type="radio"] { width: auto; margin-inline-end: .5
 
 /* Storage notices must fit narrow enlarged text with platform fallback fonts. */
 #storage-status { overflow-wrap: anywhere; }
+
+
+/* Guard the account/settings shell against intrinsic content overflow at
+   320–390px. Preserve full text and form controls; do not suppress scrollbars. */
+html { max-width:100%; }
+body { width:100%; max-width:100%; }
+#account,#account section,#account form { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+#account :is(pre,code,p,label,nav,a,button) { overflow-wrap:anywhere; }
+#account :is(input,select,textarea) { min-width:0; max-width:100%; }

@@ -70,7 +70,10 @@ def evaluate(cases):
         if identity in seen:
             raise ValueError("Duplicate case ID; the same case must not increase sample size")
         seen.add(identity)
-        if case["synthetic"] is not True or case["domain"] not in DOMAINS or case["reference"] not in LABELS or case["prediction"] not in LABELS | {"abstain"}:
+        if (case["synthetic"] is not True
+                or not all(isinstance(case[key], str) for key in ("domain", "reference", "prediction"))
+                or case["domain"] not in DOMAINS or case["reference"] not in LABELS
+                or case["prediction"] not in LABELS | {"abstain"}):
             raise ValueError("Only supported labeled synthetic cases are accepted")
         by_domain[case["domain"]].append(case)
     result = {

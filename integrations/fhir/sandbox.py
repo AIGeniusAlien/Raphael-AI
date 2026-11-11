@@ -115,10 +115,19 @@ async def preview_patient(resource_id: str, *, transport=None):
                         raise SandboxUnavailable("FHIR sandbox search contains an unexpected resource type.")
                     if not declared_synthetic(resource):
                         raise SandboxUnavailable("FHIR preview requires each returned resource to be explicitly synthetic.")
-                    references = [resource.get(key, {}).get("reference") for key in ("subject", "patient")
-                                  if isinstance(resource.get(key, {}), dict)]
-                    if "Patient/" + resource_id not in references:
-                        raise SandboxUnavailable("FHIR resource is not linked to the requested synthetic patient.")
+                    references = []
+                    for key in ("subject", "patient"):
+                        if key not in resource:
+                            continue
+                        value = resource[key]
+                        if not isinstance(value, dict) or not isinstance(value.get("reference"), str):
+                            raise SandboxUnavailable("FHIR resource has an invalid patient-reference field.")
+                        references.append(value["reference"])
+                    # A malicious or buggy sandbox could return contradictory
+                    # patient and subject references despite the patient search.
+                    # Never accept one matching reference as proof that all are safe.
+                    if not references or any(ref != "Patient/" + resource_id for ref in references):
+                        raise SandboxUnavailable("FHIR resource is not exclusively linked to the requested synthetic patient.")
                     resources.append(resource)
         except httpx.HTTPError:
             raise SandboxUnavailable("FHIR sandbox is unavailable; no resources were imported.")

@@ -209,29 +209,13 @@ final class RaphaelUITests: XCTestCase {
         let organization = app.textFields["Development organization"]
         XCTAssertTrue(organization.exists)
         organization.tap()
-        // SwiftUI can temporarily dismiss/recreate the software keyboard as
-        // the native form lays out. Assert the entire real field, not a WebKit
-        // proxy or a simulated input value.
+        // This must exercise the real native UIKit field and preserve every
+        // keystroke across sign-in form updates, not work around lost input
+        // with simulated retries or manipulate a WebKit accessibility proxy.
         let entry = "synthetic-accessibility-check"
-        var expectedPrefix = ""
-        for chunk in ["synthetic-", "accessibility-", "check"] {
-            expectedPrefix += chunk
-            // SwiftUI may rebuild its native text field while the keyboard is
-            // being presented. Only retype the actual missing suffix, never
-            // clear or fake the field value.
-            for attempt in 0..<3 {
-                let current = organization.value as? String ?? ""
-                if current == expectedPrefix { break }
-                XCTAssertTrue(expectedPrefix.hasPrefix(current),
-                              "Native organization input unexpectedly changed.")
-                let missing = String(expectedPrefix.dropFirst(current.count))
-                if attempt > 0 { organization.tap() }
-                organization.typeText(missing)
-            }
-            XCTAssertEqual(organization.value as? String, expectedPrefix,
-                           "Native text entry must preserve the entire prefix.")
-        }
-        XCTAssertEqual(organization.value as? String, entry)
+        organization.typeText(entry)
+        XCTAssertEqual(organization.value as? String, entry,
+                       "Native organization entry must preserve exact typed content.")
         XCTAssertTrue(app.secureTextFields["Password"].exists)
         XCTAssertFalse(app.webViews.firstMatch.exists)
     }

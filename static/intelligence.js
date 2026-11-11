@@ -126,7 +126,15 @@
     try {
       const response=await fetch('/api/dev/intelligence/threads/'+threadId+'/stream',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:prompt,attachment_ids:selected,allow_attachment_ai:authorized}),signal:controller.signal});
       if(!active())return;
-      if(!response.ok){const error=await response.json();throw new Error(error.detail||'Provider request failed.');}
+      if(!response.ok){
+        if(response.status===401||response.status===403){
+          // A streamed request bypasses api(); fail closed on lost credentials
+          // or clinician role, rather than leaving protected chart text visible.
+          voice.stop();$('intelligence').hidden=true;
+        }
+        const error=await response.json();
+        throw new Error(typeof error.detail==='string'?error.detail:'Provider request failed.');
+      }
       if(!active())return;
       // Clear only the exact question the server accepted. A failed request
       // leaves the clinician's draft intact for correction or retry.

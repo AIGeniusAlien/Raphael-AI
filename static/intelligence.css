@@ -138,3 +138,16 @@ body:has(#intelligence)>#status{margin:0;padding:.45rem clamp(1rem,2vw,2rem);fon
 #messages .from-user>strong{color:#17546b}
 #messages .from-raphael{margin-left:0;margin-right:auto}
 #threads button[aria-current="true"]{background:#12394b;color:white;border-color:#12394b}
+
+
+/* Narrow-layout intrinsic sizing: wrap long labels and controls rather than
+   forcing a horizontally scrolling viewport. No content is clipped/hidden. */
+@media(max-width:720px){
+  #intelligence,#intelligence>aside,#intelligence>.conversation-pane,
+  #intelligence>.clinical-tools-pane{width:100%;max-width:100%;min-width:0}
+  #intelligence .composer-actions{flex-wrap:wrap}
+  #intelligence #composer-hint{flex:1 1 170px;min-width:0;overflow-wrap:anywhere}
+  #intelligence .composer-actions #send{flex:0 0 auto}
+  #intelligence :is(pre,code,a,p,span,label,h2,h3){overflow-wrap:anywhere}
+  #intelligence :is(input,select,textarea,button){max-width:100%;min-width:0}
+}

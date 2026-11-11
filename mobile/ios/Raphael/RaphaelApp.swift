@@ -202,10 +202,10 @@ struct NativeSignInView: View {
                     Text("Sign in to your authorized synthetic workspace. Not an emergency service.").font(.callout)
                 }
                 Section("Secure sign-in") {
-                    TextField("Development organization", text: $tenant).textContentType(.organizationName)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    TextField("Username", text: $username).textContentType(.username)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    NativePlainEntry(text: $tenant, title: "Development organization", identifier: "Development organization", kind: .organizationName)
+                        .frame(minHeight: 44)
+                    NativePlainEntry(text: $username, title: "Username", identifier: "Username", kind: .username)
+                        .frame(minHeight: 44)
                     NativeSecretEntry(text: $password, title: "Password").id("password-entry").frame(minHeight: 44)
                     Button(showFactor ? "Hide second-factor entry" : "Use an authenticator or recovery code") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -236,6 +236,57 @@ struct NativeSignInView: View {
     }
 }
 
+
+/// UIKit owns the live insertion point while SwiftUI rerenders sign-in actions.
+/// Never replace the current typed value during editing: a SwiftUI Form
+/// update can otherwise reset focus or the caret and silently lose characters.
+struct NativePlainEntry: UIViewRepresentable {
+    @Binding var text: String
+    let title: String
+    let identifier: String
+    let kind: UITextContentType
+
+    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
+    func makeUIView(context: Context) -> UITextField {
+        let input = UITextField()
+        input.placeholder = title
+        input.accessibilityLabel = title
+        input.accessibilityIdentifier = identifier
+        input.textContentType = kind
+        input.autocapitalizationType = .none
+        input.autocorrectionType = .no
+        input.spellCheckingType = .no
+        input.smartDashesType = .no
+        input.smartQuotesType = .no
+        input.keyboardType = .asciiCapable
+        input.returnKeyType = .next
+        input.font = .preferredFont(forTextStyle: .body)
+        input.adjustsFontForContentSizeCategory = true
+        input.delegate = context.coordinator
+        input.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .editingChanged)
+        input.text = text
+        return input
+    }
+    func updateUIView(_ input: UITextField, context: Context) {
+        context.coordinator.text = $text
+        input.placeholder = title
+        input.accessibilityLabel = title
+        input.accessibilityIdentifier = identifier
+        if input.textContentType != kind { input.textContentType = kind }
+        // Do not move the insertion point in the user's active field.
+        // External explicit clearing is still respected when focus is gone.
+        if !input.isFirstResponder && input.text != text { input.text = text }
+    }
+    final class Coordinator: NSObject, UITextFieldDelegate {
+        var text: Binding<String>
+        init(text: Binding<String>) { self.text = text }
+        @objc func changed(_ input: UITextField) { text.wrappedValue = input.text ?? "" }
+        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            textField.resignFirstResponder()
+            return true
+        }
+    }
+}
 
 /// A stable UIKit secure field avoids SwiftUI secure-entry reconciliation while
 /// the sign-in form changes enabled state. Input reaches its binding synchronously.

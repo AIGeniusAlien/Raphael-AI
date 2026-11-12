@@ -71,9 +71,26 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             source=context.request.post('/api/dev/knowledge/sources',data={'title':'Nonclinical synthetic fixture','url':'https://example.org/synthetic-fixture','content':'Violet calibrator baseline measurement. Synthetic nonclinical fixture text.','license_declaration':'Test-owned nonclinical fixture text.','permission_attested':True,'tier':'D','org':'Synthetic test','source_date':'2024-01-01'}).json()
                             self.assertIn('id',source);self.assertEqual(context.request.post(f"/api/dev/knowledge/sources/{source['id']}/approve",data={}).status,200)
                             page.goto('/static/intelligence.html?patient='+str(patient['id']));expect(page.locator('#intelligence')).to_be_visible()
+                            # The original Raphael logo and accessible conversation-first
+                            # ChatGPT-style composer are actual browser features, not mockups.
+                            expect(page.locator('.intelligence-brand img')).to_be_visible()
+                            expect(page.locator('.conversation-pane')).to_be_visible()
+                            expect(page.locator('#prompt-form')).to_be_visible()
                             page.locator('#title').fill('Synthetic clinical thread');page.locator('#thread-form button').click();expect(page.locator('#thread-title')).to_have_text('Synthetic clinical thread')
-                            page.locator('#prompt').fill('violet calibrator');page.locator('#prompt-form button').click();expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete')
+                            expect(page.locator('#imaging-link')).to_have_attribute('href','/static/imaging.html?patient='+str(patient['id']))
+                            page.locator('#prompt').fill('violet calibrator');page.locator('#prompt').press('Enter');expect(page.locator('#messages')).to_contain_text('Synthetic nonclinical fixture response.');expect(page.locator('#status')).to_contain_text('Draft complete');expect(page.locator('#prompt')).to_have_value('')
                             expect(page.locator('#evidence')).to_contain_text('Nonclinical synthetic fixture');expect(page.locator('#evidence a[href^="/api/dev/knowledge/citations/"]')).to_have_attribute('href',__import__('re').compile(r'/api/dev/knowledge/citations/'))
+                            # Capture actual conversation-first layout in the real
+                            # synthetic streaming browser journey, at desktop and phone widths.
+                            if os.getenv('RAPHAEL_VISUAL_OUTPUT'):
+                                visual=Path(os.environ['RAPHAEL_VISUAL_OUTPUT']);visual.mkdir(parents=True,exist_ok=True)
+                                for name,width,height in [('conversation-desktop',1440,900),('conversation-phone',390,844)]:
+                                    page.set_viewport_size({'width':width,'height':height})
+                                    self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth+1'),
+                                                     name+' main conversation overflow')
+                                    expect(page.locator('#prompt-form')).to_be_visible()
+                                    page.screenshot(path=str(visual/(name+'.png')),full_page=True)
+                                page.set_viewport_size({'width':1280,'height':900})
                             # Separate real attachment conversation,actual encrypted API/SDK
                             # fixture path;the provider remains nonclinical and local.
                             page.locator('#new-draft').click();page.locator('#title').fill('Attachment privacy workflow');page.locator('#thread-form button').click()
@@ -88,7 +105,7 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             page.once('dialog',lambda dialog:dialog.accept());page.get_by_role('button',name='Authorize reviewed text for provider use',exact=True).click()
                             expect(page.locator('#attachment-list')).to_contain_text('reviewed')
                             page.get_by_label('Use Reviewed synthetic attachment as reported context',exact=True).check()
-                            before=len(requests);page.locator('#prompt').fill('violet calibrator attachment');page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Authorize selected text')
+                            before=len(requests);page.locator('#prompt').fill('violet calibrator attachment');page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Authorize selected text');expect(page.locator('#prompt')).to_have_value('violet calibrator attachment')
                             self.assertEqual(len(requests),before)
                             page.locator('#attachment-ai-consent').check();page.locator('#send').click();expect(page.locator('#status')).to_contain_text('Draft complete')
                             self.assertIn('Violet calibrator reported attachment value.',requests[-1]['messages'][0]['content'])
@@ -129,6 +146,15 @@ class IntelligenceBrowserTests(unittest.TestCase):
                             page.locator('#new-encounter').click();expect(page.locator('#encounter option')).to_have_count(1)
                             page.locator('#start-session').click();expect(page.locator('#status')).to_contain_text('Confirm recording consent')
                             page.locator('#consent').check();page.locator('#start-session').click();expect(page.locator('#session-id')).not_to_have_value('')
+                            first_session_id=page.locator('#session-id').input_value()
+                            page.locator('#start-session').click()
+                            expect(page.locator('#session-id')).not_to_have_value(first_session_id)
+                            previous=context.request.get('/api/dev/intelligence/sessions/'+first_session_id)
+                            self.assertEqual(previous.status,200)
+                            self.assertFalse(previous.json()['consent'],'Starting a second session must revoke the first recording consent.')
+                            current=context.request.get('/api/dev/intelligence/sessions/'+page.locator('#session-id').input_value())
+                            self.assertEqual(current.status,200)
+                            self.assertTrue(current.json()['consent'])
                             page.locator('#manual').fill('Synthetic reported symptom.');page.locator('#append').click();expect(page.locator('#note')).to_have_value(__import__('re').compile('Synthetic reported symptom'))
                             page.locator('#manual').fill('Additional synthetic history.');page.locator('#append').click();expect(page.locator('#note')).to_have_value(__import__('re').compile('Additional synthetic history'))
                             page.locator('#format').select_option('discharge');page.locator('#generate-note').click()

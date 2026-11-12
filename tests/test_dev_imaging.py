@@ -70,6 +70,33 @@ class PixelTests(unittest.TestCase):
             with self.subTest(length=len(data)), self.assertRaises(ValueError):
                 validate_dicom(data)
 
+    def test_identity_markers_do_not_override_hidden_identifying_dicom_tags(self):
+        for field, value in (
+            ("PatientBirthDate", "19800101"),
+            ("PatientAddress", "Real Street"),
+            ("AccessionNumber", "CONFIDENTIAL"),
+            ("InstitutionName", "Real Hospital"),
+            ("ReferringPhysicianName", "Real^Name"),
+            ("StudyComments", "Confidential subject information"),
+        ):
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, "forbidden identifying field"):
+                    validate_dicom(synthetic_dicom(**{field: value}))
+
+    def test_private_tags_and_nested_sequences_are_rejected(self):
+        data = pydicom.dcmread(io.BytesIO(synthetic_dicom()))
+        data.add_new((0x0011, 0x1010), "LO", "Confidential private metadata")
+        stream = io.BytesIO()
+        data.save_as(stream, write_like_original=False)
+        with self.assertRaisesRegex(ValueError, "Private tags"):
+            validate_dicom(stream.getvalue())
+        data = pydicom.dcmread(io.BytesIO(synthetic_dicom()))
+        data.add_new((0x0008, 0x1111), "SQ", [pydicom.dataset.Dataset()])
+        stream = io.BytesIO()
+        data.save_as(stream, write_like_original=False)
+        with self.assertRaisesRegex(ValueError, "nested DICOM sequences"):
+            validate_dicom(stream.getvalue())
+
     def test_compressed_transfer_syntax_is_rejected_before_decoding(self):
         ds = pydicom.dcmread(io.BytesIO(synthetic_dicom()))
         ds.file_meta.TransferSyntaxUID = "1.2.840.10008.1.2.4.50"
@@ -192,6 +219,179 @@ class ImagingApiTests(unittest.TestCase):
         self.assertEqual(self.client.get(path).json()[0]["status"], "approved")
         self.login("outsider", "beta")
         self.assertEqual(self.client.get(path).status_code, 404)
+
+    def test_dicomweb_read_only_preview_rechecks_chart_mapping_and_role(self):
+        path = f"/api/dev/patients/{self.patient_id}/imaging/dicomweb-studies"
+        # Existing chart has no explicitly synthetic remote mapping.
+        self.assertEqual(self.client.get(path).status_code, 422)
+        with self.engine.begin() as c:
+            c.execute(text("UPDATE dev_patients SET mrn=:mrn WHERE id=:id"),
+                      {"mrn": "SYNTHETIC-PACS-01", "id": self.patient_id})
+        calls = []
+        async def stub(mrn):
+            calls.append(mrn)
+            return {"status": "synthetic_read_only_dicomweb_preview",
+                    "studies": [{"study_instance_uid": "1.2.3", "modality": "CT"}],
+                    "imported": False, "clinical_use_authorized": False}
+        with patch("integrations.dicomweb.sandbox.preview_studies", side_effect=stub):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(calls, ["SYNTHETIC-PACS-01"])
+            self.assertFalse(response.json()["imported"])
+            self.assertFalse(response.json()["clinical_use_authorized"])
+        with self.engine.connect() as c:
+            self.assertIn("preview_synthetic_dicomweb",
+                          c.execute(text("SELECT event FROM dev_audit")).scalars().all())
+        self.login("patient")
+        self.assertEqual(self.client.get(path).status_code, 403)
+        self.login("outsider", "beta")
+        self.assertEqual(self.client.get(path).status_code, 404)
+        self.login()
+        async def stale(mrn):
+            # A mapping edit while remote I/O is in flight must not be
+            # disclosed under the original synthetic chart binding.
+            with self.engine.begin() as c:
+                c.execute(text("UPDATE dev_patients SET mrn=:mrn WHERE id=:id"),
+                          {"mrn": "SYNTHETIC-PACS-CHANGED", "id": self.patient_id})
+            return {"studies": [{"study_instance_uid": "1.2.3"}]}
+        with patch("integrations.dicomweb.sandbox.preview_studies", side_effect=stale):
+            self.assertEqual(self.client.get(path).status_code, 409)
+
+    def test_clinician_communication_attestation_is_scoped_and_never_sends_alerts(self):
+        study = self.upload().json()
+        reports = f"/api/dev/imaging/studies/{study['id']}/reports"
+        draft = self.client.post(reports, json={
+            "findings": "Synthetic reviewer-entered findings",
+            "impression": "Synthetic reviewer-entered impression",
+        })
+        self.assertEqual(draft.status_code, 200, draft.text)
+        report_id = draft.json()["id"]
+        path = f"/api/dev/imaging/reports/{report_id}/communications"
+        body = {
+            "recipient_role": "Synthetic referring team",
+            "method": "phone",
+            "documented_message": "Synthetic external verbal discussion was completed.",
+            "clinician_confirms_communication_occurred": True,
+        }
+        self.assertEqual(self.client.post(path, json=body).status_code, 409)
+        approved = self.client.post(
+            f"/api/dev/imaging/reports/{report_id}/approve", json={})
+        self.assertEqual(approved.status_code, 200, approved.text)
+        for missing in [
+            dict(body, clinician_confirms_communication_occurred=False),
+            dict(body, clinician_confirms_communication_occurred="true"),
+            dict(body, method="automatic_pager"),
+        ]:
+            with self.subTest(missing=missing):
+                self.assertEqual(self.client.post(path, json=missing).status_code, 422)
+        self.assertEqual(self.client.get(path).json(), [])
+        recorded = self.client.post(path, json=body)
+        self.assertEqual(recorded.status_code, 200, recorded.text)
+        self.assertFalse(recorded.json()["notification_sent_by_raphael"])
+        self.assertFalse(recorded.json()["clinical_use_authorized"])
+        self.assertEqual(recorded.json()["status"], "clinician_attested_external_communication")
+        history = self.client.get(path)
+        self.assertEqual(history.status_code, 200, history.text)
+        self.assertEqual(len(history.json()), 1)
+        self.assertEqual(history.json()[0]["recipient_role"], body["recipient_role"])
+        self.assertIsNone(history.json()[0]["acknowledgment_recorded_at"])
+        ack_path = f"/api/dev/imaging/communications/{recorded.json()['id']}/acknowledgment"
+        acknowledgment = {
+            "acknowledged_by_role": "Synthetic receiving clinician",
+            "attestation": "Synthetic external confirmation of receipt was reported.",
+            "clinician_confirms_acknowledgment_occurred": True,
+        }
+        for invalid in [
+            dict(acknowledgment, clinician_confirms_acknowledgment_occurred=False),
+            dict(acknowledgment, clinician_confirms_acknowledgment_occurred="yes"),
+            dict(acknowledgment, attestation="short"),
+        ]:
+            with self.subTest(invalid=invalid):
+                self.assertEqual(self.client.post(ack_path, json=invalid).status_code, 422)
+        accepted = self.client.post(ack_path, json=acknowledgment)
+        self.assertEqual(accepted.status_code, 200, accepted.text)
+        self.assertEqual(accepted.json()["status"], "clinician_attested_external_acknowledgment")
+        self.assertFalse(accepted.json()["acknowledgment_verified_by_raphael"])
+        self.assertEqual(self.client.post(ack_path, json=acknowledgment).status_code, 409)
+        self.assertEqual(self.client.get(path).json()[0]["acknowledged_by_role"],
+                         acknowledgment["acknowledged_by_role"])
+        with self.engine.connect() as c:
+            self.assertIn("document_imaging_communication",
+                          c.execute(text("SELECT event FROM dev_audit")).scalars().all())
+        self.login("patient")
+        self.assertEqual(self.client.get(path).status_code, 403)
+        self.assertEqual(self.client.post(path, json=body).status_code, 403)
+        self.assertEqual(self.client.post(ack_path, json=acknowledgment).status_code, 403)
+        self.assertNotIn("communications", str(self.client.get(reports).json()))
+        self.login("outsider", "beta")
+        self.assertEqual(self.client.get(path).status_code, 404)
+        self.assertEqual(self.client.post(path, json=body).status_code, 404)
+        self.assertEqual(self.client.post(ack_path, json=acknowledgment).status_code, 404)
+        self.login()
+        pending_ack = self.client.post(path, json=body)
+        self.assertEqual(pending_ack.status_code, 200, pending_ack.text)
+        pending_ack_path = f"/api/dev/imaging/communications/{pending_ack.json()['id']}/acknowledgment"
+        self.assertEqual(self.client.post(
+            f"/api/dev/imaging/reports/{report_id}/withdraw",
+            json={"reason": "Synthetic review withdrawn"}).status_code, 200)
+        self.assertEqual(self.client.post(path, json=body).status_code, 409)
+        self.assertEqual(self.client.post(
+            pending_ack_path, json=acknowledgment).status_code, 409)
+        self.assertEqual(len(self.client.get(path).json()), 2)
+
+    def test_clinician_study_worklist_tracks_drafts_without_exposing_them_to_patient(self):
+        study = self.upload().json()
+        study_path = f"/api/dev/imaging/studies/{study['id']}/reports"
+        first = self.client.post(study_path, json={
+            "findings": "Synthetic entered findings",
+            "impression": "Synthetic entered impression",
+        })
+        self.assertEqual(first.status_code, 200, first.text)
+        clinician_list = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies")
+        self.assertEqual(clinician_list.status_code, 200, clinician_list.text)
+        self.assertEqual(clinician_list.json()[0]["report_summary"], {"drafts": 1, "approved": 0, "withdrawn": 0})
+        self.login("patient")
+        patient_list = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies")
+        self.assertEqual(patient_list.status_code, 200, patient_list.text)
+        self.assertNotIn("report_summary", patient_list.json()[0])
+        self.assertEqual(self.client.get(study_path).json(), [])
+        self.login()
+        approved = self.client.post(f"/api/dev/imaging/reports/{first.json()['id']}/approve", json={})
+        self.assertEqual(approved.status_code, 200, approved.text)
+        worklist = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").json()
+        self.assertEqual(worklist[0]["report_summary"], {"drafts": 0, "approved": 1, "withdrawn": 0})
+        self.login("outsider", "beta")
+        self.assertEqual(self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").status_code, 404)
+
+    def test_approved_report_withdrawal_hides_patient_copy_and_preserves_audit(self):
+        study = self.upload().json()
+        path = f"/api/dev/imaging/studies/{study['id']}/reports"
+        draft = self.client.post(path, json={
+            "findings": "Synthetic manual findings",
+            "impression": "Synthetic manual impression",
+        })
+        self.assertEqual(draft.status_code, 200, draft.text)
+        report_id = draft.json()["id"]
+        self.assertEqual(self.client.post(f"/api/dev/imaging/reports/{report_id}/approve", json={}).status_code, 200)
+        self.login("patient")
+        self.assertEqual(len(self.client.get(path).json()), 1)
+        self.assertEqual(self.client.post(f"/api/dev/imaging/reports/{report_id}/withdraw", json={"reason": "Synthetic correction required"}).status_code, 403)
+        self.login()
+        withdrawn = self.client.post(f"/api/dev/imaging/reports/{report_id}/withdraw", json={"reason": "Synthetic correction required"})
+        self.assertEqual(withdrawn.status_code, 200, withdrawn.text)
+        self.assertEqual(withdrawn.json()["status"], "withdrawn")
+        self.assertEqual(self.client.post(f"/api/dev/imaging/reports/{report_id}/withdraw", json={"reason": "Synthetic correction required"}).status_code, 409)
+        self.assertEqual(self.client.get(path).json()[0]["status"], "withdrawn")
+        worklist = self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").json()
+        self.assertEqual(worklist[0]["report_summary"], {"drafts": 0, "approved": 0, "withdrawn": 1})
+        with self.engine.connect() as c:
+            original = c.execute(text("SELECT status,findings FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).one()
+            self.assertEqual(original.status, "approved")
+            self.assertEqual(original.findings, "Synthetic manual findings")
+            self.assertEqual(c.execute(text("SELECT COUNT(*) FROM dev_imaging_report_withdrawals WHERE report_id=:id"), {"id": report_id}).scalar(), 1)
+        self.login("patient")
+        self.assertEqual(self.client.get(path).json(), [])
+        self.assertNotIn("report_summary", self.client.get(f"/api/dev/patients/{self.patient_id}/imaging/studies").json()[0])
 
     def test_fhir_absent_configuration_is_explicit_and_does_not_import(self):
         r = self.client.get(f"/api/dev/patients/{self.patient_id}/fhir-preview?resource_id=synthetic")

@@ -13,7 +13,7 @@ import pydicom
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from PIL import Image
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 from sqlalchemy import text
 
 from database import execute_sqlite_script
@@ -47,6 +47,28 @@ CREATE TABLE IF NOT EXISTS dev_imaging_reports (
  approved_at TEXT,
  created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS dev_imaging_report_withdrawals (
+ report_id INTEGER PRIMARY KEY REFERENCES dev_imaging_reports(id),
+ withdrawn_by INTEGER NOT NULL REFERENCES dev_users(id),
+ withdrawn_at TEXT NOT NULL,
+ reason TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS dev_imaging_communications (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ report_id INTEGER NOT NULL REFERENCES dev_imaging_reports(id),
+ recorded_by INTEGER NOT NULL REFERENCES dev_users(id),
+ recipient_role TEXT NOT NULL,
+ method TEXT NOT NULL,
+ documented_message TEXT NOT NULL,
+ recorded_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS dev_imaging_communication_acknowledgments (
+ communication_id INTEGER PRIMARY KEY REFERENCES dev_imaging_communications(id),
+ recorded_by INTEGER NOT NULL REFERENCES dev_users(id),
+ acknowledged_by_role TEXT NOT NULL,
+ attestation TEXT NOT NULL,
+ recorded_at TEXT NOT NULL
+);
 """
 
 
@@ -78,6 +100,25 @@ def validate_dicom(data):
             raise ValueError("Only explicitly synthetic, identity-removed development DICOM is accepted.")
         if not str(getattr(ds, "PatientID", "")).startswith("SYNTHETIC-") or not str(getattr(ds, "PatientName", "")).upper().startswith("SYNTHETIC"):
             raise ValueError("Use an explicitly labeled SYNTHETIC test patient ID and name.")
+        # Explicitly synthetic fixtures can still conceal identifying DICOM tags.
+        # Reject common identifier fields, private tags, and nested sequences
+        # rather than accidentally persisting them in the development database.
+        # This is a bounded defense, NOT a certification of de-identification.
+        identifying_fields = (
+            "PatientBirthDate", "PatientAddress", "PatientTelephoneNumbers",
+            "OtherPatientIDs", "OtherPatientNames", "PatientComments",
+            "AccessionNumber", "InstitutionName", "InstitutionAddress",
+            "ReferringPhysicianName", "PerformingPhysicianName",
+            "OperatorsName", "RequestingPhysician", "StudyComments", "ImageComments",
+        )
+        for field in identifying_fields:
+            if str(getattr(ds, field, "")).strip():
+                raise ValueError("Synthetic DICOM contains a forbidden identifying field.")
+        if len(ds) > 1024:
+            raise ValueError("Synthetic DICOM metadata exceeds the development limit.")
+        for element in ds:
+            if element.tag.is_private or element.VR == "SQ":
+                raise ValueError("Private tags and nested DICOM sequences are not supported in synthetic uploads.")
         rows, columns = int(ds.Rows), int(ds.Columns)
         frames = int(getattr(ds, "NumberOfFrames", 1))
         if not (1 <= rows <= 2048 and 1 <= columns <= 2048 and 1 <= frames <= 64) or rows * columns * frames > MAX_PIXELS:
@@ -132,6 +173,26 @@ class ReportInput(BaseModel):
     recommendation: str = Field(default="", max_length=5000)
 
 
+class WithdrawReportInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    reason: str = Field(min_length=5, max_length=500)
+
+
+class CommunicationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    recipient_role: str = Field(min_length=3, max_length=120)
+    method: str = Field(pattern="^(phone|in_person|secure_internal_message|other)$")
+    documented_message: str = Field(min_length=10, max_length=1000)
+    clinician_confirms_communication_occurred: StrictBool
+
+
+class CommunicationAcknowledgmentInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    acknowledged_by_role: str = Field(min_length=3, max_length=120)
+    attestation: str = Field(min_length=10, max_length=1000)
+    clinician_confirms_acknowledgment_occurred: StrictBool
+
+
 def install_imaging(app, ctx):
     router = APIRouter(prefix="/api/dev", dependencies=[Depends(ctx.request_guard)], tags=["synthetic imaging and FHIR sandbox"])
 
@@ -151,8 +212,23 @@ def install_imaging(app, ctx):
         with ctx.engine.begin() as c:
             ctx.patient_for(c, patient_id, user)
             rows = c.execute(text("SELECT * FROM dev_imaging_studies WHERE patient_id=:p ORDER BY id DESC"), {"p": patient_id}).mappings().all()
+            response = [public_study(row) for row in rows]
+            if user["role"] == "clinician":
+                counts = c.execute(text(
+                    "SELECT r.study_id, "
+                    "SUM(CASE WHEN r.status='draft' THEN 1 ELSE 0 END) AS drafts, "
+                    "SUM(CASE WHEN r.status='approved' AND w.report_id IS NULL THEN 1 ELSE 0 END) AS approved, "
+                    "SUM(CASE WHEN w.report_id IS NOT NULL THEN 1 ELSE 0 END) AS withdrawn "
+                    "FROM dev_imaging_reports r "
+                    "JOIN dev_imaging_studies s ON s.id=r.study_id "
+                    "LEFT JOIN dev_imaging_report_withdrawals w ON w.report_id=r.id "
+                    "WHERE s.patient_id=:p GROUP BY r.study_id"
+                ), {"p": patient_id}).mappings().all()
+                summaries = {row["study_id"]: {"drafts": int(row["drafts"]), "approved": int(row["approved"]), "withdrawn": int(row["withdrawn"])} for row in counts}
+                for item in response:
+                    item["report_summary"] = summaries.get(item["id"], {"drafts": 0, "approved": 0, "withdrawn": 0})
             ctx.audit(c, user, "list_imaging", "patient", patient_id)
-            return [public_study(row) for row in rows]
+            return response
 
     @router.post("/patients/{patient_id}/imaging/studies")
     async def upload(patient_id: int, request: Request, user=Depends(ctx.clinician)):
@@ -204,11 +280,22 @@ def install_imaging(app, ctx):
     def reports(study_id: int, user=Depends(ctx.user)):
         with ctx.engine.begin() as c:
             study_for(c, study_id, user)
-            clause = " AND r.status='approved'" if user["role"] == "patient" else ""
-            rows = c.execute(text("SELECT r.*,u.username AS author_username FROM dev_imaging_reports r JOIN dev_users u ON u.id=r.author_id "
+            clause = " AND r.status='approved' AND w.report_id IS NULL" if user["role"] == "patient" else ""
+            rows = c.execute(text("SELECT r.*,u.username AS author_username,w.withdrawn_at,w.reason AS withdrawal_reason "
+                                  "FROM dev_imaging_reports r JOIN dev_users u ON u.id=r.author_id "
+                                  "LEFT JOIN dev_imaging_report_withdrawals w ON w.report_id=r.id "
                                   "WHERE r.study_id=:s" + clause + " ORDER BY r.id"), {"s": study_id}).mappings().all()
             ctx.audit(c, user, "read_imaging_reports", "imaging_study", study_id)
-            return [dict(row) for row in rows]
+            response = []
+            for row in rows:
+                item = dict(row)
+                if item["withdrawn_at"]:
+                    item["status"] = "withdrawn"
+                elif user["role"] == "patient":
+                    item.pop("withdrawn_at", None)
+                    item.pop("withdrawal_reason", None)
+                response.append(item)
+            return response
 
     @router.post("/imaging/studies/{study_id}/reports", dependencies=[Depends(ctx.same_origin_json)])
     def create_report(study_id: int, body: ReportInput, user=Depends(ctx.clinician)):
@@ -233,6 +320,126 @@ def install_imaging(app, ctx):
                 raise HTTPException(409, "Only a draft report can be approved.")
             ctx.audit(c, user, "approve_imaging_report", "imaging_report", report_id)
             return dict(c.execute(text("SELECT * FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).mappings().one())
+
+    @router.post("/imaging/reports/{report_id}/withdraw", dependencies=[Depends(ctx.same_origin_json)])
+    def withdraw_report(report_id: int, body: WithdrawReportInput, user=Depends(ctx.clinician)):
+        with ctx.engine.begin() as c:
+            report = c.execute(text("SELECT * FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).mappings().first()
+            if not report:
+                raise HTTPException(404, "Imaging report not found.")
+            study_for(c, report["study_id"], user)
+            if report["status"] != "approved":
+                raise HTTPException(409, "Only an approved report can be withdrawn.")
+            result = c.execute(text("INSERT OR IGNORE INTO dev_imaging_report_withdrawals(report_id,withdrawn_by,withdrawn_at,reason) "
+                                    "VALUES (:id,:u,:at,:reason)"),
+                               {"id": report_id, "u": user["id"], "at": _now(), "reason": body.reason})
+            if result.rowcount != 1:
+                raise HTTPException(409, "This report is already withdrawn.")
+            ctx.audit(c, user, "withdraw_imaging_report", "imaging_report", report_id)
+            return {"id": report_id, "status": "withdrawn", "clinical_use_authorized": False}
+
+    @router.get("/imaging/reports/{report_id}/communications")
+    def report_communications(report_id: int, user=Depends(ctx.clinician)):
+        with ctx.engine.begin() as c:
+            report = c.execute(text("SELECT * FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).mappings().first()
+            if not report:
+                raise HTTPException(404, "Imaging report not found.")
+            study_for(c, report["study_id"], user)
+            rows = c.execute(text(
+                "SELECT cm.id,cm.report_id,cm.recorded_by,cm.recipient_role,cm.method,"
+                "cm.documented_message,cm.recorded_at,ak.acknowledged_by_role,"
+                "ak.attestation AS acknowledgment_attestation,ak.recorded_at AS acknowledgment_recorded_at "
+                "FROM dev_imaging_communications cm "
+                "LEFT JOIN dev_imaging_communication_acknowledgments ak ON ak.communication_id=cm.id "
+                "WHERE cm.report_id=:id ORDER BY cm.id"
+            ), {"id": report_id}).mappings().all()
+            ctx.audit(c, user, "read_imaging_communications", "imaging_report", report_id)
+            return [dict(item) for item in rows]
+
+    @router.post("/imaging/reports/{report_id}/communications", dependencies=[Depends(ctx.same_origin_json)])
+    def document_communication(report_id: int, body: CommunicationInput, user=Depends(ctx.clinician)):
+        if not body.clinician_confirms_communication_occurred:
+            raise HTTPException(422, "Only document a communication that actually occurred.")
+        with ctx.engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            report = c.execute(text("SELECT * FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).mappings().first()
+            if not report:
+                raise HTTPException(404, "Imaging report not found.")
+            study_for(c, report["study_id"], user)
+            withdrawn = c.execute(text(
+                "SELECT 1 FROM dev_imaging_report_withdrawals WHERE report_id=:id"
+            ), {"id": report_id}).scalar()
+            if report["status"] != "approved" or withdrawn:
+                raise HTTPException(409, "Only active approved reports can have communications documented.")
+            result = c.execute(text(
+                "INSERT INTO dev_imaging_communications(report_id,recorded_by,recipient_role,method,documented_message,recorded_at) "
+                "VALUES (:r,:u,:role,:method,:message,:at)"
+            ), {"r": report_id, "u": user["id"], "role": body.recipient_role,
+                "method": body.method, "message": body.documented_message, "at": _now()})
+            ctx.audit(c, user, "document_imaging_communication", "imaging_report", report_id)
+            return {"id": result.lastrowid, "report_id": report_id,
+                    "status": "clinician_attested_external_communication",
+                    "notification_sent_by_raphael": False, "clinical_use_authorized": False}
+
+    @router.post("/imaging/communications/{communication_id}/acknowledgment", dependencies=[Depends(ctx.same_origin_json)])
+    def document_communication_acknowledgment(
+        communication_id: int, body: CommunicationAcknowledgmentInput, user=Depends(ctx.clinician)
+    ):
+        if not body.clinician_confirms_acknowledgment_occurred:
+            raise HTTPException(422, "A recipient acknowledgment must already have been independently verified.")
+        with ctx.engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            record = c.execute(text(
+                "SELECT cm.id,cm.report_id,r.study_id,r.status "
+                "FROM dev_imaging_communications cm "
+                "JOIN dev_imaging_reports r ON r.id=cm.report_id WHERE cm.id=:id"
+            ), {"id": communication_id}).mappings().first()
+            if not record:
+                raise HTTPException(404, "Communication not found.")
+            study_for(c, record["study_id"], user)
+            withdrawn = c.execute(text(
+                "SELECT 1 FROM dev_imaging_report_withdrawals WHERE report_id=:r"
+            ), {"r": record["report_id"]}).scalar()
+            if record["status"] != "approved" or withdrawn:
+                raise HTTPException(409, "Acknowledgments cannot be added to withdrawn reports.")
+            existing = c.execute(text(
+                "SELECT 1 FROM dev_imaging_communication_acknowledgments WHERE communication_id=:id"
+            ), {"id": communication_id}).scalar()
+            if existing:
+                raise HTTPException(409, "This communication acknowledgment is already recorded.")
+            c.execute(text(
+                "INSERT INTO dev_imaging_communication_acknowledgments "
+                "(communication_id,recorded_by,acknowledged_by_role,attestation,recorded_at) "
+                "VALUES (:id,:u,:role,:a,:at)"
+            ), {"id": communication_id, "u": user["id"],
+                "role": body.acknowledged_by_role, "a": body.attestation, "at": _now()})
+            ctx.audit(c, user, "attest_imaging_communication_acknowledgment",
+                      "imaging_report", record["report_id"])
+            return {"communication_id": communication_id,
+                    "status": "clinician_attested_external_acknowledgment",
+                    "acknowledgment_verified_by_raphael": False,
+                    "clinical_use_authorized": False}
+
+    @router.get("/patients/{patient_id}/imaging/dicomweb-studies")
+    async def dicomweb_preview(patient_id: int, user=Depends(ctx.clinician)):
+        # The remote lookup key is taken only from an already-authorized,
+        # operator-maintained synthetic local chart; clients cannot choose it.
+        with ctx.engine.begin() as c:
+            patient = ctx.patient_for(c, patient_id, user)
+            synthetic_id = patient.get("mrn")
+        from integrations.dicomweb.sandbox import DicomwebUnavailable, preview_studies
+        try:
+            result = await preview_studies(synthetic_id)
+        except ValueError:
+            raise HTTPException(422, "An authorized local synthetic MRN is required.")
+        except DicomwebUnavailable as error:
+            raise HTTPException(503, str(error))
+        with ctx.engine.begin() as c:
+            current = ctx.patient_for(c, patient_id, user)
+            if current.get("mrn") != synthetic_id:
+                raise HTTPException(409, "Synthetic patient mapping changed during remote preview.")
+            ctx.audit(c, user, "preview_synthetic_dicomweb", "patient", patient_id)
+        return result
 
     @router.get("/patients/{patient_id}/fhir-preview")
     async def fhir_preview(patient_id: int, resource_id: str = Query(min_length=1, max_length=64), user=Depends(ctx.clinician)):

@@ -208,8 +208,14 @@ final class RaphaelUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout: 15))
         let organization = app.textFields["Development organization"]
         XCTAssertTrue(organization.exists)
-        organization.tap(); organization.typeText("synthetic-accessibility-check")
-        XCTAssertEqual(organization.value as? String, "synthetic-accessibility-check")
+        organization.tap()
+        // This must exercise the real native UIKit field and preserve every
+        // keystroke across sign-in form updates, not work around lost input
+        // with simulated retries or manipulate a WebKit accessibility proxy.
+        let entry = "synthetic-accessibility-check"
+        organization.typeText(entry)
+        XCTAssertEqual(organization.value as? String, entry,
+                       "Native organization entry must preserve exact typed content.")
         XCTAssertTrue(app.secureTextFields["Password"].exists)
         XCTAssertFalse(app.webViews.firstMatch.exists)
     }
@@ -238,6 +244,7 @@ final class RaphaelUITests: XCTestCase {
         var flags:[String:Any] = ["application_state":app.state.rawValue,
             "native_privacy_cover_ax":app.staticTexts["Private workspace hidden"].exists,
             "native_sections_ax":app.buttons["Patient sections"].exists,
+            "native_recovery_ax":app.buttons["Verify session and recover workspace"].exists,
             "native_notice_ax":app.staticTexts["synthetic-notice"].exists,
             "sign_in_button_ax":app.buttons["Sign in"].exists,
             "ocr_available":false]
@@ -249,6 +256,7 @@ final class RaphaelUITests: XCTestCase {
                 // Never publish recognized text: only fixed synthetic UI flags.
                 flags["ocr_available"]=true
                 flags["pixels_privacy_cover"]=text.contains("private workspace hidden")
+                flags["pixels_recovery_notice"]=text.contains("secure workspace interrupted")
                 flags["pixels_patient_workspace"]=text.contains("patient workspace")
                 flags["pixels_sign_in"]=text.contains("sign in")
                 flags["pixels_synthetic_notice"]=text.contains("synthetic development")
@@ -309,9 +317,13 @@ final class RaphaelUITests: XCTestCase {
         // Accept only its explicit existing recovery UI,then prove the actual
         // authenticated web workspace after one real user retry. Never bypass
         // sign-in or accept a native-only identity as web-session proof.
-        if !resumed && problem.exists && problem.label.hasPrefix("The secure web session stopped.") {
+        if !resumed && app.buttons["Verify session and recover workspace"].exists {
+            try tapHeader(app.buttons["Verify session and recover workspace"])
+            resumed = identity.waitForExistence(timeout:45)
+            print("::notice title=Raphael native background recovery::Explicit user verification after reported WebKit process termination;authenticated web identity remains required.")
+        } else if !resumed && problem.exists && problem.label.hasPrefix("The secure web session stopped.") {
             try tapHeader(app.buttons["Retry this section"])
-            resumed = identity.waitForExistence(timeout:30)
+            resumed = identity.waitForExistence(timeout:45)
             print("::notice title=Raphael native background recovery::Explicit user retry after reported WebKit content-process termination;authenticated web identity remains required.")
         }
         let stopped = problem.exists && problem.label.hasPrefix("The secure web session stopped.")
@@ -467,7 +479,7 @@ final class RaphaelUITests: XCTestCase {
         try requireUI(codes.count==10,"All ten private recovery codes must be available.")
         try tapHeader(visibleExportAction(app,"native-mfa-clear"))
         XCTAssertFalse(key.exists);XCTAssertFalse(privateCodes.exists)
-        try tapHeader(app.buttons["native-mfa-done"]);app.buttons["Done"].tap()
+        try tapHeader(app.buttons["native-mfa-done"]);try tapHeader(app.buttons["native-settings-done"])
         app.buttons["Sign out"].tap()
         try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30),"Enrollment must preserve normal logout.")
         let http=FixtureHTTPS();defer{http.close()}
@@ -492,7 +504,7 @@ final class RaphaelUITests: XCTestCase {
         let disabled=expectation(for:NSPredicate(format:"label == %@","Authenticator disabled. Other sessions revoked."),evaluatedWith:app.staticTexts["native-mfa-status"])
         await fulfillment(of:[disabled],timeout:20)
         let (_,revoked)=try await http.call("api/dev/session",cookie:other);XCTAssertEqual(revoked.statusCode,401)
-        try tapHeader(app.buttons["native-mfa-done"]);app.buttons["Done"].tap();app.buttons["Sign out"].tap()
+        try tapHeader(app.buttons["native-mfa-done"]);try tapHeader(app.buttons["native-settings-done"]);app.buttons["Sign out"].tap()
         try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30),"MFA management must preserve final session invalidation.")
     }
 

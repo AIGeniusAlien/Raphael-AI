@@ -8,7 +8,19 @@
   async function api(path, options = {}) {
     const r = await fetch('/api/dev' + path, { credentials: 'same-origin', ...options });
     const data = await r.json();
-    if (!r.ok) throw new Error(typeof data.detail === 'string' ? data.detail : `Request failed (${r.status}).`);
+    if (!r.ok) {
+      if (r.status === 401 || r.status === 403 || r.status === 404) {
+        // Any revoked clinical session or withdrawn chart grant (masked as 404)
+        // must not keep showing cached chart
+        // pixels, report drafts, or sandbox record previews.
+        reset(); state.patient = null;
+        el('workspace').hidden = true;
+        el('patient-heading').textContent = '';
+        el('studies').replaceChildren();
+        el('patient').value = '';
+      }
+      throw new Error(typeof data.detail === 'string' ? data.detail : `Request failed (${r.status}).`);
+    }
     return data;
   }
   const post = (path, body = {}) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -17,7 +29,7 @@
     state.epoch++; state.study = null; state.studies = [];
     el('viewer').hidden = true; el('prior-view').hidden = true; el('reports').replaceChildren();
     el('current-image').removeAttribute('src'); el('prior-image').removeAttribute('src');
-    el('metadata').textContent = ''; el('fhir-output').textContent = '';
+    el('metadata').textContent = ''; el('fhir-output').textContent = ''; el('dicomweb-output').textContent = '';
     for (const id of ['findings', 'impression', 'recommendation', 'dicom-file', 'fhir-id']) el(id).value = '';
   }
   async function loadStudies(epoch = state.epoch) {
@@ -26,7 +38,8 @@
     state.studies = items; el('studies').replaceChildren();
     if (!items.length) el('studies').appendChild(make('p', 'No synthetic images stored.'));
     for (const item of items) {
-      const button = make('button', `${item.metadata.Modality} · ${item.created_at} · ${item.metadata.rows}×${item.metadata.columns}`);
+      const queue = clinician() && item.report_summary ? ` · ${item.report_summary.drafts} drafts · ${item.report_summary.approved} approved` : '';
+      const button = make('button', `${item.metadata.Modality} · ${item.created_at} · ${item.metadata.rows}×${item.metadata.columns}${queue}`);
       button.type = 'button'; button.addEventListener('click', () => action(() => selectStudy(item)));
       el('studies').appendChild(button);
     }
@@ -35,7 +48,9 @@
     reset(); const epoch = state.epoch;
     const patient = await api(`/patients/${id}`);
     if (epoch !== state.epoch) return;
-    state.patient = patient; el('patient-heading').textContent = patient.name; el('workspace').hidden = false;
+    state.patient = patient; el('patient-heading').textContent = patient.name;
+    el('chart-link').href = '/static/chart.html?patient_id=' + encodeURIComponent(String(patient.id));
+    el('workspace').hidden = false;
     await loadStudies(epoch);
   }
   async function loadReports(epoch = state.epoch, studyId = state.study?.id) {
@@ -44,15 +59,97 @@
     el('reports').replaceChildren();
     if (!items.length) el('reports').appendChild(make('p', 'No visible reports for this image.'));
     for (const report of items) {
-      const article = make('article'); article.appendChild(make('h4', report.status === 'approved' ? 'Clinician-approved report (synthetic test workflow)' : 'Draft — clinician review required'));
+      const article = make('article'); article.appendChild(make('h4', report.status === 'approved' ? 'Clinician-approved report (synthetic test workflow)' : report.status === 'withdrawn' ? 'Withdrawn report — historical record only' : 'Draft — clinician review required'));
+      if (report.status === 'withdrawn') article.appendChild(make('p', 'Withdrawal reason: ' + (report.withdrawal_reason || 'Not supplied')));
       for (const key of ['findings', 'impression', 'recommendation']) { article.appendChild(make('strong', key)); article.appendChild(make('p', report[key])); }
       if (clinician() && report.status === 'draft') {
         const button = make('button', 'Approve report for patient visibility'); button.type = 'button';
         button.addEventListener('click', () => action(async () => {
           if (epoch !== state.epoch || state.study?.id !== studyId) return;
           await post(`/imaging/reports/${report.id}/approve`);
-          await loadReports(epoch, studyId);
+          await loadReports(epoch, studyId); await loadStudies(epoch);
         })); article.appendChild(button);
+      }
+      if (clinician() && report.status === 'approved') {
+        // This is an attestation ledger, not a pager, alerting service, or
+        // automatic recognition of urgent findings. Never imply delivery.
+        const section = make('section');
+        section.append(make('h5', 'Manually document an already completed result communication'),
+          make('p', 'Development tracking only. Raphael does not detect critical findings, call anyone, or deliver notifications. Contact the receiving team through an approved external clinical workflow.'));
+        const recipient = make('input');
+        recipient.maxLength = 120; recipient.placeholder = 'Recipient role (synthetic only)'; recipient.setAttribute('aria-label', 'Communication recipient role');
+        const method = make('select');
+        method.setAttribute('aria-label', 'Communication method');
+        for (const [key,label] of [['phone','Phone'],['in_person','In person'],['secure_internal_message','External secure message'],['other','Other external method']]) {
+          const option = make('option',label); option.value=key;method.append(option);
+        }
+        const summary = make('textarea');
+        summary.maxLength=1000;summary.placeholder='Document what was communicated, using synthetic data only';summary.setAttribute('aria-label','Communication summary');
+        const agreed = make('input'); agreed.type='checkbox';
+        const agreement = make('label', 'I confirm this communication already occurred outside Raphael');
+        agreement.prepend(agreed);
+        const save = make('button', 'Record completed communication');save.type='button';
+        const history = make('button', 'View communication history');history.type='button';
+        const historyPane = make('div');
+        const load = async()=> {
+          const records=await api(`/imaging/reports/${report.id}/communications`);
+          if(epoch!==state.epoch || state.study?.id!==studyId)return;
+          historyPane.replaceChildren();
+          if(!records.length)historyPane.append(make('p','No communications attested in Raphael. This does not establish whether anyone was contacted.'));
+          for(const row of records){
+            const item=make('section');
+            item.append(make('p',row.recorded_at+' · '+row.method+' · '+row.recipient_role+' · '+row.documented_message));
+            if(row.acknowledgment_recorded_at){
+              item.append(make('p','Clinician-attested external acknowledgment · '+row.acknowledgment_recorded_at+' · '+row.acknowledged_by_role+' · '+row.acknowledgment_attestation));
+            }else{
+              item.append(make('p','No acknowledgment recorded. Raphael has not verified delivery or receipt.'));
+              const role=make('input');role.maxLength=120;role.placeholder='Role of person who acknowledged';role.setAttribute('aria-label','Acknowledging recipient role');
+              const details=make('textarea');details.maxLength=1000;details.placeholder='Synthetic summary of independently confirmed acknowledgment';details.setAttribute('aria-label','Acknowledgment attestation');
+              const confirmed=make('input');confirmed.type='checkbox';
+              const check=make('label','I independently confirmed the receiving team acknowledged this result outside Raphael');check.prepend(confirmed);
+              const record=make('button','Record external acknowledgment');record.type='button';
+              record.addEventListener('click',()=>action(async()=>{
+                if(epoch!==state.epoch||state.study?.id!==studyId)return;
+                await post(`/imaging/communications/${row.id}/acknowledgment`,{
+                  acknowledged_by_role:role.value,attestation:details.value,
+                  clinician_confirms_acknowledgment_occurred:confirmed.checked
+                });
+                await load();
+                status('External acknowledgment attested by clinician. Raphael did not verify receipt.');
+              }));
+              item.append(role,details,check,record);
+            }
+            historyPane.append(item);
+          }
+        };
+        history.addEventListener('click',()=>action(load));
+        save.addEventListener('click',()=>action(async()=>{
+          if(epoch!==state.epoch || state.study?.id!==studyId)return;
+          await post(`/imaging/reports/${report.id}/communications`,{
+            recipient_role:recipient.value,method:method.value,documented_message:summary.value,
+            clinician_confirms_communication_occurred:agreed.checked
+          });
+          recipient.value='';summary.value='';agreed.checked=false;
+          await load();
+          status('External communication attestation recorded; Raphael did not deliver a notification.');
+        }));
+        section.append(recipient,method,summary,agreement,save,history,historyPane);
+        article.append(section);
+      }
+      if (clinician() && report.status === 'approved') {
+        const label = make('label', 'Reason to withdraw approved synthetic report');
+        const reason = make('textarea'); reason.maxLength = 500; reason.minLength = 5;
+        label.appendChild(reason);
+        const button = make('button', 'Withdraw report from patient visibility'); button.type = 'button';
+        button.addEventListener('click', () => action(async () => {
+          if (epoch !== state.epoch || state.study?.id !== studyId) return;
+          const explanation = reason.value.trim();
+          if (explanation.length < 5) throw new Error('Enter a withdrawal reason of at least five characters.');
+          await post(`/imaging/reports/${report.id}/withdraw`, {reason: explanation});
+          await loadReports(epoch, studyId); await loadStudies(epoch);
+          status('Report withdrawn from patient visibility. Historical clinician record retained.');
+        }));
+        article.append(label, button);
       }
       el('reports').appendChild(article);
     }
@@ -72,7 +169,7 @@
     state.user = await api('/session');
     if (!['patient', 'clinician'].includes(state.user.role)) throw new Error('Clinical chart access is unavailable for this role.');
     el('session-label').textContent = `${state.user.username} · ${state.user.role} · synthetic development only`;
-    el('upload-form').hidden = !clinician(); el('report-form').hidden = !clinician(); el('fhir-section').hidden = !clinician();
+    el('upload-form').hidden = !clinician(); el('report-form').hidden = !clinician(); el('fhir-section').hidden = !clinician(); el('dicomweb-section').hidden = !clinician();
     const patients = await api('/patients');
     for (const patient of patients) { const option = make('option', patient.name); option.value = String(patient.id); el('patient').appendChild(option); }
     el('patient').addEventListener('change', () => action(async () => { if (el('patient').value) await selectPatient(Number(el('patient').value)); else { reset(); state.patient = null; el('workspace').hidden = true; } }));
@@ -96,6 +193,14 @@
       await post(`/imaging/studies/${studyId}/reports`, { findings: el('findings').value, impression: el('impression').value, recommendation: el('recommendation').value });
       if (epoch !== state.epoch) return; for (const id of ['findings', 'impression', 'recommendation']) el(id).value = ''; await loadReports(epoch, studyId); status('Manual report draft saved. It is not visible to the patient until approved.');
     }); });
+    el('dicomweb-preview').addEventListener('click', () => action(async () => {
+      if (!clinician() || !state.patient) throw new Error('Select an authorized synthetic record.');
+      const epoch=state.epoch,patientId=state.patient.id;
+      const result=await api(`/patients/${patientId}/imaging/dicomweb-studies`);
+      if(epoch!==state.epoch||state.patient?.id!==patientId)return;
+      el('dicomweb-output').textContent=JSON.stringify(result,null,2);
+      status('Read-only synthetic DICOMweb metadata preview completed; no images imported.');
+    }));
     el('fhir-form').addEventListener('submit', event => { event.preventDefault(); action(async () => {
       if (!state.patient) throw new Error('Select a synthetic record.'); const epoch = state.epoch;
       const result = await api(`/patients/${state.patient.id}/fhir-preview?resource_id=${encodeURIComponent(el('fhir-id').value)}`);

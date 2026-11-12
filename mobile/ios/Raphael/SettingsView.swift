@@ -104,7 +104,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Privacy and settings")
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: dismiss) } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: dismiss).accessibilityIdentifier("native-settings-done") } }
             .confirmationDialog(confirmSignOut ? "Sign out of this Raphael session?" : "Export sensitive record data?",
                 isPresented:Binding(get:{confirmSignOut || exportAction != nil},set:{if !$0 {confirmSignOut = false;exportAction = nil}}),titleVisibility:.visible) {
                 if confirmSignOut {

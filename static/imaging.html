@@ -8,7 +8,7 @@
   <p id="session-label"></p>
   <label for="patient">Authorized synthetic record</label><select id="patient"><option value="">Select a record</option></select>
   <section id="workspace" hidden>
-    <h2 id="patient-heading"></h2>
+    <h2 id="patient-heading"></h2><p><a id="chart-link" href="/static/portal.html">Open this patient's structured chart</a></p>
     <form id="upload-form" hidden><h3>Upload a synthetic DICOM image</h3><p>Maximum 10 MiB. Requires PatientIdentityRemoved=YES and SYNTHETIC patient name/ID. These declarations do not detect real patient information. Only bounded uncompressed monochrome CT, MR, CR, DX and US images are supported.</p><label for="dicom-file">DICOM file</label><input id="dicom-file" type="file" accept=".dcm,application/dicom" required><button type="submit">Upload test image</button></form>
     <h3>Stored images</h3><div id="studies"></div>
     <section id="viewer" hidden><h3>Image and metadata</h3><p>Pixel values are normalized to the image minimum/maximum for display. This is not a calibrated diagnostic viewer.</p><label for="frame">Frame (zero based)</label><input id="frame" type="number" min="0" value="0"><button id="view-frame" type="button">View frame</button>
@@ -18,6 +18,7 @@
       <h3>Manual structured reports</h3><p>Drafts require explicit clinician approval before patient visibility. The application does not generate findings from pixels.</p><div id="reports"></div>
       <form id="report-form" hidden><label for="findings">Clinician-entered findings</label><textarea id="findings" required maxlength="10000"></textarea><label for="impression">Clinician-entered impression</label><textarea id="impression" required maxlength="10000"></textarea><label for="recommendation">Recommendation</label><textarea id="recommendation" maxlength="5000"></textarea><button type="submit">Save report draft</button></form>
     </section>
+    <section id="dicomweb-section" hidden><h3>Read-only synthetic PACS study discovery</h3><p>Queries only an operator-configured DICOMweb QIDO-RS development sandbox using the selected authorized patient's stored SYNTHETIC- MRN. This does not import pixels, detect abnormalities, connect to a hospital PACS, or send clinical alerts.</p><button id="dicomweb-preview" type="button">Discover synthetic studies</button><pre id="dicomweb-output"></pre></section>
     <section id="fhir-section" hidden><h3>Read-only FHIR sandbox preview</h3><p>Requires a configured synthetic sandbox and an explicitly tagged synthetic Patient resource. Preview does not import or overwrite the chart.</p><form id="fhir-form"><label for="fhir-id">Synthetic sandbox Patient resource ID</label><input id="fhir-id" required maxlength="64" pattern="[A-Za-z0-9.\-]+"><button type="submit">Preview sandbox resources</button></form><pre id="fhir-output"></pre></section>
   </section>
 </main><script src="/static/imaging.js"></script>

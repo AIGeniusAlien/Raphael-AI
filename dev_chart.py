@@ -326,6 +326,9 @@ def install_chart(app, ctx):
                       "limitations": "Synthetic records only. Range flags compare entered values and ranges; no diagnosis, dosing, reminder delivery or clinical validation is performed. Document consent applies only to private document access, not all chart access."}
             from longitudinal import review
             result['longitudinal']=review(result['entries'])
+            if user["role"] == "clinician":
+                from imaging_review_queue import summarize_imaging_reports
+                result["imaging_review"] = summarize_imaging_reports(result["entries"], result["encounters"])
             ctx.audit(c, user, "read_structured_chart", "patient", patient_id)
             return result
 
@@ -347,9 +350,31 @@ def install_chart(app, ctx):
     @router.patch("/encounters/{encounter_id}", dependencies=[Depends(ctx.same_origin_json)])
     def update_encounter(encounter_id: int, body: EncounterUpdate, user=Depends(clinician)):
         with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
             encounter_for(c, encounter_id, user)
+            # Clinical chart-only installations may not include the optional
+            # documentation module. In integrated installations, closing an
+            # encounter must revoke its microphone consent atomically rather
+            # than waiting for the next transcript write to fail.
+            recording_table_present = bool(c.execute(text(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='dev_active_sessions'"
+            )).scalar()) if body.status == 'closed' else False
+            active_sessions = []
+            if recording_table_present:
+                active_sessions = [row[0] for row in c.execute(text(
+                    "SELECT id FROM dev_active_sessions "
+                    "WHERE encounter_id=:e AND consent=1 AND state='active'"
+                ), {'e': encounter_id}).all()]
+                if active_sessions:
+                    c.execute(text(
+                        "UPDATE dev_active_sessions SET consent=0,state='stopped' "
+                        "WHERE encounter_id=:e AND consent=1 AND state='active'"
+                    ), {'e': encounter_id})
             c.execute(text("UPDATE dev_chart_encounters SET status=:s,summary=:v WHERE id=:id"),
                       {"s": body.status, "v": body.summary, "id": encounter_id})
+            for session_id in active_sessions:
+                ctx.audit(c, user, "recording_consent_revoked_on_encounter_close",
+                          "active_session", session_id)
             ctx.audit(c, user, "update_encounter", "encounter", encounter_id)
             return encounter_for(c, encounter_id, user)
 
@@ -408,6 +433,10 @@ def install_chart(app, ctx):
             existing = entry_for(c, entry_id, user)
             if existing["status"] != "draft":
                 raise HTTPException(409, "Only draft records can be approved.")
+            if existing["encounter_id"]:
+                encounter = encounter_for(c, existing["encounter_id"], user)
+                if encounter["status"] == "closed":
+                    raise HTTPException(409, "Reopen the encounter before approving its draft records.")
             result = c.execute(text("UPDATE dev_chart_entries SET status='approved',approved_by=:u,approved_at=:at,revision=revision+1 "
                                     "WHERE id=:id AND status='draft' AND revision=:r"),
                                {"u": user["id"], "at": now(), "id": entry_id, "r": body.revision})

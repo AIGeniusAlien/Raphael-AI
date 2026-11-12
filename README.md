@@ -1,3 +1,29 @@
+# Raphael — comprehensive clinical copilot (synthetic development)
+
+**Current release status: NOT AUTHORIZED for real patient care, real PHI, or public distribution.** Raphael's long-term scope covers medical reasoning, multispecialty imaging, clinical documentation, charting and hospital operations. Present implementations are bounded synthetic software features, not a clinically validated replacement for clinicians or hospital systems.
+
+## Run the current app locally
+
+From this repository on Python 3.12:
+
+```bash
+python -m dev_start --setup --provision
+```
+
+This provisions synthetic-only clinician/patient accounts, asks for account setup credentials through the existing bootstrap workflow, migrates a development SQLite database, and binds the FastAPI app to **127.0.0.1:8000** (not the public internet). For persistent local state, use `--database <private-synthetic-path>` at initial setup and reuse the same exact path at startup. By default live AI provider access is disabled; do not assume configured/validated diagnostic inference. Do **not** enter actual patient data.
+
+Run all locally supported verification checks:
+
+```bash
+python -m dev_verify --all --require-browser --output <private-synthetic-results-directory>
+```
+
+`--require-browser` requires working Chromium/Playwright. GitHub native iOS simulator checks and dependency advisory audit remain separate CI evidence. See [controlled synthetic preview handoff](docs/CONTROLLED_SYNTHETIC_PREVIEW_HANDOFF.md) for the source-scoped release preflight and human signoff gates.
+
+**Launch tracks are not interchangeable:** The local clinician/patient development app demonstrates broader synthetic workflows. `consumer_candidate` is a more restricted *patient records/account preview* only. Neither is a clinical deployment or approved unrestricted public release.
+
+---
+
 > Ultimate increment,2026-11-01: [Current implementation and release gates](docs/RAPHAEL_FINAL_LAUNCH_READINESS.md). Reports below retain their historical source scope.
 
 Release readiness:see [the2026-10-28 source-scoped audit](docs/RC_RELEASE_AUDIT.md). Historical test/live reports do not imply TestFlight or clinical-production approval.

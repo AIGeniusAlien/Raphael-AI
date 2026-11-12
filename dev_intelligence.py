@@ -488,7 +488,7 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
         return {'status': 'cancelled'}
 
     @router.post('/threads/{identifier}/assessment')
-    def structured_assessment(identifier: int, body: Prompt, user=Depends(ctx.clinician)):
+    def structured_assessment(identifier: int, body: Prompt, request: Request, user=Depends(ctx.clinician)):
         with engine.begin() as c:
             record = thread_for(c, identifier, user)
             if body.attachment_ids or attachment_store.history_access(c,record,user):raise HTTPException(409,'Attachment-derived context is supported only in the reviewed streaming workflow. Start a clean thread for structured assessment.')
@@ -505,14 +505,24 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             raise HTTPException(503, 'Structured assessment service is not configured.')
         result = assessment_generator(case_context=json.dumps({'reported_chart': chart, 'history': history})[:50000], question=body.content, mode='general', tenant=user['tenant'])
         from rag.assessment_schema import Assessment
+        from dev_account import session_active
         from pydantic import ValidationError
         try:
             result = Assessment.model_validate(result).model_dump()
         except ValidationError:
             raise HTTPException(502, 'Assessment response failed schema validation.')
         with engine.begin() as c:
+            # A clinical draft cannot persist after account deactivation, logout,
+            # chart/intake revocation or attachment lineage review changes while
+            # the external assessment generator was running.
             thread_for(c, identifier, user)
-            c.execute(text("INSERT INTO dev_ai_messages(thread_id,role,content,status,model,created_at) VALUES (:id,'assistant',:v,'complete',:m,:at)"), {'id': identifier, 'v': json.dumps(result), 'm': os.getenv('LLM_MODEL', 'gpt-4o-mini'), 'at': now()})
+            if not session_active(c,request,user):
+                raise HTTPException(401,'Session revoked before assessment persistence.')
+            attachment_store.history_access(c,record,user)
+            # A generated differential is never promoted to the 'complete' conversational
+            # context consumed by future AI generations. It is a separately
+            # reviewable provisional artifact, not an adjudicated chart fact.
+            c.execute(text("INSERT INTO dev_ai_messages(thread_id,role,content,status,model,created_at) VALUES (:id,'assistant',:v,'provisional_assessment',:m,:at)"), {'id': identifier, 'v': json.dumps(result), 'm': os.getenv('LLM_MODEL', 'gpt-4o-mini'), 'at': now()})
             ctx.audit(c, user, 'store_structured_assessment', 'ai_thread', identifier)
         return result
 
@@ -521,12 +531,26 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
         if not body.consent:
             raise HTTPException(403, 'Explicit recording consent is required.')
         with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
             ctx.patient_for(c, patient_id, user)
             row = c.execute(text('SELECT patient_id,status FROM dev_chart_encounters WHERE id=:id'), {'id': body.encounter_id}).first()
             if not row or row[0] != patient_id:
                 raise HTTPException(404, 'Encounter not found.')
             if row[1] != 'open':
                 raise HTTPException(409, 'Open the encounter before recording.')
+            # Enforce recording consent on the server, not only in the browser.
+            # An API client or another device must not create two concurrently
+            # consented recording sessions under the same clinician identity.
+            old_ids = [r[0] for r in c.execute(text(
+                "SELECT id FROM dev_active_sessions WHERE owner_id=:u AND consent=1 AND state='active'"
+            ), {'u': user['id']}).all()]
+            if old_ids:
+                c.execute(text(
+                    "UPDATE dev_active_sessions SET consent=0,state='stopped' "
+                    "WHERE owner_id=:u AND consent=1 AND state='active'"
+                ), {'u': user['id']})
+                for old_id in old_ids:
+                    ctx.audit(c, user, 'recording_consent_revoked', 'active_session', old_id)
             identifier = c.execute(text("INSERT INTO dev_active_sessions(patient_id,encounter_id,owner_id,consent,state,created_at) VALUES (:p,:e,:u,1,'active',:at)"), {'p': patient_id, 'e': body.encounter_id, 'u': user['id'], 'at': now()}).lastrowid
             ctx.audit(c, user, 'recording_consent_granted', 'active_session', identifier)
             return session_for(c, identifier, user)
@@ -535,6 +559,9 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
     def session(identifier: int, user=Depends(ctx.clinician)):
         with engine.begin() as c:
             result = session_for(c, identifier, user)
+            result['encounter_open'] = c.execute(text(
+                "SELECT status FROM dev_chart_encounters WHERE id=:e AND patient_id=:p"
+            ), {'e': result['encounter_id'], 'p': result['patient_id']}).scalar() == 'open'
             result['segments'] = [dict(r) for r in c.execute(text('SELECT * FROM dev_transcript_segments WHERE session_id=:id ORDER BY id'), {'id': identifier}).mappings()]
             result['notes'] = [dict(r) for r in c.execute(text('SELECT * FROM dev_active_notes WHERE session_id=:id ORDER BY version'), {'id': identifier}).mappings()]
             return result
@@ -542,7 +569,23 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
     @router.post('/sessions/{identifier}/consent')
     def consent(identifier: int, body: Consent, user=Depends(ctx.clinician)):
         with engine.begin() as c:
-            session_for(c, identifier, user)
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            existing = session_for(c, identifier, user)
+            if body.consent and c.execute(text(
+                "SELECT status FROM dev_chart_encounters WHERE id=:e AND patient_id=:p"
+            ), {'e': existing['encounter_id'], 'p': existing['patient_id']}).scalar() != 'open':
+                raise HTTPException(409, 'Reopen the encounter before restoring recording consent.')
+            if body.consent:
+                old_ids = [r[0] for r in c.execute(text(
+                    "SELECT id FROM dev_active_sessions WHERE owner_id=:u AND id!=:id AND consent=1 AND state='active'"
+                ), {'u': user['id'], 'id': identifier}).all()]
+                if old_ids:
+                    c.execute(text(
+                        "UPDATE dev_active_sessions SET consent=0,state='stopped' "
+                        "WHERE owner_id=:u AND id!=:id AND consent=1 AND state='active'"
+                    ), {'u': user['id'], 'id': identifier})
+                    for old_id in old_ids:
+                        ctx.audit(c, user, 'recording_consent_revoked', 'active_session', old_id)
             c.execute(text("UPDATE dev_active_sessions SET consent=:v,state=:s WHERE id=:id"), {'v': int(body.consent), 's': 'active' if body.consent else 'stopped', 'id': identifier})
             ctx.audit(c, user, 'recording_consent_granted' if body.consent else 'recording_consent_revoked', 'active_session', identifier)
         return {'consent': body.consent}
@@ -554,6 +597,10 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             record = session_for(c, identifier, user)
             if not record['consent'] or record['state'] != 'active':
                 raise HTTPException(403, 'Recording consent is not active.')
+            if c.execute(text(
+                "SELECT status FROM dev_chart_encounters WHERE id=:e AND patient_id=:p"
+            ), {'e': record['encounter_id'], 'p': record['patient_id']}).scalar() != 'open':
+                raise HTTPException(409, 'Closed encounters cannot accept recording transcript segments.')
             count = c.execute(text('SELECT count(*) FROM dev_transcript_segments WHERE session_id=:id'), {'id': identifier}).scalar()
             if count >= 500:
                 raise HTTPException(413, 'Documentation session limit reached.')

@@ -48,6 +48,98 @@ class IntelligenceTests(unittest.TestCase):
     def session(self):
         r=self.client.post(f"/api/dev/intelligence/patients/{self.patient['id']}/sessions",json={'encounter_id':self.encounter['id'],'consent':True});self.assertEqual(r.status_code,200,r.text);return r.json()['id']
 
+    def test_closed_encounter_blocks_transcripts_and_regrant_even_with_stale_consent(self):
+        sid = self.session()
+        endpoint = f'/api/dev/intelligence/sessions/{sid}'
+        self.assertTrue(self.client.get(endpoint).json()['encounter_open'])
+        close = self.client.patch(
+            f"/api/dev/encounters/{self.encounter['id']}",
+            json={'status':'closed','summary':'Synthetic completed encounter'})
+        self.assertEqual(close.status_code, 200, close.text)
+        state = self.client.get(endpoint)
+        self.assertEqual(state.status_code, 200, state.text)
+        self.assertFalse(state.json()['encounter_open'])
+        self.assertFalse(state.json()['consent'])
+        self.assertEqual(state.json()['state'], 'stopped')
+        events = [row['event'] for row in self.client.get(endpoint+'/audit').json()]
+        self.assertIn('recording_consent_revoked_on_encounter_close', events)
+        self.assertEqual(self.client.post(
+            endpoint+'/segments',
+            json={'content':'Synthetic prohibited segment','origin':'manual_synthetic'}
+        ).status_code, 403)
+        self.assertEqual(self.client.post(
+            endpoint+'/consent',json={'consent':True}
+        ).status_code, 409)
+        self.assertEqual(self.client.post(
+            endpoint+'/consent',json={'consent':False}
+        ).status_code, 200)
+        with self.engine.connect() as c:
+            self.assertEqual(c.execute(text(
+                "SELECT count(*) FROM dev_transcript_segments WHERE session_id=:s"
+            ),{'s':sid}).scalar(),0)
+
+    def test_server_revokes_prior_recording_on_new_session_even_without_browser(self):
+        first = self.session()
+        second = self.session()
+        self.assertNotEqual(first, second)
+        older = self.client.get(f'/api/dev/intelligence/sessions/{first}')
+        newer = self.client.get(f'/api/dev/intelligence/sessions/{second}')
+        self.assertEqual(older.status_code, 200, older.text)
+        self.assertEqual(newer.status_code, 200, newer.text)
+        self.assertFalse(older.json()['consent'])
+        self.assertEqual(older.json()['state'], 'stopped')
+        self.assertTrue(newer.json()['consent'])
+        self.assertEqual(self.client.post(
+            f'/api/dev/intelligence/sessions/{first}/segments',
+            json={'content': 'synthetic old session', 'origin': 'manual_synthetic'}
+        ).status_code, 403)
+        events = [item['event'] for item in self.client.get(
+            f'/api/dev/intelligence/sessions/{first}/audit').json()]
+        self.assertIn('recording_consent_revoked', events)
+        with self.engine.connect() as c:
+            active = c.execute(text(
+                "SELECT count(*) FROM dev_active_sessions WHERE consent=1 AND state='active'"
+            )).scalar()
+        self.assertEqual(active, 1)
+
+    def test_server_regrant_replaces_current_consent_without_cross_clinician_revocation(self):
+        first = self.session()
+        second = self.session()
+        regrant = self.client.post(
+            f'/api/dev/intelligence/sessions/{first}/consent',
+            json={'consent': True})
+        self.assertEqual(regrant.status_code, 200, regrant.text)
+        self.assertTrue(self.client.get(
+            f'/api/dev/intelligence/sessions/{first}').json()['consent'])
+        self.assertFalse(self.client.get(
+            f'/api/dev/intelligence/sessions/{second}').json()['consent'])
+        self.login('second')
+        separate_patient = self.client.post(
+            '/api/dev/patients', json={'name': 'Second synthetic clinician patient'})
+        self.assertEqual(separate_patient.status_code, 200, separate_patient.text)
+        separate_encounter = self.client.post(
+            f"/api/dev/patients/{separate_patient.json()['id']}/encounters",
+            json={'title': 'Separate synthetic encounter'})
+        self.assertEqual(separate_encounter.status_code, 200, separate_encounter.text)
+        second_session = self.client.post(
+            f"/api/dev/intelligence/patients/{separate_patient.json()['id']}/sessions",
+            json={'encounter_id': separate_encounter.json()['id'], 'consent': True})
+        self.assertEqual(second_session.status_code, 200, second_session.text)
+        another = second_session.json()['id']
+        self.assertTrue(self.client.get(
+            f'/api/dev/intelligence/sessions/{another}').json()['consent'])
+        self.login('doctor')
+        self.assertTrue(self.client.get(
+            f'/api/dev/intelligence/sessions/{first}').json()['consent'])
+        self.assertFalse(self.client.get(
+            f'/api/dev/intelligence/sessions/{second}').json()['consent'])
+        with self.engine.connect() as c:
+            active = c.execute(text(
+                "SELECT owner_id,count(*) FROM dev_active_sessions "
+                "WHERE consent=1 AND state='active' GROUP BY owner_id"
+            )).all()
+        self.assertEqual(sorted(row[1] for row in active), [1, 1])
+
     def test_stream_persists_followups_and_model_trace(self):
         identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}'
         seen=[]
@@ -296,10 +388,40 @@ class IntelligenceTests(unittest.TestCase):
         def assess(**kwargs):seen.append(kwargs);return result
         self.assessment=assess
         r=self.client.post(path,json={'content':'Synthetic'});self.assertEqual(r.status_code,200,r.text);self.assertEqual(seen[0]['tenant'],'one');self.assertIn('reported_chart',seen[0]['case_context'])
+        history=self.client.get(f'/api/dev/intelligence/threads/{identifier}').json()['messages']
+        self.assertEqual(history[-1]['status'],'provisional_assessment')
+        self.assertEqual(json.loads(history[-1]['content'])['problem_representation'],'Synthetic fixture')
+        provider_inputs=[]
+        self.provider=lambda messages,model: (provider_inputs.append(messages) or iter(['Synthetic draft [fixture-1]']))
+        streamed=self.client.post(f'/api/dev/intelligence/threads/{identifier}/stream',json={'content':'Second synthetic question'})
+        self.assertIn('event: complete',streamed.text)
+        self.assertTrue(provider_inputs)
+        self.assertFalse(any('Synthetic missing information' in msg['content'] for msg in provider_inputs[0][1:-1]),
+                         'Unreviewed structured assessment must not become a trusted future AI context turn')
         self.assessment=lambda **_: {'bad':'unsupported'}
         self.assertEqual(self.client.post(path,json={'content':'Synthetic'}).status_code,502)
         self.login('second')
         self.assertEqual(self.client.post(path,json={'content':'Synthetic'}).status_code,404)
+
+    def test_structured_assessment_does_not_persist_after_session_revocation(self):
+        identifier=self.thread()
+        valid={'problem_representation':'Synthetic only','ranked_differential':[],
+               'working_diagnosis':None,'rule_in_out_plan':[],'cant_miss':[],
+               'red_flags_escalation':[],'missing_data':['Unknown history'],
+               'confidence':'Uncertain','evidence_used':[],
+               'safety_notes':['Not reviewed']}
+        def revoke_during_generation(**kwargs):
+            response=self.client.post('/api/dev/logout',json={})
+            self.assertEqual(response.status_code,200,response.text)
+            return valid
+        self.assessment=revoke_during_generation
+        response=self.client.post(f'/api/dev/intelligence/threads/{identifier}/assessment',
+                                  json={'content':'Synthetic question'})
+        self.assertEqual(response.status_code,401,response.text)
+        self.login()
+        messages=self.client.get(f'/api/dev/intelligence/threads/{identifier}').json()['messages']
+        self.assertFalse(any(m['status']=='provisional_assessment' for m in messages),
+                         'No assessment may be stored after the initiating session was revoked.')
 
     def test_qdrant_backend_passes_conflicting_evidence_with_uncertainty_policy(self):
         seen=[];thread=self.thread()

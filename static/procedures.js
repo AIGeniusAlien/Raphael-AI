@@ -3,7 +3,7 @@
   const $=id=>document.getElementById(id);
   const sections=['indications','contraindications','patient_selection','preparation','tests_and_imaging','consent_requirements','safety_checks','equipment_and_resources','procedure_stages','complications','monitoring','follow_up','escalation'];
   const element=(tag,value)=>{const e=document.createElement(tag);if(value!==undefined)e.textContent=String(value);return e;};
-  let user,epoch=0,selection=0,run,nonce=crypto.randomUUID();
+  let user,epoch=0,selection=0,runsRequest=0,run,nonce=crypto.randomUUID();
   const status=(value='',error=false)=>{$('status').textContent=value;$('status').dataset.error=String(error);};
   async function api(path,body){
     const response=await fetch('/api/dev'+path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)})});
@@ -18,8 +18,8 @@
   function sourceLink(url){const a=element('a','Read bound source');const parsed=new URL(url);if(parsed.protocol!=='https:')throw new Error('Unsupported source URL.');a.href=parsed.href;a.target='_blank';a.rel='noopener noreferrer';return a;}
   async function refresh(){const expected=epoch;await loadRuns();if(user.role==='clinician')await loadTemplates();if(epoch!==expected)return;}
   async function loadRuns(){
-    const expected=epoch,patient=$('patient').value;$('runs').replaceChildren();if(!patient)return;
-    const data=await api(`/procedures/patients/${patient}/runs`);if(epoch!==expected||$('patient').value!==patient)return;
+    const expected=epoch,patient=$('patient').value,request=++runsRequest;$('runs').replaceChildren();if(!patient)return;
+    const data=await api(`/procedures/patients/${patient}/runs`);if(epoch!==expected||request!==runsRequest||$('patient').value!==patient)return;
     if(!data.runs.length)$('runs').appendChild(element('p','No visible checklists for this patient.'));
     for(const row of data.runs)$('runs').appendChild(button(`Checklist ${row.id} · ${row.state} · coordination ${row.consent_state}${row.active_source_and_template?'':' · reference no longer current'}`,()=>showRun(row.id)));
   }

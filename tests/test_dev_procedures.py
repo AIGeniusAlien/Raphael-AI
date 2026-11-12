@@ -45,6 +45,31 @@ class ProcedureTests(unittest.TestCase):
     def publish(self,run):return self.post(f"/api/dev/procedures/runs/{run['id']}/publish",{'expected_revision':run['revision'],'content_reviewed':True}).json()
     def authorize(self,run,authorize=True):return self.post(f"/api/dev/procedures/runs/{run['id']}/authorization",{'expected_revision':run['revision'],'authorize':authorize,'understands_coordination_only':True}).json()
     def get(self,run):return self.client.get(f"/api/dev/procedures/runs/{run['id']}")
+    def test_patient_list_changes_only_after_committed_clinician_publication(self):
+        _, run = self.start()
+        route = f"/api/dev/procedures/patients/{self.patient['id']}/runs"
+        self.login('patient')
+        self.assertEqual(self.client.get(route).json()['runs'], [])
+        self.login('other')
+        self.assertEqual(self.client.get(route).status_code, 404)
+        self.login('outsider', 'b')
+        self.assertEqual(self.client.get(route).status_code, 404)
+        self.login()
+        response = self.publish(run)
+        self.assertEqual(response['state'], 'published')
+        with self.engine.connect() as connection:
+            actual = connection.execute(
+                text("SELECT state, revision, published_at FROM dev_procedure_runs WHERE id=:id"),
+                {'id': run['id']}
+            ).mappings().one()
+            self.assertEqual(actual['state'], 'published')
+            self.assertIsNotNone(actual['published_at'])
+        self.login('patient')
+        published = self.client.get(route)
+        self.assertEqual(published.status_code, 200, published.text)
+        self.assertEqual([item['id'] for item in published.json()['runs']], [run['id']])
+        self.assertEqual(published.json()['runs'][0]['state'], 'published')
+
     def test_complete_clinician_patient_publication_authorization_and_signoff(self):
         template,run=self.start();self.login('patient');self.assertEqual(self.get(run).status_code,404)
         self.login();run=self.publish(run);self.assertFalse(run['actionable'])

@@ -74,6 +74,68 @@
     details.append(summary, list); holder.append(details);
     const rules = node('details'); rules.append(node('summary', 'Comparison rules and limits'), node('p', review.limitations, 'meta')); holder.append(rules);
   }
+  async function loadDicomWorklist(version) {
+    const section = byId('dicom-worklist-section'), holder = byId('dicom-worklist');
+    section.hidden = !clinician();
+    holder.replaceChildren();
+    if (!clinician()) return;
+    const workspaceLink = node('a', 'Open synthetic DICOM imaging workspace');
+    workspaceLink.href = '/static/imaging.html?patient=' + encodeURIComponent(String(patientId));
+    holder.append(workspaceLink);
+    try {
+      const studies = await api(base() + '/imaging/studies');
+      if (version !== generation || !user || !clinician()) return;
+      if (!studies.length) {
+        holder.append(node('p', 'No synthetic DICOM studies are currently stored for this chart.'));
+        return;
+      }
+      const list = node('ul');
+      for (const study of studies) {
+        const item = node('li');
+        const meta = study.metadata || {}, counts = study.report_summary || {};
+        const heading = node('strong', `${meta.Modality || 'Study'} · ${meta.frames ?? '?'} frame(s)`);
+        const details = node('p', `Drafts: ${counts.drafts ?? 0} · approved: ${counts.approved ?? 0} · withdrawn: ${counts.withdrawn ?? 0} · added ${study.created_at}`, 'meta');
+        const link = node('a', 'Review study in imaging workspace');
+        link.href = '/static/imaging.html?patient=' + encodeURIComponent(String(patientId));
+        item.append(heading, details, link);
+        list.append(item);
+      }
+      holder.append(list);
+    } catch (error) {
+      if (version !== generation || !user) return;
+      holder.append(node('p', 'Imaging worklist unavailable. No report status is assumed; open the imaging workspace to retry.', 'flag'));
+    }
+  }
+  function renderImagingReview() {
+    const section = byId('imaging-review-section');
+    const holder = byId('imaging-review');
+    holder.replaceChildren();
+    section.hidden = !clinician();
+    if (!clinician()) return;
+    const review = chart.imaging_review;
+    if (!review || !Array.isArray(review.reports)) {
+      holder.append(node('p', 'Imaging review information is unavailable; refresh the chart.', 'flag'));
+      return;
+    }
+    holder.append(node('p', review.limitation || review.limitations),
+      node('p', `${review.total_reports} recorded reports · ${review.drafts} drafts · ${review.approved} approved · ${review.flagged} flagged for workflow review.`, 'meta'));
+    if (!review.reports.length) {
+      holder.append(node('p', 'No synthetic imaging reports have been entered.'));
+      return;
+    }
+    for (const report of review.reports) {
+      const details = report.review_flags.length
+        ? 'Workflow flags: ' + report.review_flags.join(', ').replaceAll('_', ' ')
+        : 'No metadata workflow flags identified; clinical accuracy was not assessed.';
+      const item = summaryRecord(report.label, details,
+        `Report ${report.entry_id} · ${report.status} · revision ${report.revision}`);
+      if (report.action_required) item.classList.add('flag');
+      const link = node('a', 'View report and approval controls');
+      link.href = '#chart-entry-' + Number(report.entry_id);
+      item.append(link);
+      holder.append(item);
+    }
+  }
   function renderEntries() {
     const holder = byId('entries'); holder.replaceChildren();
     if (!chart.entries.length) holder.append(node('p', 'No visible structured records yet.'));
@@ -185,7 +247,8 @@
     byId('extraction-patient-id').textContent = String(chart.patient.id);
     byId('patient-name').textContent = `${chart.patient.name} · Synthetic chart`;
     byId('chart-content').hidden = false;
-    renderLongitudinal(); renderEntries(); renderEncounters(); renderAppointments(); renderDocuments();
+    renderLongitudinal(); renderEntries(); renderImagingReview(); renderEncounters(); renderAppointments(); renderDocuments();
+    await loadDicomWorklist(version);
     if (user.role === 'patient') {
       const consents = await api(base() + '/document-consents');
       if (version !== generation || !user) return;

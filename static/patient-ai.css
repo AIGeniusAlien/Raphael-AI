@@ -1,1 +1,42 @@
 #patient-ai{display:grid;grid-template-columns:minmax(240px,1fr) minmax(0,3fr);gap:1rem;align-items:start}#patient-ai>aside,#patient-ai>section{background:white;border:1px solid #cbd8df;border-radius:1rem;padding:1.2rem;min-width:0}#threads button{display:block;width:100%;text-align:left}select{width:100%;font:inherit;padding:.6rem}.check{font-weight:400}.check input{width:auto;margin-right:.5rem}.chat,.source{margin:1rem 0;padding:1rem;border:1px solid #cbd8df;border-radius:.5rem;white-space:pre-wrap;overflow-wrap:anywhere}.chat strong{display:block}.source a{display:block;overflow-wrap:anywhere}#scope{font-weight:600}@media(max-width:760px){#patient-ai{display:block}#patient-ai>aside{margin-bottom:1rem}}
+
+
+/* Patient-facing Raphael: same conversation-first design, education-only scope. */
+body:has(#patient-ai){max-width:100%;padding:0;background:#f6f9fb}
+body:has(#patient-ai)> .patient-ai-header{padding:.9rem clamp(1rem,2.5vw,2.5rem);background:#fff;margin:0;border-bottom:1px solid #d8e3ea}
+.patient-brand{display:flex;align-items:center;gap:.85rem}
+.patient-brand img{object-fit:contain}
+.patient-brand h1{margin:0;font-size:1.4rem}
+.patient-brand .brand-eyebrow{margin:0;font-size:.68rem;letter-spacing:.14em;color:#075e68;font-weight:750}
+.patient-ai-header .notice{max-width:950px;font-size:.84rem}
+.skip-chat{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+.skip-chat:focus{left:1rem;top:1rem;width:auto;height:auto;padding:.7rem;background:#fff;z-index:50}
+body:has(#patient-ai)>#status{padding:.5rem 1.5rem;margin:0}
+#patient-ai{grid-template-columns:clamp(240px,23vw,320px) minmax(0,1fr);gap:0;
+  min-height:calc(100dvh - 150px);max-width:1600px;margin:auto}
+#patient-ai>aside,#patient-ai>section{border-radius:0;border:0;box-shadow:none}
+#patient-ai>aside{border-right:1px solid #d8e3ea;background:#edf3f6;max-height:calc(100dvh - 140px);overflow-y:auto}
+#patient-ai>.patient-conversation-pane{display:flex;flex-direction:column;gap:.3rem;background:#fff;padding:1rem clamp(1rem,3vw,3rem)}
+.patient-conversation-pane #messages{flex:1 1 auto;min-height:250px;max-height:calc(100dvh - 380px);overflow:auto;overscroll-behavior:contain}
+.patient-conversation-pane .chat{border:0;border-bottom:1px solid #e7edf1;border-radius:0;padding:.8rem .4rem;
+  margin:.6rem 0;line-height:1.6;max-width:850px}
+.patient-conversation-pane .chat.from-patient{margin-left:auto;background:#edf5f8;
+  border:1px solid #d7e7ef;border-radius:1rem;max-width:min(85%,640px);padding:.85rem 1rem}
+.patient-conversation-pane .chat strong{color:#075e68;font-size:.83rem;margin-bottom:.4rem}
+.patient-conversation-pane #prompt-form{order:1;position:sticky;bottom:0;z-index:2;
+  background:#fff;border:1px solid #b6cdd8;border-radius:1.1rem;
+  box-shadow:0 10px 30px #12394b14;padding:.75rem;margin:.5rem 0}
+#patient-ai #prompt-form label{margin:.1rem 0;font-size:.84rem}
+#patient-ai #prompt-form textarea{border:0;min-height:80px;max-height:240px;resize:vertical;line-height:1.6;background:transparent}
+#patient-ai #prompt-form textarea:focus-visible{outline:2px solid #367f92;outline-offset:2px}
+.patient-composer-actions{display:flex;justify-content:space-between;gap:1rem;align-items:center}
+.patient-composer-actions span{font-size:.73rem;color:#526b78}
+.patient-composer-actions #send{white-space:nowrap;border-radius:1.4rem;margin:0}
+#patient-ai #evidence{overflow-y:auto;max-height:280px}
+#patient-ai #threads button[aria-current="true"]{background:#12394b;color:white;border-color:#12394b}
+@media(max-width:760px){
+  #patient-ai{display:flex;flex-direction:column}
+  #patient-ai>aside{max-height:none;border-bottom:1px solid #d8e3ea;border-right:0}
+  #patient-ai>.patient-conversation-pane{min-height:70dvh;padding:1rem}
+  .patient-conversation-pane #messages{max-height:56dvh}
+}

@@ -20,7 +20,7 @@ final class PatientWebSession: NSObject, ObservableObject, WKNavigationDelegate,
     private var recordAuthenticationEpoch = 0
     private var authenticationEpoch = 0
     private var foregroundProbeEpoch = 0
-    private var workspaceNeedsRecovery = false
+    @Published private(set) var workspaceNeedsRecovery = false
     private var recoveringWorkspace = false
     private static let recoveryProblem = "The secure web session stopped. Retry replaces this private workspace; unsaved changes may be lost."
     private var nativeCookie: HTTPCookie?

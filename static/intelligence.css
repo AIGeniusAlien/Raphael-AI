@@ -7,3 +7,166 @@
 
 /* Private source identifiers and file controls remain within the existing grid. */
 #attachments-section,#attachment-preview,#attachment-list article{min-width:0;overflow-wrap:anywhere}#attachment-list article{border:1px solid #d7e2ea;border-radius:.5rem;padding:.75rem;margin:.75rem 0}#attachment-list button{margin:.25rem}#attachment-preview pre{max-height:22rem;overflow:auto}
+
+
+/* Raphael physician copilot: conversation-first layout; no application controls removed. */
+body:has(#intelligence) {
+  max-width: 100%;
+  min-height: 100dvh;
+  padding: 0;
+  background: #f6f9fb;
+}
+body:has(#intelligence) > .intelligence-header {
+  margin: 0;
+  padding: .75rem clamp(1rem,2.4vw,2.5rem);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem 1.6rem;
+  border-bottom: 1px solid #dbe5ec;
+  background: #fff;
+}
+.intelligence-brand {display:flex;align-items:center;gap:.8rem;min-width:0}
+.intelligence-brand img{object-fit:contain;flex-shrink:0}
+.intelligence-brand h1{margin:0;font-size:1.3rem;letter-spacing:-.035em}
+.brand-eyebrow{font-size:.67rem;letter-spacing:.15em;font-weight:750;color:#075e68;margin:0}
+.intelligence-header .notice{font-size:.78rem;max-width:35rem;line-height:1.35;margin:0}
+.intelligence-header nav{margin-left:auto}
+.intelligence-header nav a{font-size:.85rem}
+#identity{font-size:.8rem;color:#536a78;margin:0}
+.skip-chat{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+.skip-chat:focus{left:1rem;top:.5rem;width:auto;height:auto;z-index:100;background:white;padding:.7rem}
+body:has(#intelligence)>#status{margin:0;padding:.45rem clamp(1rem,2vw,2rem);font-size:.83rem}
+#intelligence{
+  grid-template-columns:clamp(220px,18.5vw,290px) minmax(400px,1fr) clamp(260px,23vw,360px);
+  gap:0;
+  align-items:stretch;
+  max-width:1800px;
+  min-height:calc(100dvh - 145px);
+  margin:0 auto;
+  border-inline:1px solid #e0e9ee;
+}
+#intelligence>aside,#intelligence>section{
+  border:0;border-radius:0;box-shadow:none;
+  min-width:0;
+}
+#intelligence>aside{background:#ecf2f6;border-right:1px solid #d8e3ea;max-height:calc(100dvh - 140px);overflow:auto}
+#intelligence>aside h2{font-size:1rem}
+#intelligence .conversation-pane{
+  display:flex;flex-direction:column;gap:.35rem;
+  min-height:calc(100dvh - 145px);
+  padding:1.1rem clamp(1rem,2.5vw,2.5rem) .75rem;
+  background:#fff;
+}
+.conversation-pane #thread-title{font-size:clamp(1.1rem,2vw,1.5rem);line-height:1.25;margin:.15rem 0}
+.conversation-pane #thread-scope{font-size:.85rem;color:#405c68}
+.conversation-pane>#messages{
+  flex:1 1 auto;
+  min-height:240px;
+  max-height:calc(100dvh - 390px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:.3rem .4rem 1.5rem;
+}
+.chat-entry{
+  margin:0 auto 1.2rem;
+  max-width:850px;
+  padding:.6rem .2rem;
+  border-bottom:1px solid #eff2f5;
+}
+.chat-entry>strong{display:block;font-size:.84rem;color:#075e68;margin-bottom:.4rem}
+.chat-entry>.chat-text{font-size:.99rem;line-height:1.72;white-space:pre-wrap}
+.conversation-pane #prompt-form{
+  position:sticky;
+  bottom:0;
+  order:1;
+  z-index:2;
+  margin:.5rem 0 0;
+  padding:.7rem;
+  border:1px solid #b6cdd8;
+  border-radius:1.1rem;
+  background:#fff;
+  box-shadow:0 10px 30px #12394b14;
+}
+#prompt-form label{margin:0 0 .25rem;font-size:.86rem;color:#27566b}
+#prompt-form textarea{
+  min-height:80px;
+  max-height:240px;
+  border:0;
+  outline:0;
+  padding:.55rem .25rem;
+  resize:vertical;
+  background:transparent;
+  line-height:1.5;
+}
+#prompt-form textarea:focus-visible{outline:2px solid #367f92;outline-offset:2px;border-radius:.4rem}
+.composer-actions{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+#composer-hint{font-size:.71rem;color:#5b707c}
+.composer-actions #send{margin:0;border-radius:1.6rem;padding:.65rem 1.05rem;white-space:nowrap}
+.conversation-pane #evidence{max-height:260px;overflow-y:auto}
+#intelligence .clinical-tools-pane{
+  background:#f8fbfc;
+  border-left:1px solid #d8e3ea;
+  max-height:calc(100dvh - 140px);
+  overflow-y:auto;
+}
+.clinical-tools-pane h2{font-size:1.06rem}
+#intelligence button{transition:background-color .12s ease}
+#intelligence button:focus-visible,#intelligence select:focus-visible{outline:3px solid #aa5c00;outline-offset:2px}
+@media(max-width:1150px){
+  #intelligence{grid-template-columns:230px minmax(0,1fr)}
+  #intelligence>.clinical-tools-pane{grid-column:1/-1;max-height:none;border-left:0;border-top:1px solid #d8e3ea}
+  #intelligence>.conversation-pane{min-height:620px}
+}
+@media(max-width:720px){
+  #intelligence{display:flex;flex-direction:column}
+  #intelligence>aside{max-height:none;border-right:0;border-bottom:1px solid #d8e3ea}
+  #intelligence>.conversation-pane{min-height:72dvh;padding:1rem}
+  .conversation-pane>#messages{max-height:55dvh}
+  #intelligence>.clinical-tools-pane{max-height:none}
+  .intelligence-header nav{margin-left:0}
+  #composer-hint{font-size:.68rem}
+}
+@media(prefers-reduced-motion:reduce){
+  #intelligence button{transition:none}
+}
+
+
+/* Chat author distinction remains accessible without depending on color alone. */
+#messages .from-user{max-width:min(85%,680px);margin-left:auto;margin-right:0;padding:.8rem 1rem;
+  background:#edf5f8;border:1px solid #d5e5ed;border-radius:1.15rem}
+#messages .from-user>strong{color:#17546b}
+#messages .from-raphael{margin-left:0;margin-right:auto}
+#threads button[aria-current="true"]{background:#12394b;color:white;border-color:#12394b}
+
+
+/* Narrow-layout intrinsic sizing: wrap long labels and controls rather than
+   forcing a horizontally scrolling viewport. No content is clipped/hidden. */
+@media(max-width:720px){
+  #intelligence,#intelligence>aside,#intelligence>.conversation-pane,
+  #intelligence>.clinical-tools-pane{width:100%;max-width:100%;min-width:0}
+  #intelligence .composer-actions{flex-wrap:wrap}
+  #intelligence #composer-hint{flex:1 1 170px;min-width:0;overflow-wrap:anywhere}
+  #intelligence .composer-actions #send{flex:0 0 auto}
+  #intelligence :is(pre,code,a,p,span,label,h2,h3){overflow-wrap:anywhere}
+  #intelligence :is(input,select,textarea,button){max-width:100%;min-width:0}
+}
+
+
+/* Structured clinician reasoning is presented for inspection, never as a
+   verified diagnosis or validated probability. Preserve small-screen flow. */
+#structured-assessment .assessment-review{
+  margin-block:1rem;padding:1rem;
+  border:1px solid #cadce5;border-radius:.8rem;background:#f7fbfd;
+  overflow-wrap:anywhere;min-width:0;
+}
+#structured-assessment .assessment-review>section{margin-top:1.15rem}
+#structured-assessment .assessment-review h3{margin-top:0}
+#structured-assessment .assessment-review h4{margin:.4rem 0}
+#structured-assessment .assessment-review ul{padding-left:1.4rem}
+#structured-assessment .assessment-candidate{
+  border-left:3px solid #30768b;background:#fff;padding:.65rem .85rem;
+  border-radius:.3rem;margin:.65rem 0;min-width:0;
+}
+#structured-assessment .assessment-candidate h5{margin:0;font-size:1rem}
+#structured-assessment .assessment-review pre{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}

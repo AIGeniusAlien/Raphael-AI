@@ -78,7 +78,7 @@ async def preview_studies(patient_mrn: str, *, transport=None):
             body = bytearray()
             async with client.stream(
                 "GET", base + "/studies",
-                params={"PatientID": patient_mrn, "limit": MAX_RESULTS},
+                params={"PatientID": patient_mrn, "limit": MAX_RESULTS, "includefield": "00120062"},
                 headers=headers,
             ) as response:
                 if response.status_code != 200:

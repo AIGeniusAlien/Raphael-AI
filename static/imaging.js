@@ -9,8 +9,9 @@
     const r = await fetch('/api/dev' + path, { credentials: 'same-origin', ...options });
     const data = await r.json();
     if (!r.ok) {
-      if (r.status === 401 || r.status === 403) {
-        // Any revoked clinical session must not keep showing cached chart
+      if (r.status === 401 || r.status === 403 || r.status === 404) {
+        // Any revoked clinical session or withdrawn chart grant (masked as 404)
+        // must not keep showing cached chart
         // pixels, report drafts, or sandbox record previews.
         reset(); state.patient = null;
         el('workspace').hidden = true;

@@ -7,7 +7,17 @@
   async function api(path, body, method='POST') {
     const response = await fetch('/api/dev' + path, {method: body === undefined ? 'GET' : method, credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: body === undefined ? undefined : JSON.stringify(body)});
     const data = await response.json();
-    if (!response.ok) { if (response.status === 401) { voice.stop(); $('intelligence').hidden = true; } throw new Error(typeof data.detail === 'string' ? data.detail : 'Request failed.'); }
+    if (!response.ok) {
+      // Chart access revocation is intentionally concealed as 404 by the
+      // server. A scoped thread/session request must fail closed, not keep
+      // displaying its previously cached clinical content.
+      const scopedNotFound=response.status===404 &&
+        (/^\/intelligence\/(threads|sessions)\//.test(path)||/^\/patients\//.test(path));
+      if (response.status === 401 || response.status === 403 || scopedNotFound) {
+        voice.stop(); $('intelligence').hidden = true;
+      }
+      throw new Error(typeof data.detail === 'string' ? data.detail : 'Request failed.');
+    }
     return data;
   }
   async function action(fn) { try { await fn(); } catch (error) { status(error.message); } }

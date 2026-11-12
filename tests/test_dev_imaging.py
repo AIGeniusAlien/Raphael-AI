@@ -220,6 +220,43 @@ class ImagingApiTests(unittest.TestCase):
         self.login("outsider", "beta")
         self.assertEqual(self.client.get(path).status_code, 404)
 
+    def test_dicomweb_read_only_preview_rechecks_chart_mapping_and_role(self):
+        path = f"/api/dev/patients/{self.patient_id}/imaging/dicomweb-studies"
+        # Existing chart has no explicitly synthetic remote mapping.
+        self.assertEqual(self.client.get(path).status_code, 422)
+        with self.engine.begin() as c:
+            c.execute(text("UPDATE dev_patients SET mrn=:mrn WHERE id=:id"),
+                      {"mrn": "SYNTHETIC-PACS-01", "id": self.patient_id})
+        calls = []
+        async def stub(mrn):
+            calls.append(mrn)
+            return {"status": "synthetic_read_only_dicomweb_preview",
+                    "studies": [{"study_instance_uid": "1.2.3", "modality": "CT"}],
+                    "imported": False, "clinical_use_authorized": False}
+        with patch("integrations.dicomweb.sandbox.preview_studies", side_effect=stub):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(calls, ["SYNTHETIC-PACS-01"])
+            self.assertFalse(response.json()["imported"])
+            self.assertFalse(response.json()["clinical_use_authorized"])
+        with self.engine.connect() as c:
+            self.assertIn("preview_synthetic_dicomweb",
+                          c.execute(text("SELECT event FROM dev_audit")).scalars().all())
+        self.login("patient")
+        self.assertEqual(self.client.get(path).status_code, 403)
+        self.login("outsider", "beta")
+        self.assertEqual(self.client.get(path).status_code, 404)
+        self.login()
+        async def stale(mrn):
+            # A mapping edit while remote I/O is in flight must not be
+            # disclosed under the original synthetic chart binding.
+            with self.engine.begin() as c:
+                c.execute(text("UPDATE dev_patients SET mrn=:mrn WHERE id=:id"),
+                          {"mrn": "SYNTHETIC-PACS-CHANGED", "id": self.patient_id})
+            return {"studies": [{"study_instance_uid": "1.2.3"}]}
+        with patch("integrations.dicomweb.sandbox.preview_studies", side_effect=stale):
+            self.assertEqual(self.client.get(path).status_code, 409)
+
     def test_clinician_communication_attestation_is_scoped_and_never_sends_alerts(self):
         study = self.upload().json()
         reports = f"/api/dev/imaging/studies/{study['id']}/reports"

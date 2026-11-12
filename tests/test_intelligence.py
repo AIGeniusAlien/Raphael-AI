@@ -84,7 +84,18 @@ class IntelligenceTests(unittest.TestCase):
         self.assertFalse(self.client.get(
             f'/api/dev/intelligence/sessions/{second}').json()['consent'])
         self.login('second')
-        another = self.session()
+        separate_patient = self.client.post(
+            '/api/dev/patients', json={'name': 'Second synthetic clinician patient'})
+        self.assertEqual(separate_patient.status_code, 200, separate_patient.text)
+        separate_encounter = self.client.post(
+            f"/api/dev/patients/{separate_patient.json()['id']}/encounters",
+            json={'title': 'Separate synthetic encounter'})
+        self.assertEqual(separate_encounter.status_code, 200, separate_encounter.text)
+        second_session = self.client.post(
+            f"/api/dev/intelligence/patients/{separate_patient.json()['id']}/sessions",
+            json={'encounter_id': separate_encounter.json()['id'], 'consent': True})
+        self.assertEqual(second_session.status_code, 200, second_session.text)
+        another = second_session.json()['id']
         self.assertTrue(self.client.get(
             f'/api/dev/intelligence/sessions/{another}').json()['consent'])
         self.login('doctor')

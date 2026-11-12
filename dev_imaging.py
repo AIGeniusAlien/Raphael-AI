@@ -363,6 +363,27 @@ def install_imaging(app, ctx):
                     "status": "clinician_attested_external_communication",
                     "notification_sent_by_raphael": False, "clinical_use_authorized": False}
 
+    @router.get("/patients/{patient_id}/imaging/dicomweb-studies")
+    async def dicomweb_preview(patient_id: int, user=Depends(ctx.clinician)):
+        # The remote lookup key is taken only from an already-authorized,
+        # operator-maintained synthetic local chart; clients cannot choose it.
+        with ctx.engine.begin() as c:
+            patient = ctx.patient_for(c, patient_id, user)
+            synthetic_id = patient.get("mrn")
+        from integrations.dicomweb.sandbox import DicomwebUnavailable, preview_studies
+        try:
+            result = await preview_studies(synthetic_id)
+        except ValueError:
+            raise HTTPException(422, "An authorized local synthetic MRN is required.")
+        except DicomwebUnavailable as error:
+            raise HTTPException(503, str(error))
+        with ctx.engine.begin() as c:
+            current = ctx.patient_for(c, patient_id, user)
+            if current.get("mrn") != synthetic_id:
+                raise HTTPException(409, "Synthetic patient mapping changed during remote preview.")
+            ctx.audit(c, user, "preview_synthetic_dicomweb", "patient", patient_id)
+        return result
+
     @router.get("/patients/{patient_id}/fhir-preview")
     async def fhir_preview(patient_id: int, resource_id: str = Query(min_length=1, max_length=64), user=Depends(ctx.clinician)):
         with ctx.engine.begin() as c:

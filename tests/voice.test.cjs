@@ -98,3 +98,17 @@ test('stale watchdog response cannot interfere with newer listening session',asy
  assert.equal(a.instances[1].stopped,undefined);
  a.voice.stop();
 });
+
+test('stalled remote consent verification has bounded failure time and stops microphone',async()=>{
+ const a=setup();
+ await a.voice.start({consent:true,mode:'standard',wakePhrase:'Raphael',
+   verifyConsent:()=>new Promise(()=>{})});
+ const checking=a.watchdog();
+ // Exercise only the 5-second authorization deadline callback in the
+ // deterministic fake timer; no network, audio, or wall-clock sleeps.
+ a.timeout();
+ await checking;
+ assert.equal(a.voice.active,false);
+ assert.equal(a.instances[0].stopped,true);
+ assert.match(a.statuses.at(-1),/could not be verified/);
+});

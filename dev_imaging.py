@@ -62,6 +62,13 @@ CREATE TABLE IF NOT EXISTS dev_imaging_communications (
  documented_message TEXT NOT NULL,
  recorded_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS dev_imaging_communication_acknowledgments (
+ communication_id INTEGER PRIMARY KEY REFERENCES dev_imaging_communications(id),
+ recorded_by INTEGER NOT NULL REFERENCES dev_users(id),
+ acknowledged_by_role TEXT NOT NULL,
+ attestation TEXT NOT NULL,
+ recorded_at TEXT NOT NULL
+);
 """
 
 
@@ -177,6 +184,13 @@ class CommunicationInput(BaseModel):
     method: str = Field(pattern="^(phone|in_person|secure_internal_message|other)$")
     documented_message: str = Field(min_length=10, max_length=1000)
     clinician_confirms_communication_occurred: StrictBool
+
+
+class CommunicationAcknowledgmentInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    acknowledged_by_role: str = Field(min_length=3, max_length=120)
+    attestation: str = Field(min_length=10, max_length=1000)
+    clinician_confirms_acknowledgment_occurred: StrictBool
 
 
 def install_imaging(app, ctx):
@@ -332,8 +346,12 @@ def install_imaging(app, ctx):
                 raise HTTPException(404, "Imaging report not found.")
             study_for(c, report["study_id"], user)
             rows = c.execute(text(
-                "SELECT id,report_id,recorded_by,recipient_role,method,documented_message,recorded_at "
-                "FROM dev_imaging_communications WHERE report_id=:id ORDER BY id"
+                "SELECT cm.id,cm.report_id,cm.recorded_by,cm.recipient_role,cm.method,"
+                "cm.documented_message,cm.recorded_at,ak.acknowledged_by_role,"
+                "ak.attestation AS acknowledgment_attestation,ak.recorded_at AS acknowledgment_recorded_at "
+                "FROM dev_imaging_communications cm "
+                "LEFT JOIN dev_imaging_communication_acknowledgments ak ON ak.communication_id=cm.id "
+                "WHERE cm.report_id=:id ORDER BY cm.id"
             ), {"id": report_id}).mappings().all()
             ctx.audit(c, user, "read_imaging_communications", "imaging_report", report_id)
             return [dict(item) for item in rows]
@@ -362,6 +380,45 @@ def install_imaging(app, ctx):
             return {"id": result.lastrowid, "report_id": report_id,
                     "status": "clinician_attested_external_communication",
                     "notification_sent_by_raphael": False, "clinical_use_authorized": False}
+
+    @router.post("/imaging/communications/{communication_id}/acknowledgment", dependencies=[Depends(ctx.same_origin_json)])
+    def document_communication_acknowledgment(
+        communication_id: int, body: CommunicationAcknowledgmentInput, user=Depends(ctx.clinician)
+    ):
+        if not body.clinician_confirms_acknowledgment_occurred:
+            raise HTTPException(422, "A recipient acknowledgment must already have been independently verified.")
+        with ctx.engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            record = c.execute(text(
+                "SELECT cm.id,cm.report_id,r.study_id,r.status "
+                "FROM dev_imaging_communications cm "
+                "JOIN dev_imaging_reports r ON r.id=cm.report_id WHERE cm.id=:id"
+            ), {"id": communication_id}).mappings().first()
+            if not record:
+                raise HTTPException(404, "Communication not found.")
+            study_for(c, record["study_id"], user)
+            withdrawn = c.execute(text(
+                "SELECT 1 FROM dev_imaging_report_withdrawals WHERE report_id=:r"
+            ), {"r": record["report_id"]}).scalar()
+            if record["status"] != "approved" or withdrawn:
+                raise HTTPException(409, "Acknowledgments cannot be added to withdrawn reports.")
+            existing = c.execute(text(
+                "SELECT 1 FROM dev_imaging_communication_acknowledgments WHERE communication_id=:id"
+            ), {"id": communication_id}).scalar()
+            if existing:
+                raise HTTPException(409, "This communication acknowledgment is already recorded.")
+            c.execute(text(
+                "INSERT INTO dev_imaging_communication_acknowledgments "
+                "(communication_id,recorded_by,acknowledged_by_role,attestation,recorded_at) "
+                "VALUES (:id,:u,:role,:a,:at)"
+            ), {"id": communication_id, "u": user["id"],
+                "role": body.acknowledged_by_role, "a": body.attestation, "at": _now()})
+            ctx.audit(c, user, "attest_imaging_communication_acknowledgment",
+                      "imaging_report", record["report_id"])
+            return {"communication_id": communication_id,
+                    "status": "clinician_attested_external_acknowledgment",
+                    "acknowledgment_verified_by_raphael": False,
+                    "clinical_use_authorized": False}
 
     @router.get("/patients/{patient_id}/imaging/dicomweb-studies")
     async def dicomweb_preview(patient_id: int, user=Depends(ctx.clinician)):

@@ -40,6 +40,57 @@
   }
   function capturedFields(){const fields={};for(const name of documentationFormats[$('format').value]||[]){const value=$('document-field-'+name)?.value.trim();if(value)fields[name]={text:value,chart_entry_ids:[],transcript_segment_ids:[]};}return fields;}
   async function loadThreads() { const rows=await api('/intelligence/threads?q='+encodeURIComponent($('search').value));$('threads').replaceChildren();for(const t of rows){const b=node('button',t.title);b.type='button';b.dataset.threadId=String(t.id);b.setAttribute('aria-current',String(state.thread?.id===t.id));b.onclick=()=>action(()=>selectThread(t.id));$('threads').append(b);} }
+  function renderStructuredAssessment(assessment) {
+    const holder=$('structured-assessment');
+    holder.replaceChildren();
+    const header=node('section','');
+    header.className='assessment-review';
+    header.append(node('h3','Structured clinical reasoning — provisional draft'),
+      node('p','Clinician review required. Candidate diagnoses, evidence associations and urgency have not been independently validated. This does not authorize orders or treatment.'));
+    const addGroup=(title,items)=>{
+      const section=node('section','');
+      section.append(node('h4',title));
+      const list=node('ul','');
+      if(Array.isArray(items)&&items.length){
+        for(const item of items)list.append(node('li',String(item)));
+      }else list.append(node('li','Not provided — assess clinically.'));
+      section.append(list);header.append(section);
+    };
+    const addText=(title,value)=>{
+      const section=node('section','');
+      section.append(node('h4',title),node('p',value||'Not established — clinician review required.'));
+      header.append(section);
+    };
+    addText('Problem representation',assessment.problem_representation);
+    const differential=node('section','');
+    differential.append(node('h4','Ranked differential diagnosis'));
+    const entries=Array.isArray(assessment.ranked_differential)?assessment.ranked_differential:[];
+    if(!entries.length)differential.append(node('p','No candidate diagnoses provided; insufficient output for ranking.'));
+    entries.forEach((item,index)=>{
+      const entryBox=node('article','');
+      entryBox.className='assessment-candidate';
+      entryBox.append(node('h5',String(index+1)+'. '+item.diagnosis),
+        node('p','Model likelihood label: '+item.likelihood+' — not a calibrated probability.'));
+      const reasons=node('ul','');
+      for(const phrase of item.supports||[])reasons.append(node('li','Supporting observation: '+phrase));
+      for(const phrase of item.argues_against||[])reasons.append(node('li','Counterpoint: '+phrase));
+      entryBox.append(reasons,node('p','Unverified citation IDs: '+(item.citations||[]).join(', ')));
+      differential.append(entryBox);
+    });
+    header.append(differential);
+    addText('Working diagnosis (not confirmed)',assessment.working_diagnosis);
+    addGroup('Rule-in / rule-out considerations',assessment.rule_in_out_plan);
+    addGroup('Potential must-not-miss conditions',assessment.cant_miss);
+    addGroup('Red flags and escalation for clinician assessment',assessment.red_flags_escalation);
+    addGroup('Missing clinical information',assessment.missing_data);
+    addText('Uncertainty / confidence statement',assessment.confidence);
+    addGroup('Safety limitations',assessment.safety_notes);
+    const provenance=node('details','');
+    provenance.append(node('summary','Inspect unverified evidence metadata'),
+      node('pre',JSON.stringify(assessment.evidence_used||[],null,2)));
+    header.append(provenance);
+    holder.append(header);
+  }
   function renderConversation(thread) {
     $('messages').replaceChildren();$('evidence').replaceChildren();
     for(const m of thread.messages){entry(m.role,m.content,m.status);if(m.patient_context && m.role==='assistant'){const details=node('details'),summary=node('summary','Inspect prepared patient context for response '+m.id),body=node('pre',JSON.stringify(m.patient_context,null,2));details.append(summary,node('p','Authorized preparation snapshot,not independently verified findings or proof of transmission. Omitted facts are unknown,not negative findings.'),body);$('messages').append(details);}if(m.evidence?.length){const inspect=node('button','Inspect evidence for response '+m.id);inspect.onclick=()=>renderEvidence(m.evidence);$('messages').append(inspect);}}
@@ -168,7 +219,7 @@
     $('intelligence').hidden=false;await loadThreads();await encounters();const linked=new URLSearchParams(location.search).get('thread');if(linked&&/^\d+$/.test(linked))await selectThread(Number(linked));$('voice-status').textContent=voice.supported()?'Microphone off. Recognition available; explicit permission required.':'Speech recognition unavailable. Manual synthetic transcript entry supported.';
   }
   $('format').onchange=()=>{state.structuredDirty=false;documentFields();};
-  $('assessment').onclick=()=>action(async()=>{if(state.attachmentSelected.size||state.thread?.requires_attachment_authorization)throw new Error('Attachment-derived context requires the reviewed streaming workflow. Start a clean thread for structured assessment.');if(!state.thread||state.busy)throw new Error('Select a conversation and finish generation first.');const epoch=state.epoch;const output=await api('/intelligence/threads/'+state.thread.id+'/assessment',{content:$('prompt').value});if(epoch!==state.epoch)return;const holder=$('structured-assessment');holder.replaceChildren(node('p','Structured clinician draft — requires review.'));for(const [key,value] of Object.entries(output)){holder.append(node('h3',key.replaceAll('_',' ')),node('pre',typeof value==='string'?value:JSON.stringify(value,null,2)));}status('Structured assessment saved. No note was approved and no message was sent.');});
+  $('assessment').onclick=()=>action(async()=>{if(state.attachmentSelected.size||state.thread?.requires_attachment_authorization)throw new Error('Attachment-derived context requires the reviewed streaming workflow. Start a clean thread for structured assessment.');if(!state.thread||state.busy)throw new Error('Select a conversation and finish generation first.');const epoch=state.epoch;const output=await api('/intelligence/threads/'+state.thread.id+'/assessment',{content:$('prompt').value});if(epoch!==state.epoch)return;renderStructuredAssessment(output);status('Structured assessment saved. No note was approved and no message was sent.');});
   $('new-draft').onclick=()=>action(async()=>{if(state.busy)throw new Error('Stop generation before starting a new conversation.');await releaseEncounterSessionBeforeNavigation();state.epoch++;state.thread=null;state.attachmentSelected.clear();state.attachmentItems=[];state.attachmentPreview=null;$('attachment-preview').replaceChildren();$('attachment-list').replaceChildren();$('attachments-section').hidden=true;$('attachment-ai-consent').checked=false;$('intake-return').hidden=true;state.session=null;state.version=0;state.dirty=false;$('patient').disabled=false;$('messages').replaceChildren();$('evidence').replaceChildren();$('structured-assessment').replaceChildren();$('note').value='';$('transcript').textContent='';$('audit').replaceChildren();$('versions').replaceChildren();$('consent').checked=false;$('session-id').value='';$('note-status').textContent='';$('thread-title').textContent='New conversation';state.structuredDirty=false;documentFields();$('export').disabled=true;$('retry').disabled=true;await encounters();});
   $('coverage-refresh').onclick=()=>action(async()=>{const r=await api('/intelligence/coverage');const holder=$('coverage-map');holder.replaceChildren(node('p',r.supported_use));if(!r.index_checked)return;holder.append(node('p',`${r.active_documents} active documents · ${r.active_vectors} vectors. ${r.freshness}`));for(const source of r.sources){const item=node('p',`${source.domain.replaceAll('_',' ')} · ${source.population} · ${source.indexed_documents} documents. ${source.scope_note}`),a=node('a','Open original source');a.href=source.url;a.target='_blank';a.rel='noopener noreferrer';holder.append(item,a);}holder.append(node('p','Not validated: '+r.not_validated.join('; ')));});
   $('workflow-refresh').onclick=()=>action(async()=>{const r=await api('/intelligence/workflow-checks');$('workflow-checks').textContent=`${r.accessible_generations} accessible generations: ${r.outcomes.complete} complete, ${r.outcomes.blocked} blocked, ${r.outcomes.failed} failed. Support screens: ${r.claim_screens.passed} passed, ${r.claim_screens.blocked} blocked, ${r.claim_screens.missing} missing. Checker-only usage: ${r.checker_tokens} tokens from ${r.checker_usage_reports} reports. ${r.scope}`;const metrics=await api('/intelligence/performance');const timing=metrics.timings.total_ms;$('workflow-checks').textContent+=` Observed total latency: ${timing.samples} samples, p50 ${timing.p50??'unknown'} ms, p95 ${timing.p95??'unknown'} ms, p99 ${timing.p99??'unknown'} ms. Generation tokens: ${metrics.generation_tokens??'unknown'} from ${metrics.generation_usage_reports} actual usage reports. Cost unknown. ${metrics.scope}`;});

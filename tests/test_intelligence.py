@@ -48,6 +48,32 @@ class IntelligenceTests(unittest.TestCase):
     def session(self):
         r=self.client.post(f"/api/dev/intelligence/patients/{self.patient['id']}/sessions",json={'encounter_id':self.encounter['id'],'consent':True});self.assertEqual(r.status_code,200,r.text);return r.json()['id']
 
+    def test_closed_encounter_blocks_transcripts_and_regrant_even_with_stale_consent(self):
+        sid = self.session()
+        endpoint = f'/api/dev/intelligence/sessions/{sid}'
+        self.assertTrue(self.client.get(endpoint).json()['encounter_open'])
+        close = self.client.patch(
+            f"/api/dev/encounters/{self.encounter['id']}",
+            json={'status':'closed','summary':'Synthetic completed encounter'})
+        self.assertEqual(close.status_code, 200, close.text)
+        state = self.client.get(endpoint)
+        self.assertEqual(state.status_code, 200, state.text)
+        self.assertFalse(state.json()['encounter_open'])
+        self.assertEqual(self.client.post(
+            endpoint+'/segments',
+            json={'content':'Synthetic prohibited segment','origin':'manual_synthetic'}
+        ).status_code, 409)
+        self.assertEqual(self.client.post(
+            endpoint+'/consent',json={'consent':True}
+        ).status_code, 409)
+        self.assertEqual(self.client.post(
+            endpoint+'/consent',json={'consent':False}
+        ).status_code, 200)
+        with self.engine.connect() as c:
+            self.assertEqual(c.execute(text(
+                "SELECT count(*) FROM dev_transcript_segments WHERE session_id=:s"
+            ),{'s':sid}).scalar(),0)
+
     def test_server_revokes_prior_recording_on_new_session_even_without_browser(self):
         first = self.session()
         second = self.session()

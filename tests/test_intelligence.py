@@ -48,6 +48,57 @@ class IntelligenceTests(unittest.TestCase):
     def session(self):
         r=self.client.post(f"/api/dev/intelligence/patients/{self.patient['id']}/sessions",json={'encounter_id':self.encounter['id'],'consent':True});self.assertEqual(r.status_code,200,r.text);return r.json()['id']
 
+    def test_server_revokes_prior_recording_on_new_session_even_without_browser(self):
+        first = self.session()
+        second = self.session()
+        self.assertNotEqual(first, second)
+        older = self.client.get(f'/api/dev/intelligence/sessions/{first}')
+        newer = self.client.get(f'/api/dev/intelligence/sessions/{second}')
+        self.assertEqual(older.status_code, 200, older.text)
+        self.assertEqual(newer.status_code, 200, newer.text)
+        self.assertFalse(older.json()['consent'])
+        self.assertEqual(older.json()['state'], 'stopped')
+        self.assertTrue(newer.json()['consent'])
+        self.assertEqual(self.client.post(
+            f'/api/dev/intelligence/sessions/{first}/segments',
+            json={'content': 'synthetic old session', 'origin': 'manual_synthetic'}
+        ).status_code, 403)
+        events = [item['event'] for item in self.client.get(
+            f'/api/dev/intelligence/sessions/{first}/audit').json()]
+        self.assertIn('recording_consent_revoked', events)
+        with self.engine.connect() as c:
+            active = c.execute(text(
+                "SELECT count(*) FROM dev_active_sessions WHERE consent=1 AND state='active'"
+            )).scalar()
+        self.assertEqual(active, 1)
+
+    def test_server_regrant_replaces_current_consent_without_cross_clinician_revocation(self):
+        first = self.session()
+        second = self.session()
+        regrant = self.client.post(
+            f'/api/dev/intelligence/sessions/{first}/consent',
+            json={'consent': True})
+        self.assertEqual(regrant.status_code, 200, regrant.text)
+        self.assertTrue(self.client.get(
+            f'/api/dev/intelligence/sessions/{first}').json()['consent'])
+        self.assertFalse(self.client.get(
+            f'/api/dev/intelligence/sessions/{second}').json()['consent'])
+        self.login('second')
+        another = self.session()
+        self.assertTrue(self.client.get(
+            f'/api/dev/intelligence/sessions/{another}').json()['consent'])
+        self.login('doctor')
+        self.assertTrue(self.client.get(
+            f'/api/dev/intelligence/sessions/{first}').json()['consent'])
+        self.assertFalse(self.client.get(
+            f'/api/dev/intelligence/sessions/{second}').json()['consent'])
+        with self.engine.connect() as c:
+            active = c.execute(text(
+                "SELECT owner_id,count(*) FROM dev_active_sessions "
+                "WHERE consent=1 AND state='active' GROUP BY owner_id"
+            )).all()
+        self.assertEqual(sorted(row[1] for row in active), [1, 1])
+
     def test_stream_persists_followups_and_model_trace(self):
         identifier=self.thread();path=f'/api/dev/intelligence/threads/{identifier}'
         seen=[]

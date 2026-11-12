@@ -53,6 +53,15 @@ CREATE TABLE IF NOT EXISTS dev_imaging_report_withdrawals (
  withdrawn_at TEXT NOT NULL,
  reason TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS dev_imaging_communications (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ report_id INTEGER NOT NULL REFERENCES dev_imaging_reports(id),
+ recorded_by INTEGER NOT NULL REFERENCES dev_users(id),
+ recipient_role TEXT NOT NULL,
+ method TEXT NOT NULL,
+ documented_message TEXT NOT NULL,
+ recorded_at TEXT NOT NULL
+);
 """
 
 
@@ -160,6 +169,14 @@ class ReportInput(BaseModel):
 class WithdrawReportInput(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     reason: str = Field(min_length=5, max_length=500)
+
+
+class CommunicationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    recipient_role: str = Field(min_length=3, max_length=120)
+    method: str = Field(pattern="^(phone|in_person|secure_internal_message|other)$")
+    documented_message: str = Field(min_length=10, max_length=1000)
+    clinician_confirms_communication_occurred: bool
 
 
 def install_imaging(app, ctx):
@@ -306,6 +323,45 @@ def install_imaging(app, ctx):
                 raise HTTPException(409, "This report is already withdrawn.")
             ctx.audit(c, user, "withdraw_imaging_report", "imaging_report", report_id)
             return {"id": report_id, "status": "withdrawn", "clinical_use_authorized": False}
+
+    @router.get("/imaging/reports/{report_id}/communications")
+    def report_communications(report_id: int, user=Depends(ctx.clinician)):
+        with ctx.engine.begin() as c:
+            report = c.execute(text("SELECT * FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).mappings().first()
+            if not report:
+                raise HTTPException(404, "Imaging report not found.")
+            study_for(c, report["study_id"], user)
+            rows = c.execute(text(
+                "SELECT id,report_id,recorded_by,recipient_role,method,documented_message,recorded_at "
+                "FROM dev_imaging_communications WHERE report_id=:id ORDER BY id"
+            ), {"id": report_id}).mappings().all()
+            ctx.audit(c, user, "read_imaging_communications", "imaging_report", report_id)
+            return [dict(item) for item in rows]
+
+    @router.post("/imaging/reports/{report_id}/communications", dependencies=[Depends(ctx.same_origin_json)])
+    def document_communication(report_id: int, body: CommunicationInput, user=Depends(ctx.clinician)):
+        if not body.clinician_confirms_communication_occurred:
+            raise HTTPException(422, "Only document a communication that actually occurred.")
+        with ctx.engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
+            report = c.execute(text("SELECT * FROM dev_imaging_reports WHERE id=:id"), {"id": report_id}).mappings().first()
+            if not report:
+                raise HTTPException(404, "Imaging report not found.")
+            study_for(c, report["study_id"], user)
+            withdrawn = c.execute(text(
+                "SELECT 1 FROM dev_imaging_report_withdrawals WHERE report_id=:id"
+            ), {"id": report_id}).scalar()
+            if report["status"] != "approved" or withdrawn:
+                raise HTTPException(409, "Only active approved reports can have communications documented.")
+            result = c.execute(text(
+                "INSERT INTO dev_imaging_communications(report_id,recorded_by,recipient_role,method,documented_message,recorded_at) "
+                "VALUES (:r,:u,:role,:method,:message,:at)"
+            ), {"r": report_id, "u": user["id"], "role": body.recipient_role,
+                "method": body.method, "message": body.documented_message, "at": _now()})
+            ctx.audit(c, user, "document_imaging_communication", "imaging_report", report_id)
+            return {"id": result.lastrowid, "report_id": report_id,
+                    "status": "clinician_attested_external_communication",
+                    "notification_sent_by_raphael": False, "clinical_use_authorized": False}
 
     @router.get("/patients/{patient_id}/fhir-preview")
     async def fhir_preview(patient_id: int, resource_id: str = Query(min_length=1, max_length=64), user=Depends(ctx.clinician)):

@@ -15,7 +15,7 @@ assert.ok(begin>=0&&end>begin&&resetStart>=0&&resetEnd>resetStart,
 
 function fixture(status){
  const ids=['workspace','viewer','prior-view','reports','studies','current-image',
-   'prior-image','metadata','fhir-output','findings','impression','recommendation',
+   'prior-image','metadata','fhir-output','dicomweb-output','findings','impression','recommendation',
    'dicom-file','fhir-id','patient-heading','patient'];
  const elements=Object.fromEntries(ids.map(id=>[id,{
    hidden:false,value:id,textContent:'Synthetic protected content',
@@ -47,6 +47,7 @@ test('unauthorized synthetic imaging API request clears all protected cached pre
   assert.equal(elements['prior-image'].src,undefined);
   assert.equal(elements.metadata.textContent,'');
   assert.equal(elements['fhir-output'].textContent,'');
+  assert.equal(elements['dicomweb-output'].textContent,'');
   assert.equal(elements['patient-heading'].textContent,'');
   assert.equal(elements.studies.children.length,0);
   assert.equal(elements.patient.value,'');

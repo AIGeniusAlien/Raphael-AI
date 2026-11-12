@@ -265,6 +265,15 @@
   $('consent').onchange=()=>{if(!$('consent').checked)$('stop-session').click();};
   $('append').onclick=()=>action(async()=>{await appendSegment($('manual').value,'manual_synthetic');$('manual').value='';});$('note').oninput=()=>{state.dirty=true;};$('generate-note').onclick=()=>action(()=>updateNote());$('save-note').onclick=()=>action(()=>updateNote(true));
   $('approve').onclick=()=>action(async()=>{if(state.dirty)throw new Error('Save your edits before approval.');if(!confirm('Approve this saved synthetic draft and publish it to the patient record? Review every missing field and factual statement first. This is a test workflow, not a legally verified signature.'))return;await api('/intelligence/sessions/'+state.session+'/approve',{expected_version:state.version});await loadSession();});
+  document.addEventListener('visibilitychange',()=>{
+    // A hidden clinical tab must not keep a browser-vendor microphone session
+    // active. Returning to the tab requires an explicit start and a fresh
+    // server consent check. No automatic microphone restart is permitted.
+    if(document.hidden&&voice.active){
+      voice.stop();
+      $('voice-status').textContent='Microphone stopped while the clinical tab is hidden. Start listening explicitly after verifying consent.';
+    }
+  });
   window.addEventListener('pagehide',()=>{voice.stop();state.controller?.abort();});
   action(boot);
 })();

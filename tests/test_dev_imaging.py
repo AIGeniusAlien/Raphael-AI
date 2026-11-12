@@ -328,11 +328,16 @@ class ImagingApiTests(unittest.TestCase):
         self.assertEqual(self.client.post(path, json=body).status_code, 404)
         self.assertEqual(self.client.post(ack_path, json=acknowledgment).status_code, 404)
         self.login()
+        pending_ack = self.client.post(path, json=body)
+        self.assertEqual(pending_ack.status_code, 200, pending_ack.text)
+        pending_ack_path = f"/api/dev/imaging/communications/{pending_ack.json()['id']}/acknowledgment"
         self.assertEqual(self.client.post(
             f"/api/dev/imaging/reports/{report_id}/withdraw",
             json={"reason": "Synthetic review withdrawn"}).status_code, 200)
         self.assertEqual(self.client.post(path, json=body).status_code, 409)
-        self.assertEqual(len(self.client.get(path).json()), 1)
+        self.assertEqual(self.client.post(
+            pending_ack_path, json=acknowledgment).status_code, 409)
+        self.assertEqual(len(self.client.get(path).json()), 2)
 
     def test_clinician_study_worklist_tracks_drafts_without_exposing_them_to_patient(self):
         study = self.upload().json()

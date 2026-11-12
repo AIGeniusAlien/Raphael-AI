@@ -8,7 +8,18 @@
   async function api(path, options = {}) {
     const r = await fetch('/api/dev' + path, { credentials: 'same-origin', ...options });
     const data = await r.json();
-    if (!r.ok) throw new Error(typeof data.detail === 'string' ? data.detail : `Request failed (${r.status}).`);
+    if (!r.ok) {
+      if (r.status === 401 || r.status === 403) {
+        // Any revoked clinical session must not keep showing cached chart
+        // pixels, report drafts, or sandbox record previews.
+        reset(); state.patient = null;
+        el('workspace').hidden = true;
+        el('patient-heading').textContent = '';
+        el('studies').replaceChildren();
+        el('patient').value = '';
+      }
+      throw new Error(typeof data.detail === 'string' ? data.detail : `Request failed (${r.status}).`);
+    }
     return data;
   }
   const post = (path, body = {}) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

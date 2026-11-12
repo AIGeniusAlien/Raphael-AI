@@ -59,6 +59,48 @@
         })); article.appendChild(button);
       }
       if (clinician() && report.status === 'approved') {
+        // This is an attestation ledger, not a pager, alerting service, or
+        // automatic recognition of urgent findings. Never imply delivery.
+        const section = make('section');
+        section.append(make('h5', 'Manually document an already completed result communication'),
+          make('p', 'Development tracking only. Raphael does not detect critical findings, call anyone, or deliver notifications. Contact the receiving team through an approved external clinical workflow.'));
+        const recipient = make('input');
+        recipient.maxLength = 120; recipient.placeholder = 'Recipient role (synthetic only)'; recipient.setAttribute('aria-label', 'Communication recipient role');
+        const method = make('select');
+        method.setAttribute('aria-label', 'Communication method');
+        for (const [key,label] of [['phone','Phone'],['in_person','In person'],['secure_internal_message','External secure message'],['other','Other external method']]) {
+          const option = make('option',label); option.value=key;method.append(option);
+        }
+        const summary = make('textarea');
+        summary.maxLength=1000;summary.placeholder='Document what was communicated, using synthetic data only';summary.setAttribute('aria-label','Communication summary');
+        const agreed = make('input'); agreed.type='checkbox';
+        const agreement = make('label', 'I confirm this communication already occurred outside Raphael');
+        agreement.prepend(agreed);
+        const save = make('button', 'Record completed communication');save.type='button';
+        const history = make('button', 'View communication history');history.type='button';
+        const historyPane = make('div');
+        const load = async()=> {
+          const records=await api(`/imaging/reports/${report.id}/communications`);
+          if(epoch!==state.epoch || state.study?.id!==studyId)return;
+          historyPane.replaceChildren();
+          if(!records.length)historyPane.append(make('p','No communications attested in Raphael. This does not establish whether anyone was contacted.'));
+          for(const row of records)historyPane.append(make('p',row.recorded_at+' · '+row.method+' · '+row.recipient_role+' · '+row.documented_message));
+        };
+        history.addEventListener('click',()=>action(load));
+        save.addEventListener('click',()=>action(async()=>{
+          if(epoch!==state.epoch || state.study?.id!==studyId)return;
+          await post(`/imaging/reports/${report.id}/communications`,{
+            recipient_role:recipient.value,method:method.value,documented_message:summary.value,
+            clinician_confirms_communication_occurred:agreed.checked
+          });
+          recipient.value='';summary.value='';agreed.checked=false;
+          await load();
+          status('External communication attestation recorded; Raphael did not deliver a notification.');
+        }));
+        section.append(recipient,method,summary,agreement,save,history,historyPane);
+        article.append(section);
+      }
+      if (clinician() && report.status === 'approved') {
         const label = make('label', 'Reason to withdraw approved synthetic report');
         const reason = make('textarea'); reason.maxLength = 500; reason.minLength = 5;
         label.appendChild(reason);

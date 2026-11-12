@@ -350,9 +350,31 @@ def install_chart(app, ctx):
     @router.patch("/encounters/{encounter_id}", dependencies=[Depends(ctx.same_origin_json)])
     def update_encounter(encounter_id: int, body: EncounterUpdate, user=Depends(clinician)):
         with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
             encounter_for(c, encounter_id, user)
+            # Clinical chart-only installations may not include the optional
+            # documentation module. In integrated installations, closing an
+            # encounter must revoke its microphone consent atomically rather
+            # than waiting for the next transcript write to fail.
+            recording_table_present = bool(c.execute(text(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='dev_active_sessions'"
+            )).scalar()) if body.status == 'closed' else False
+            active_sessions = []
+            if recording_table_present:
+                active_sessions = [row[0] for row in c.execute(text(
+                    "SELECT id FROM dev_active_sessions "
+                    "WHERE encounter_id=:e AND consent=1 AND state='active'"
+                ), {'e': encounter_id}).all()]
+                if active_sessions:
+                    c.execute(text(
+                        "UPDATE dev_active_sessions SET consent=0,state='stopped' "
+                        "WHERE encounter_id=:e AND consent=1 AND state='active'"
+                    ), {'e': encounter_id})
             c.execute(text("UPDATE dev_chart_encounters SET status=:s,summary=:v WHERE id=:id"),
                       {"s": body.status, "v": body.summary, "id": encounter_id})
+            for session_id in active_sessions:
+                ctx.audit(c, user, "recording_consent_revoked_on_encounter_close",
+                          "active_session", session_id)
             ctx.audit(c, user, "update_encounter", "encounter", encounter_id)
             return encounter_for(c, encounter_id, user)
 

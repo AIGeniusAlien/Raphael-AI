@@ -512,7 +512,10 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             raise HTTPException(502, 'Assessment response failed schema validation.')
         with engine.begin() as c:
             thread_for(c, identifier, user)
-            c.execute(text("INSERT INTO dev_ai_messages(thread_id,role,content,status,model,created_at) VALUES (:id,'assistant',:v,'complete',:m,:at)"), {'id': identifier, 'v': json.dumps(result), 'm': os.getenv('LLM_MODEL', 'gpt-4o-mini'), 'at': now()})
+            # A generated differential is never promoted to the 'complete' conversational
+            # context consumed by future AI generations. It is a separately
+            # reviewable provisional artifact, not an adjudicated chart fact.
+            c.execute(text("INSERT INTO dev_ai_messages(thread_id,role,content,status,model,created_at) VALUES (:id,'assistant',:v,'provisional_assessment',:m,:at)"), {'id': identifier, 'v': json.dumps(result), 'm': os.getenv('LLM_MODEL', 'gpt-4o-mini'), 'at': now()})
             ctx.audit(c, user, 'store_structured_assessment', 'ai_thread', identifier)
         return result
 

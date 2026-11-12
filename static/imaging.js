@@ -95,7 +95,31 @@
           if(epoch!==state.epoch || state.study?.id!==studyId)return;
           historyPane.replaceChildren();
           if(!records.length)historyPane.append(make('p','No communications attested in Raphael. This does not establish whether anyone was contacted.'));
-          for(const row of records)historyPane.append(make('p',row.recorded_at+' · '+row.method+' · '+row.recipient_role+' · '+row.documented_message));
+          for(const row of records){
+            const item=make('section');
+            item.append(make('p',row.recorded_at+' · '+row.method+' · '+row.recipient_role+' · '+row.documented_message));
+            if(row.acknowledgment_recorded_at){
+              item.append(make('p','Clinician-attested external acknowledgment · '+row.acknowledgment_recorded_at+' · '+row.acknowledged_by_role+' · '+row.acknowledgment_attestation));
+            }else{
+              item.append(make('p','No acknowledgment recorded. Raphael has not verified delivery or receipt.'));
+              const role=make('input');role.maxLength=120;role.placeholder='Role of person who acknowledged';role.setAttribute('aria-label','Acknowledging recipient role');
+              const details=make('textarea');details.maxLength=1000;details.placeholder='Synthetic summary of independently confirmed acknowledgment';details.setAttribute('aria-label','Acknowledgment attestation');
+              const confirmed=make('input');confirmed.type='checkbox';
+              const check=make('label','I independently confirmed the receiving team acknowledged this result outside Raphael');check.prepend(confirmed);
+              const record=make('button','Record external acknowledgment');record.type='button';
+              record.addEventListener('click',()=>action(async()=>{
+                if(epoch!==state.epoch||state.study?.id!==studyId)return;
+                await post(`/imaging/communications/${row.id}/acknowledgment`,{
+                  acknowledged_by_role:role.value,attestation:details.value,
+                  clinician_confirms_acknowledgment_occurred:confirmed.checked
+                });
+                await load();
+                status('External acknowledgment attested by clinician. Raphael did not verify receipt.');
+              }));
+              item.append(role,details,check,record);
+            }
+            historyPane.append(item);
+          }
         };
         history.addEventListener('click',()=>action(load));
         save.addEventListener('click',()=>action(async()=>{

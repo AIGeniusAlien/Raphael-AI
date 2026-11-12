@@ -245,7 +245,7 @@
     // Recheck the server immediately before requesting microphone access.
     const active=await api('/intelligence/sessions/'+sessionId);
     if(epoch!==state.epoch||state.session!==sessionId)return;
-    if(!active.consent||active.state!=='active'||String(active.patient_id)!==state.sessionPatientId){
+    if(!active.consent||active.state!=='active'||!active.encounter_open||String(active.patient_id)!==state.sessionPatientId){
       voice.stop();$('consent').checked=false;
       throw new Error('Recording consent was revoked or changed. Reauthorize an encounter before listening.');
     }

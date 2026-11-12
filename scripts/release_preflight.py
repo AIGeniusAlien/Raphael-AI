@@ -5,6 +5,7 @@ This tool evaluates *provided* verification evidence; it never runs checks
 by itself or claims the environment, data, or operator is certified.
 """
 import argparse
+from collections.abc import Mapping
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -32,7 +33,7 @@ def check_candidate(verification, *, commit, verified_commit, environment, ci_ev
         blockers.append("invalid_source_commit")
     if not isinstance(verified_commit, str) or not COMMIT.fullmatch(verified_commit) or verified_commit != commit:
         blockers.append("verification_source_mismatch")
-    if not isinstance(environment, dict):
+    if not isinstance(environment, Mapping):
         environment = {}
     for name, expected in (
         ("RAPHAEL_DEV_PORTAL", "1"),

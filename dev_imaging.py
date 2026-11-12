@@ -13,7 +13,7 @@ import pydicom
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from PIL import Image
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 from sqlalchemy import text
 
 from database import execute_sqlite_script
@@ -176,7 +176,7 @@ class CommunicationInput(BaseModel):
     recipient_role: str = Field(min_length=3, max_length=120)
     method: str = Field(pattern="^(phone|in_person|secure_internal_message|other)$")
     documented_message: str = Field(min_length=10, max_length=1000)
-    clinician_confirms_communication_occurred: bool
+    clinician_confirms_communication_occurred: StrictBool
 
 
 def install_imaging(app, ctx):

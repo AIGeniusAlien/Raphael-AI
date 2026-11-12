@@ -488,7 +488,7 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
         return {'status': 'cancelled'}
 
     @router.post('/threads/{identifier}/assessment')
-    def structured_assessment(identifier: int, body: Prompt, user=Depends(ctx.clinician)):
+    def structured_assessment(identifier: int, body: Prompt, request: Request, user=Depends(ctx.clinician)):
         with engine.begin() as c:
             record = thread_for(c, identifier, user)
             if body.attachment_ids or attachment_store.history_access(c,record,user):raise HTTPException(409,'Attachment-derived context is supported only in the reviewed streaming workflow. Start a clean thread for structured assessment.')
@@ -505,13 +505,20 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             raise HTTPException(503, 'Structured assessment service is not configured.')
         result = assessment_generator(case_context=json.dumps({'reported_chart': chart, 'history': history})[:50000], question=body.content, mode='general', tenant=user['tenant'])
         from rag.assessment_schema import Assessment
+        from dev_account import session_active
         from pydantic import ValidationError
         try:
             result = Assessment.model_validate(result).model_dump()
         except ValidationError:
             raise HTTPException(502, 'Assessment response failed schema validation.')
         with engine.begin() as c:
+            # A clinical draft cannot persist after account deactivation, logout,
+            # chart/intake revocation or attachment lineage review changes while
+            # the external assessment generator was running.
             thread_for(c, identifier, user)
+            if not session_active(c,request,user):
+                raise HTTPException(401,'Session revoked before assessment persistence.')
+            attachment_store.history_access(c,record,user)
             # A generated differential is never promoted to the 'complete' conversational
             # context consumed by future AI generations. It is a separately
             # reviewable provisional artifact, not an adjudicated chart fact.

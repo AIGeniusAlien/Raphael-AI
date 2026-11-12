@@ -59,6 +59,10 @@ class IntelligenceTests(unittest.TestCase):
         state = self.client.get(endpoint)
         self.assertEqual(state.status_code, 200, state.text)
         self.assertFalse(state.json()['encounter_open'])
+        self.assertFalse(state.json()['consent'])
+        self.assertEqual(state.json()['state'], 'stopped')
+        events = [row['event'] for row in self.client.get(endpoint+'/audit').json()]
+        self.assertIn('recording_consent_revoked_on_encounter_close', events)
         self.assertEqual(self.client.post(
             endpoint+'/segments',
             json={'content':'Synthetic prohibited segment','origin':'manual_synthetic'}

@@ -151,3 +151,22 @@ body:has(#intelligence)>#status{margin:0;padding:.45rem clamp(1rem,2vw,2rem);fon
   #intelligence :is(pre,code,a,p,span,label,h2,h3){overflow-wrap:anywhere}
   #intelligence :is(input,select,textarea,button){max-width:100%;min-width:0}
 }
+
+
+/* Structured clinician reasoning is presented for inspection, never as a
+   verified diagnosis or validated probability. Preserve small-screen flow. */
+#structured-assessment .assessment-review{
+  margin-block:1rem;padding:1rem;
+  border:1px solid #cadce5;border-radius:.8rem;background:#f7fbfd;
+  overflow-wrap:anywhere;min-width:0;
+}
+#structured-assessment .assessment-review>section{margin-top:1.15rem}
+#structured-assessment .assessment-review h3{margin-top:0}
+#structured-assessment .assessment-review h4{margin:.4rem 0}
+#structured-assessment .assessment-review ul{padding-left:1.4rem}
+#structured-assessment .assessment-candidate{
+  border-left:3px solid #30768b;background:#fff;padding:.65rem .85rem;
+  border-radius:.3rem;margin:.65rem 0;min-width:0;
+}
+#structured-assessment .assessment-candidate h5{margin:0;font-size:1rem}
+#structured-assessment .assessment-review pre{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}

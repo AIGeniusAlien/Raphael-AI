@@ -531,12 +531,26 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
         if not body.consent:
             raise HTTPException(403, 'Explicit recording consent is required.')
         with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
             ctx.patient_for(c, patient_id, user)
             row = c.execute(text('SELECT patient_id,status FROM dev_chart_encounters WHERE id=:id'), {'id': body.encounter_id}).first()
             if not row or row[0] != patient_id:
                 raise HTTPException(404, 'Encounter not found.')
             if row[1] != 'open':
                 raise HTTPException(409, 'Open the encounter before recording.')
+            # Enforce recording consent on the server, not only in the browser.
+            # An API client or another device must not create two concurrently
+            # consented recording sessions under the same clinician identity.
+            old_ids = [r[0] for r in c.execute(text(
+                "SELECT id FROM dev_active_sessions WHERE owner_id=:u AND consent=1 AND state='active'"
+            ), {'u': user['id']}).all()]
+            if old_ids:
+                c.execute(text(
+                    "UPDATE dev_active_sessions SET consent=0,state='stopped' "
+                    "WHERE owner_id=:u AND consent=1 AND state='active'"
+                ), {'u': user['id']})
+                for old_id in old_ids:
+                    ctx.audit(c, user, 'recording_consent_revoked', 'active_session', old_id)
             identifier = c.execute(text("INSERT INTO dev_active_sessions(patient_id,encounter_id,owner_id,consent,state,created_at) VALUES (:p,:e,:u,1,'active',:at)"), {'p': patient_id, 'e': body.encounter_id, 'u': user['id'], 'at': now()}).lastrowid
             ctx.audit(c, user, 'recording_consent_granted', 'active_session', identifier)
             return session_for(c, identifier, user)
@@ -552,7 +566,19 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
     @router.post('/sessions/{identifier}/consent')
     def consent(identifier: int, body: Consent, user=Depends(ctx.clinician)):
         with engine.begin() as c:
+            c.exec_driver_sql('BEGIN IMMEDIATE')
             session_for(c, identifier, user)
+            if body.consent:
+                old_ids = [r[0] for r in c.execute(text(
+                    "SELECT id FROM dev_active_sessions WHERE owner_id=:u AND id!=:id AND consent=1 AND state='active'"
+                ), {'u': user['id'], 'id': identifier}).all()]
+                if old_ids:
+                    c.execute(text(
+                        "UPDATE dev_active_sessions SET consent=0,state='stopped' "
+                        "WHERE owner_id=:u AND id!=:id AND consent=1 AND state='active'"
+                    ), {'u': user['id'], 'id': identifier})
+                    for old_id in old_ids:
+                        ctx.audit(c, user, 'recording_consent_revoked', 'active_session', old_id)
             c.execute(text("UPDATE dev_active_sessions SET consent=:v,state=:s WHERE id=:id"), {'v': int(body.consent), 's': 'active' if body.consent else 'stopped', 'id': identifier})
             ctx.audit(c, user, 'recording_consent_granted' if body.consent else 'recording_consent_revoked', 'active_session', identifier)
         return {'consent': body.consent}

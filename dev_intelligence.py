@@ -559,6 +559,9 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
     def session(identifier: int, user=Depends(ctx.clinician)):
         with engine.begin() as c:
             result = session_for(c, identifier, user)
+            result['encounter_open'] = c.execute(text(
+                "SELECT status FROM dev_chart_encounters WHERE id=:e AND patient_id=:p"
+            ), {'e': result['encounter_id'], 'p': result['patient_id']}).scalar() == 'open'
             result['segments'] = [dict(r) for r in c.execute(text('SELECT * FROM dev_transcript_segments WHERE session_id=:id ORDER BY id'), {'id': identifier}).mappings()]
             result['notes'] = [dict(r) for r in c.execute(text('SELECT * FROM dev_active_notes WHERE session_id=:id ORDER BY version'), {'id': identifier}).mappings()]
             return result
@@ -567,7 +570,11 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
     def consent(identifier: int, body: Consent, user=Depends(ctx.clinician)):
         with engine.begin() as c:
             c.exec_driver_sql('BEGIN IMMEDIATE')
-            session_for(c, identifier, user)
+            existing = session_for(c, identifier, user)
+            if body.consent and c.execute(text(
+                "SELECT status FROM dev_chart_encounters WHERE id=:e AND patient_id=:p"
+            ), {'e': existing['encounter_id'], 'p': existing['patient_id']}).scalar() != 'open':
+                raise HTTPException(409, 'Reopen the encounter before restoring recording consent.')
             if body.consent:
                 old_ids = [r[0] for r in c.execute(text(
                     "SELECT id FROM dev_active_sessions WHERE owner_id=:u AND id!=:id AND consent=1 AND state='active'"
@@ -590,6 +597,10 @@ def install_intelligence(app, ctx, token_provider=None, assessment_generator=Non
             record = session_for(c, identifier, user)
             if not record['consent'] or record['state'] != 'active':
                 raise HTTPException(403, 'Recording consent is not active.')
+            if c.execute(text(
+                "SELECT status FROM dev_chart_encounters WHERE id=:e AND patient_id=:p"
+            ), {'e': record['encounter_id'], 'p': record['patient_id']}).scalar() != 'open':
+                raise HTTPException(409, 'Closed encounters cannot accept recording transcript segments.')
             count = c.execute(text('SELECT count(*) FROM dev_transcript_segments WHERE session_id=:id'), {'id': identifier}).scalar()
             if count >= 500:
                 raise HTTPException(413, 'Documentation session limit reached.')

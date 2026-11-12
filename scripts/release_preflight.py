@@ -19,7 +19,7 @@ REQUIRED_CHECKS = (
 COMMIT = re.compile(r"[a-fA-F0-9]{40}\Z")
 
 
-def check_candidate(verification, *, commit, verified_commit, environment):
+def check_candidate(verification, *, commit, verified_commit, environment, ci_evidence=None):
     """Return a non-sensitive report; require exact-source verification.
 
     The consumer candidate is an authenticated, synthetic patient records
@@ -69,19 +69,32 @@ def check_candidate(verification, *, commit, verified_commit, environment):
         checks[name] = observed.get(name) == "passed"
         if not checks[name]:
             blockers.append("missing_or_failed_" + name.replace("-", "_"))
-    # Native simulator and advisory audit are independent CI gates, NOT
-    # inferred from local verification where they can be skipped.
-    checks["native_ios_ci"] = False
-    checks["dependency_advisory_ci"] = False
-    blockers.extend(("native_ci_evidence_required", "dependency_ci_evidence_required"))
+    # A provided CI summary is only a reviewable assertion, not a signature.
+    # Never infer native or advisory success from locally skipped checks.
+    ci_jobs = ("regression", "ios-simulator", "dependency-audit", "engineering-watch")
+    valid_ci = (
+        isinstance(ci_evidence, dict)
+        and ci_evidence.get("source") == "github_actions_api"
+        and ci_evidence.get("head_sha") == commit
+        and isinstance(ci_evidence.get("jobs"), dict)
+        and set(ci_evidence["jobs"]) == set(ci_jobs)
+    )
+    if not valid_ci:
+        blockers.append("missing_or_mismatched_ci_evidence")
+    for job in ci_jobs:
+        passed = valid_ci and ci_evidence["jobs"].get(job) == "success"
+        checks["ci_" + job.replace("-", "_")] = bool(passed)
+        if not passed:
+            blockers.append("ci_" + job.replace("-", "_") + "_not_passing")
     return {
-        "status": "BLOCKED" if blockers else "SYNTHETIC_PREVIEW_PREFLIGHT_PASSED",
+        "status": "BLOCKED" if blockers else "SYNTHETIC_PREVIEW_TECHNICAL_CHECKS_PASSED",
         "source_commit": commit if isinstance(commit, str) and COMMIT.fullmatch(commit) else None,
         "gate": "candidate_synthetic_patient_preview_only",
         "checks": checks,
         "blockers": sorted(set(blockers)),
         "external_service_and_host_review_required": True,
         "operator_authorization_required": True,
+        "ci_evidence_independently_authenticated": False,
         "clinical_validation": False,
         "clinical_production_authorized": False,
         "public_distribution_authorized": False,
@@ -98,16 +111,22 @@ def main(argv=None):
     parser.add_argument("--verification-report", type=Path, required=True)
     parser.add_argument("--commit", required=True, help="Full 40-character tested source commit SHA")
     parser.add_argument("--verified-commit", required=True, help="Full commit SHA recorded for the verification artifact")
+    parser.add_argument("--ci-evidence", type=Path, required=True,
+                        help="Separate reviewed GitHub Actions API job summary bound to tested SHA")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
     try:
         report = json.loads(args.verification_report.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         report = None
+    try:
+        ci_evidence = json.loads(args.ci_evidence.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        ci_evidence = None
     from os import environ
     result = check_candidate(report, commit=args.commit,
                              verified_commit=args.verified_commit,
-                             environment=environ)
+                             environment=environ, ci_evidence=ci_evidence)
     # Reports contain only booleans, enum-like codes, and a source SHA.
     document = json.dumps(result, indent=2) + "\n"
     if args.output:

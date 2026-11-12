@@ -34,7 +34,7 @@ function fixture(status){
  return {api:vm.runInContext(codeUnderTest,sandbox),state,elements};
 }
 test('unauthorized synthetic imaging API request clears all protected cached presentation',async()=>{
- for(const status of [401,403]){
+ for(const status of [401,403,404]){
   const {api,state,elements}=fixture(status);
   await assert.rejects(api('/imaging/studies/5/reports'),/Synthetic access rejected/);
   assert.equal(state.patient,null);

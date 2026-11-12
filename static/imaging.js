@@ -28,7 +28,7 @@
     state.epoch++; state.study = null; state.studies = [];
     el('viewer').hidden = true; el('prior-view').hidden = true; el('reports').replaceChildren();
     el('current-image').removeAttribute('src'); el('prior-image').removeAttribute('src');
-    el('metadata').textContent = ''; el('fhir-output').textContent = '';
+    el('metadata').textContent = ''; el('fhir-output').textContent = ''; el('dicomweb-output').textContent = '';
     for (const id of ['findings', 'impression', 'recommendation', 'dicom-file', 'fhir-id']) el(id).value = '';
   }
   async function loadStudies(epoch = state.epoch) {
@@ -144,7 +144,7 @@
     state.user = await api('/session');
     if (!['patient', 'clinician'].includes(state.user.role)) throw new Error('Clinical chart access is unavailable for this role.');
     el('session-label').textContent = `${state.user.username} · ${state.user.role} · synthetic development only`;
-    el('upload-form').hidden = !clinician(); el('report-form').hidden = !clinician(); el('fhir-section').hidden = !clinician();
+    el('upload-form').hidden = !clinician(); el('report-form').hidden = !clinician(); el('fhir-section').hidden = !clinician(); el('dicomweb-section').hidden = !clinician();
     const patients = await api('/patients');
     for (const patient of patients) { const option = make('option', patient.name); option.value = String(patient.id); el('patient').appendChild(option); }
     el('patient').addEventListener('change', () => action(async () => { if (el('patient').value) await selectPatient(Number(el('patient').value)); else { reset(); state.patient = null; el('workspace').hidden = true; } }));
@@ -168,6 +168,14 @@
       await post(`/imaging/studies/${studyId}/reports`, { findings: el('findings').value, impression: el('impression').value, recommendation: el('recommendation').value });
       if (epoch !== state.epoch) return; for (const id of ['findings', 'impression', 'recommendation']) el(id).value = ''; await loadReports(epoch, studyId); status('Manual report draft saved. It is not visible to the patient until approved.');
     }); });
+    el('dicomweb-preview').addEventListener('click', () => action(async () => {
+      if (!clinician() || !state.patient) throw new Error('Select an authorized synthetic record.');
+      const epoch=state.epoch,patientId=state.patient.id;
+      const result=await api(`/patients/${patientId}/imaging/dicomweb-studies`);
+      if(epoch!==state.epoch||state.patient?.id!==patientId)return;
+      el('dicomweb-output').textContent=JSON.stringify(result,null,2);
+      status('Read-only synthetic DICOMweb metadata preview completed; no images imported.');
+    }));
     el('fhir-form').addEventListener('submit', event => { event.preventDefault(); action(async () => {
       if (!state.patient) throw new Error('Select a synthetic record.'); const epoch = state.epoch;
       const result = await api(`/patients/${state.patient.id}/fhir-preview?resource_id=${encodeURIComponent(el('fhir-id').value)}`);

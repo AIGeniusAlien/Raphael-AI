@@ -249,7 +249,16 @@
       voice.stop();$('consent').checked=false;
       throw new Error('Recording consent was revoked or changed. Reauthorize an encounter before listening.');
     }
-    await voice.start({consent:true,mode:$('mode').value,wakePhrase:$('wake').value});
+    await voice.start({
+      consent:true,mode:$('mode').value,wakePhrase:$('wake').value,
+      verifyConsent:async()=>{
+        if(!state.session||state.session!==sessionId||state.epoch!==epoch||!$('consent').checked)return false;
+        const latest=await api('/intelligence/sessions/'+sessionId);
+        return state.session===sessionId&&state.epoch===epoch&&$('consent').checked&&
+          latest.consent===true&&latest.state==='active'&&latest.encounter_open===true&&
+          String(latest.patient_id)===state.sessionPatientId;
+      }
+    });
   });
   $('pause').onclick=()=>{voice.stop();$('voice-status').textContent='Microphone paused.';};
   $('stop-session').onclick=()=>action(async()=>{voice.stop();$('consent').checked=false;if(state.session)await api('/intelligence/sessions/'+state.session+'/consent',{consent:false});$('voice-status').textContent='Microphone off; recording consent revoked.';});

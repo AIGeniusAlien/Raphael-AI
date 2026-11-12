@@ -59,9 +59,21 @@
         this.watchdog = setInterval(async () => {
           if (verifying || !this.active || serial !== this.serial) return;
           verifying = true;
-          let authorized = false;
-          try { authorized = await verifyConsent() === true; } catch (_) {}
-          verifying = false;
+          let authorized = false,deadline=null;
+          try {
+            // A stalled network must not leave vendor recognition active
+            // indefinitely while the previous consent status is assumed.
+            // Handle late promise rejection without an unhandled exception.
+            const check=Promise.resolve().then(verifyConsent).then(value=>value===true).catch(()=>false);
+            const timeout=new Promise(resolve=>{
+              deadline=setTimeout(()=>resolve(false),5000);
+            });
+            authorized=await Promise.race([check,timeout]);
+          }catch(_){}
+          finally{
+            if(deadline!==null)clearTimeout(deadline);
+            verifying=false;
+          }
           if (!this.active || serial !== this.serial) return;
           if (!authorized) {
             this.stop();

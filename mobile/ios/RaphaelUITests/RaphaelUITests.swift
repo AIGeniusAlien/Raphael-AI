@@ -479,7 +479,7 @@ final class RaphaelUITests: XCTestCase {
         try requireUI(codes.count==10,"All ten private recovery codes must be available.")
         try tapHeader(visibleExportAction(app,"native-mfa-clear"))
         XCTAssertFalse(key.exists);XCTAssertFalse(privateCodes.exists)
-        try tapHeader(app.buttons["native-mfa-done"]);app.buttons["Done"].tap()
+        try tapHeader(app.buttons["native-mfa-done"]);try tapHeader(app.buttons["native-settings-done"])
         app.buttons["Sign out"].tap()
         try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30),"Enrollment must preserve normal logout.")
         let http=FixtureHTTPS();defer{http.close()}
@@ -504,7 +504,7 @@ final class RaphaelUITests: XCTestCase {
         let disabled=expectation(for:NSPredicate(format:"label == %@","Authenticator disabled. Other sessions revoked."),evaluatedWith:app.staticTexts["native-mfa-status"])
         await fulfillment(of:[disabled],timeout:20)
         let (_,revoked)=try await http.call("api/dev/session",cookie:other);XCTAssertEqual(revoked.statusCode,401)
-        try tapHeader(app.buttons["native-mfa-done"]);app.buttons["Done"].tap();app.buttons["Sign out"].tap()
+        try tapHeader(app.buttons["native-mfa-done"]);try tapHeader(app.buttons["native-settings-done"]);app.buttons["Sign out"].tap()
         try requireUI(app.staticTexts["Welcome to Raphael"].waitForExistence(timeout:30),"MFA management must preserve final session invalidation.")
     }
 

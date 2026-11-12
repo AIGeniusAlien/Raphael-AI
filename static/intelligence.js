@@ -238,7 +238,19 @@
   $('new-encounter').onclick=()=>action(async()=>{if(!$('patient').value)throw new Error('Select a synthetic patient.');const e=await api('/patients/'+$('patient').value+'/encounters',{title:'Synthetic clinical encounter',summary:''});await encounters();$('encounter').value=e.id;});
   $('start-session').onclick=()=>action(async()=>{if(!$('consent').checked)throw new Error('Confirm recording consent first.');if(!$('patient').value||!$('encounter').value)throw new Error('Select a patient and open encounter.');await releaseEncounterSessionBeforeNavigation();const epoch=state.epoch;const patient=$('patient').value;const s=await api('/intelligence/patients/'+patient+'/sessions',{encounter_id:Number($('encounter').value),consent:true});if(epoch!==state.epoch||patient!==$('patient').value)return;state.session=s.id;state.sessionPatientId=String(patient);state.dirty=false;$('session-id').value=s.id;await loadSession();});
   $('resume').onclick=()=>action(async()=>{voice.stop();const epoch=state.epoch;const s=await api('/intelligence/sessions/'+Number($('session-id').value));if(epoch!==state.epoch)return;if(String(s.patient_id)!==$('patient').value)throw new Error('Select the matching patient before resuming.');if(state.session&&state.session!==s.id)await releaseEncounterSessionBeforeNavigation();if(epoch!==state.epoch)return;state.session=s.id;state.sessionPatientId=String(s.patient_id);state.dirty=false;await loadSession();});
-  $('listen').onclick=()=>action(async()=>{if(!state.session||!$('consent').checked)throw new Error('Start an authorized documentation session first.');await voice.start({consent:true,mode:$('mode').value,wakePhrase:$('wake').value});});
+  $('listen').onclick=()=>action(async()=>{
+    if(!state.session||!$('consent').checked)throw new Error('Start an authorized documentation session first.');
+    const sessionId=state.session,epoch=state.epoch;
+    // A different device can revoke consent after the current page loaded.
+    // Recheck the server immediately before requesting microphone access.
+    const active=await api('/intelligence/sessions/'+sessionId);
+    if(epoch!==state.epoch||state.session!==sessionId)return;
+    if(!active.consent||active.state!=='active'||String(active.patient_id)!==state.sessionPatientId){
+      voice.stop();$('consent').checked=false;
+      throw new Error('Recording consent was revoked or changed. Reauthorize an encounter before listening.');
+    }
+    await voice.start({consent:true,mode:$('mode').value,wakePhrase:$('wake').value});
+  });
   $('pause').onclick=()=>{voice.stop();$('voice-status').textContent='Microphone paused.';};
   $('stop-session').onclick=()=>action(async()=>{voice.stop();$('consent').checked=false;if(state.session)await api('/intelligence/sessions/'+state.session+'/consent',{consent:false});$('voice-status').textContent='Microphone off; recording consent revoked.';});
   $('consent').onchange=()=>{if(!$('consent').checked)$('stop-session').click();};

@@ -33,12 +33,12 @@ test('server-revoked recording consent denies microphone and clears local consen
  assert.equal(h.fields.consent.checked,false);
 });
 test('same-patient active server consent allows clinician to request microphone',async()=>{
- const h=harness({patient_id:7,consent:true,state:'active'});
+ const h=harness({patient_id:7,consent:true,state:'active',encounter_open:true});
  await h.click();
  assert.deepEqual(h.events,['microphone_requested']);
 });
 test('server session for a different patient fails closed',async()=>{
- const h=harness({patient_id:19,consent:true,state:'active'});
+ const h=harness({patient_id:19,consent:true,state:'active',encounter_open:true});
  await assert.rejects(h.click(),/Recording consent was revoked/);
  assert.deepEqual(h.events,['stopped']);
 });
@@ -47,9 +47,15 @@ test('late response after encounter switch does not activate stale microphone',a
  const pending=h.click();
  h.state.epoch++;
  h.state.session=44;
- h.resolve({patient_id:7,consent:true,state:'active'});
+ h.resolve({patient_id:7,consent:true,state:'active',encounter_open:true});
  await pending;
  assert.deepEqual(h.events,[]);
+});
+test('closed encounter refuses microphone even when stale consent remains active',async()=>{
+ const h=harness({patient_id:7,consent:true,state:'active',encounter_open:false});
+ await assert.rejects(h.click(),/Recording consent was revoked/);
+ assert.deepEqual(h.events,['stopped']);
+ assert.equal(h.fields.consent.checked,false);
 });
 test('server unavailability does not attempt microphone permission',async()=>{
  const h=harness(null);

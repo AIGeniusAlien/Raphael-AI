@@ -311,6 +311,26 @@ class IntelligenceTests(unittest.TestCase):
         self.login('second')
         self.assertEqual(self.client.post(path,json={'content':'Synthetic'}).status_code,404)
 
+    def test_structured_assessment_does_not_persist_after_session_revocation(self):
+        identifier=self.thread()
+        valid={'problem_representation':'Synthetic only','ranked_differential':[],
+               'working_diagnosis':None,'rule_in_out_plan':[],'cant_miss':[],
+               'red_flags_escalation':[],'missing_data':['Unknown history'],
+               'confidence':'Uncertain','evidence_used':[],
+               'safety_notes':['Not reviewed']}
+        def revoke_during_generation(**kwargs):
+            response=self.client.post('/api/dev/logout',json={})
+            self.assertEqual(response.status_code,200,response.text)
+            return valid
+        self.assessment=revoke_during_generation
+        response=self.client.post(f'/api/dev/intelligence/threads/{identifier}/assessment',
+                                  json={'content':'Synthetic question'})
+        self.assertEqual(response.status_code,401,response.text)
+        self.login()
+        messages=self.client.get(f'/api/dev/intelligence/threads/{identifier}').json()['messages']
+        self.assertFalse(any(m['status']=='provisional_assessment' for m in messages),
+                         'No assessment may be stored after the initiating session was revoked.')
+
     def test_qdrant_backend_passes_conflicting_evidence_with_uncertainty_policy(self):
         seen=[];thread=self.thread()
         def provider(messages,model):seen.append(messages);yield 'Synthetic conflict and uncertainty [fixture-1] [fixture-2]'

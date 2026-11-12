@@ -220,6 +220,60 @@ class ImagingApiTests(unittest.TestCase):
         self.login("outsider", "beta")
         self.assertEqual(self.client.get(path).status_code, 404)
 
+    def test_clinician_communication_attestation_is_scoped_and_never_sends_alerts(self):
+        study = self.upload().json()
+        reports = f"/api/dev/imaging/studies/{study['id']}/reports"
+        draft = self.client.post(reports, json={
+            "findings": "Synthetic reviewer-entered findings",
+            "impression": "Synthetic reviewer-entered impression",
+        })
+        self.assertEqual(draft.status_code, 200, draft.text)
+        report_id = draft.json()["id"]
+        path = f"/api/dev/imaging/reports/{report_id}/communications"
+        body = {
+            "recipient_role": "Synthetic referring team",
+            "method": "phone",
+            "documented_message": "Synthetic external verbal discussion was completed.",
+            "clinician_confirms_communication_occurred": True,
+        }
+        self.assertEqual(self.client.post(path, json=body).status_code, 409)
+        approved = self.client.post(
+            f"/api/dev/imaging/reports/{report_id}/approve", json={})
+        self.assertEqual(approved.status_code, 200, approved.text)
+        for missing in [
+            dict(body, clinician_confirms_communication_occurred=False),
+            dict(body, clinician_confirms_communication_occurred="true"),
+            dict(body, method="automatic_pager"),
+        ]:
+            with self.subTest(missing=missing):
+                self.assertEqual(self.client.post(path, json=missing).status_code, 422)
+        self.assertEqual(self.client.get(path).json(), [])
+        recorded = self.client.post(path, json=body)
+        self.assertEqual(recorded.status_code, 200, recorded.text)
+        self.assertFalse(recorded.json()["notification_sent_by_raphael"])
+        self.assertFalse(recorded.json()["clinical_use_authorized"])
+        self.assertEqual(recorded.json()["status"], "clinician_attested_external_communication")
+        history = self.client.get(path)
+        self.assertEqual(history.status_code, 200, history.text)
+        self.assertEqual(len(history.json()), 1)
+        self.assertEqual(history.json()[0]["recipient_role"], body["recipient_role"])
+        with self.engine.connect() as c:
+            self.assertIn("document_imaging_communication",
+                          c.execute(text("SELECT event FROM dev_audit")).scalars().all())
+        self.login("patient")
+        self.assertEqual(self.client.get(path).status_code, 403)
+        self.assertEqual(self.client.post(path, json=body).status_code, 403)
+        self.assertNotIn("communications", str(self.client.get(reports).json()))
+        self.login("outsider", "beta")
+        self.assertEqual(self.client.get(path).status_code, 404)
+        self.assertEqual(self.client.post(path, json=body).status_code, 404)
+        self.login()
+        self.assertEqual(self.client.post(
+            f"/api/dev/imaging/reports/{report_id}/withdraw",
+            json={"reason": "Synthetic review withdrawn"}).status_code, 200)
+        self.assertEqual(self.client.post(path, json=body).status_code, 409)
+        self.assertEqual(len(self.client.get(path).json()), 1)
+
     def test_clinician_study_worklist_tracks_drafts_without_exposing_them_to_patient(self):
         study = self.upload().json()
         study_path = f"/api/dev/imaging/studies/{study['id']}/reports"

@@ -294,16 +294,39 @@ class ImagingApiTests(unittest.TestCase):
         self.assertEqual(history.status_code, 200, history.text)
         self.assertEqual(len(history.json()), 1)
         self.assertEqual(history.json()[0]["recipient_role"], body["recipient_role"])
+        self.assertIsNone(history.json()[0]["acknowledgment_recorded_at"])
+        ack_path = f"/api/dev/imaging/communications/{recorded.json()['id']}/acknowledgment"
+        acknowledgment = {
+            "acknowledged_by_role": "Synthetic receiving clinician",
+            "attestation": "Synthetic external confirmation of receipt was reported.",
+            "clinician_confirms_acknowledgment_occurred": True,
+        }
+        for invalid in [
+            dict(acknowledgment, clinician_confirms_acknowledgment_occurred=False),
+            dict(acknowledgment, clinician_confirms_acknowledgment_occurred="yes"),
+            dict(acknowledgment, attestation="short"),
+        ]:
+            with self.subTest(invalid=invalid):
+                self.assertEqual(self.client.post(ack_path, json=invalid).status_code, 422)
+        accepted = self.client.post(ack_path, json=acknowledgment)
+        self.assertEqual(accepted.status_code, 200, accepted.text)
+        self.assertEqual(accepted.json()["status"], "clinician_attested_external_acknowledgment")
+        self.assertFalse(accepted.json()["acknowledgment_verified_by_raphael"])
+        self.assertEqual(self.client.post(ack_path, json=acknowledgment).status_code, 409)
+        self.assertEqual(self.client.get(path).json()[0]["acknowledged_by_role"],
+                         acknowledgment["acknowledged_by_role"])
         with self.engine.connect() as c:
             self.assertIn("document_imaging_communication",
                           c.execute(text("SELECT event FROM dev_audit")).scalars().all())
         self.login("patient")
         self.assertEqual(self.client.get(path).status_code, 403)
         self.assertEqual(self.client.post(path, json=body).status_code, 403)
+        self.assertEqual(self.client.post(ack_path, json=acknowledgment).status_code, 403)
         self.assertNotIn("communications", str(self.client.get(reports).json()))
         self.login("outsider", "beta")
         self.assertEqual(self.client.get(path).status_code, 404)
         self.assertEqual(self.client.post(path, json=body).status_code, 404)
+        self.assertEqual(self.client.post(ack_path, json=acknowledgment).status_code, 404)
         self.login()
         self.assertEqual(self.client.post(
             f"/api/dev/imaging/reports/{report_id}/withdraw",

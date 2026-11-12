@@ -296,6 +296,16 @@ class IntelligenceTests(unittest.TestCase):
         def assess(**kwargs):seen.append(kwargs);return result
         self.assessment=assess
         r=self.client.post(path,json={'content':'Synthetic'});self.assertEqual(r.status_code,200,r.text);self.assertEqual(seen[0]['tenant'],'one');self.assertIn('reported_chart',seen[0]['case_context'])
+        history=self.client.get(f'/api/dev/intelligence/threads/{identifier}').json()['messages']
+        self.assertEqual(history[-1]['status'],'provisional_assessment')
+        self.assertEqual(json.loads(history[-1]['content'])['problem_representation'],'Synthetic fixture')
+        provider_inputs=[]
+        self.provider=lambda messages,model: (provider_inputs.append(messages) or iter(['Synthetic draft [fixture-1]']))
+        streamed=self.client.post(f'/api/dev/intelligence/threads/{identifier}/stream',json={'content':'Second synthetic question'})
+        self.assertIn('event: complete',streamed.text)
+        self.assertTrue(provider_inputs)
+        self.assertFalse(any('Synthetic missing information' in msg['content'] for msg in provider_inputs[0][1:-1]),
+                         'Unreviewed structured assessment must not become a trusted future AI context turn')
         self.assessment=lambda **_: {'bad':'unsupported'}
         self.assertEqual(self.client.post(path,json={'content':'Synthetic'}).status_code,502)
         self.login('second')

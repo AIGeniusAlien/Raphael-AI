@@ -66,7 +66,7 @@ class IntelligenceTests(unittest.TestCase):
         self.assertEqual(self.client.post(
             endpoint+'/segments',
             json={'content':'Synthetic prohibited segment','origin':'manual_synthetic'}
-        ).status_code, 409)
+        ).status_code, 403)
         self.assertEqual(self.client.post(
             endpoint+'/consent',json={'consent':True}
         ).status_code, 409)

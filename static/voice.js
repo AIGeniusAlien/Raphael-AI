@@ -3,10 +3,10 @@
   class RaphaelVoice {
     constructor({onText, onStatus, onCommand}) {
       this.onText = onText; this.onStatus = onStatus; this.onCommand = onCommand;
-      this.recognition = null; this.active = false; this.timer = null; this.serial = 0;
+      this.recognition = null; this.active = false; this.timer = null; this.watchdog = null; this.serial = 0;
     }
     supported() { return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
-    async start({consent, mode, wakePhrase}) {
+    async start({consent, mode, wakePhrase, verifyConsent}) {
       if (!consent) throw new Error('Recording consent is required.');
       if (!this.supported()) throw new Error('Speech recognition is unavailable in this browser. Manual synthetic transcript entry remains available.');
       this.stop();
@@ -49,12 +49,33 @@
       r.onend = () => { if (this.recognition !== r) return; if (this.active && mode === 'handsfree') { try { finalized.clear(); r.start(); } catch (_) { this.stop(); } } else this.stop(); };
       try { r.start(); } catch (error) { this.stop(); throw error; }
       this.timer = setTimeout(() => { this.stop(); this.onStatus('Voice session timed out. Start again explicitly.'); }, 120000);
+      if (typeof verifyConsent === 'function') {
+        // Remote consent and encounter status can change while recognition
+        // is running. Fail closed when this bounded periodic verification
+        // cannot establish continuing authorization. This polling cannot
+        // guarantee instantaneous remote revocation; the server separately
+        // checks every transcript write.
+        let verifying = false;
+        this.watchdog = setInterval(async () => {
+          if (verifying || !this.active || serial !== this.serial) return;
+          verifying = true;
+          let authorized = false;
+          try { authorized = await verifyConsent() === true; } catch (_) {}
+          verifying = false;
+          if (!this.active || serial !== this.serial) return;
+          if (!authorized) {
+            this.stop();
+            this.onStatus('Voice stopped: recording consent or encounter authorization could not be verified. Reauthorize before listening.');
+          }
+        }, 10000);
+      }
       this.onStatus('Listening. Browser speech services may send audio to the browser vendor.');
     }
     stop() {
       this.serial += 1;
       this.active = false;
       clearTimeout(this.timer); this.timer = null;
+      clearInterval(this.watchdog); this.watchdog = null;
       if (this.recognition) { this.recognition.onend = null; try { this.recognition.stop(); } catch (_) {} this.recognition = null; }
       window.speechSynthesis?.cancel();
     }
